@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Rayyan Project',
+  title: 'Rayyan',
   description: 'Rayyan application built with Next.js and Express',
 }
 
@@ -13,7 +13,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="font-sans antialiased">
+        {children}
+      </body>
     </html>
   )
 }

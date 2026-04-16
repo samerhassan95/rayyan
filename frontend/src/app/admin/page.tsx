@@ -3,6 +3,16 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
+import StatGroup from '../components/StateCard';
+
+
+//icons import
+import Image from 'next/image'
+import userOctagon from '../../assets/icons/user-octagon.svg'
+import crown from '../../assets/icons/crown.svg'
+import chart from '../../assets/icons/chart-2.svg'
+import wallet from '../../assets/icons/wallet-money.svg'
+
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
@@ -225,47 +235,33 @@ export default function AdminDashboard() {
   return (
     <div>
       {/* Stats Grid */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon users">👥</div>
-          <div className="stat-value">{stats?.totalUsers?.toLocaleString() || '0'}</div>
-          <div className="stat-label">Total Users</div>
-          <div className={`stat-change ${stats?.userGrowth >= 0 ? 'positive' : 'negative'}`}>
-            {stats?.userGrowth >= 0 ? '+' : ''}{stats?.userGrowth || 0}%
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon revenue">💰</div>
-          <div className="stat-value">
-            ${stats?.totalRevenue ? (stats.totalRevenue >= 1000000 ? 
-              `${(stats.totalRevenue / 1000000).toFixed(1)}M` : 
-              `${(stats.totalRevenue / 1000).toFixed(0)}K`) : '$0'}
-          </div>
-          <div className="stat-label">Revenue</div>
-          <div className={`stat-change ${stats?.revenueGrowth >= 0 ? 'positive' : 'negative'}`}>
-            {stats?.revenueGrowth >= 0 ? '+' : ''}{stats?.revenueGrowth || 0}%
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon subs">📊</div>
-          <div className="stat-value">{stats?.activeSubscriptions?.toLocaleString() || '0'}</div>
-          <div className="stat-label">Active Subs</div>
-          <div className={`stat-change ${stats?.subsGrowth >= 0 ? 'positive' : 'negative'}`}>
-            {stats?.subsGrowth >= 0 ? '+' : ''}{stats?.subsGrowth || 0}%
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon growth">📈</div>
-          <div className="stat-value">{stats?.growthRate || 0}%</div>
-          <div className="stat-label">Growth Rate</div>
-          <div className={`stat-change ${stats?.userGrowth >= 0 ? 'positive' : 'negative'}`}>
-            {stats?.userGrowth >= 0 ? '+' : ''}{Math.abs(stats?.userGrowth || 0)}%
-          </div>
-        </div>
-      </div>
+     <StatGroup 
+  items={[
+    { 
+      icon: userOctagon, 
+      label: 'Total Users', 
+      // ندمج الرقم مع النسبة في الـ value مباشرة
+      value: `${stats?.totalUsers?.toLocaleString() || '0'} (${stats?.userGrowth || 0}%)` 
+    },
+    { 
+      icon: wallet, 
+      label: 'Revenue', 
+      value: stats?.totalRevenue >= 1000000 
+             ? `$${(stats.totalRevenue / 1000000).toFixed(1)}M` 
+             : `$${(stats.totalRevenue / 1000).toFixed(0)}K`
+    },
+    { 
+      icon: crown, 
+      label: 'Active Subs', 
+      value: `${stats?.activeSubscriptions?.toLocaleString() || '0'} (+${stats?.subsGrowth || 0}%)`
+    },
+    { 
+      icon: chart, 
+      label: 'Growth Rate', 
+      value: `${stats?.growthRate || 0}%`
+    },
+  ]} 
+/>
 
       {/* Performance Trend Chart */}
       <div className="content-card" style={{ marginBottom: '30px' }}>

@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
-
+import Image from 'next/image'
+import robot from '/src/assets/images/login.svg'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export default function Login() {
@@ -18,15 +19,15 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    
+
     try {
       const response = await axios.post(`${API_URL}/api/auth/login`, formData)
       const { token, user } = response.data
-      
+
       setMessage('✅ Login successful!')
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
-      
+
       // Role-based redirection
       setTimeout(() => {
         if (user.role === 'admin') {
@@ -50,28 +51,14 @@ export default function Login() {
   }
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-    }}>
-      <div style={{
-        background: 'white',
-        padding: '40px',
-        borderRadius: '12px',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-        width: '100%',
-        maxWidth: '400px'
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <h1 style={{ 
-            fontSize: '28px', 
-            fontWeight: '700', 
-            color: '#1a202c',
-            marginBottom: '8px'
-          }}>
+    <div className='h-screen flex justify-between items-center bg-[#e6e6e6]'>
+
+
+      <div className="w-full md:w-1/2 p-8 h-[75vh] mx-4 
+    bg-gradient-to-br from-white/35 from-55% to-[#D9FFFA]/35 to-100% 
+    backdrop-blur-md 
+    border border-white/20 rounded-2xl shadow-xl shadow-black/5">        <div className='mb-8 text-center flex justify-center items-center gap-2'>
+          <h1 >
             RAYYAN
           </h1>
           <p style={{ color: '#718096', fontSize: '16px' }}>
@@ -81,9 +68,9 @@ export default function Login() {
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '6px', 
+            <label style={{
+              display: 'block',
+              marginBottom: '6px',
               fontWeight: '500',
               color: '#4a5568'
             }}>
@@ -108,9 +95,9 @@ export default function Login() {
           </div>
 
           <div style={{ marginBottom: '24px' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '6px', 
+            <label style={{
+              display: 'block',
+              marginBottom: '6px',
               fontWeight: '500',
               color: '#4a5568'
             }}>
@@ -134,8 +121,8 @@ export default function Login() {
             />
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={loading}
             style={{
               width: '100%',
@@ -155,10 +142,10 @@ export default function Login() {
         </form>
 
         {message && (
-          <div style={{ 
-            marginTop: '16px', 
-            padding: '12px', 
-            borderRadius: '8px', 
+          <div style={{
+            marginTop: '16px',
+            padding: '12px',
+            borderRadius: '8px',
             backgroundColor: message.includes('✅') ? '#f0fff4' : '#fed7d7',
             color: message.includes('✅') ? '#22543d' : '#742a2a',
             fontSize: '14px',
@@ -168,8 +155,8 @@ export default function Login() {
           </div>
         )}
 
-        <div style={{ 
-          marginTop: '24px', 
+        <div style={{
+          marginTop: '24px',
           textAlign: 'center',
           fontSize: '14px',
           color: '#718096'
@@ -192,7 +179,7 @@ export default function Login() {
               Sign Up
             </button>
           </div>
-          
+
           <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
             <div style={{ marginBottom: '12px' }}>
               <p><strong>Admin Login:</strong></p>
@@ -204,6 +191,9 @@ export default function Login() {
             </div>
           </div>
         </div>
+      </div>
+      <div className='hidden md:block md:w-1/2'>
+        <Image src={robot} alt="Robot" className=' w-full h-auto' />
       </div>
     </div>
   )

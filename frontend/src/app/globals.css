@@ -1,4 +1,65 @@
-* {
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  @font-face {
+    font-family: 'MontserratArabic';
+    src: url('/fonts/Montserrat-Arabic-Light.woff2') format('woff2'),
+         url('/fonts/Montserrat-Arabic-Light.woff') format('woff'),
+         url('/fonts/Montserrat-Arabic-Light.ttf') format('truetype'),
+         url('/fonts/Montserrat-Arabic-Light.eot?#iefix') format('embedded-opentype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'MontserratArabic';
+    src: url('/fonts/Montserrat-Arabic-Regular.woff2') format('woff2'),
+         url('/fonts/Montserrat-Arabic-Regular.woff') format('woff'),
+         url('/fonts/Montserrat-Arabic-Regular.ttf') format('truetype'),
+         url('/fonts/Montserrat-Arabic-Regular.eot?#iefix') format('embedded-opentype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'MontserratArabic';
+    src: url('/fonts/Montserrat-Arabic-Medium.woff2') format('woff2'),
+         url('/fonts/Montserrat-Arabic-Medium.woff') format('woff'),
+         url('/fonts/Montserrat-Arabic-Medium.ttf') format('truetype'),
+         url('/fonts/Montserrat-Arabic-Medium.eot?#iefix') format('embedded-opentype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'MontserratArabic';
+    src: url('/fonts/Montserrat-Arabic-Bold.woff2') format('woff2'),
+         url('/fonts/Montserrat-Arabic-Bold.woff') format('woff'),
+         url('/fonts/Montserrat-Arabic-Bold.ttf') format('truetype'),
+         url('/fonts/Montserrat-Arabic-Bold.eot?#iefix') format('embedded-opentype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'MontserratArabic';
+    src: url('/fonts/Montserrat-Arabic-Black.woff2') format('woff2'),
+         url('/fonts/Montserrat-Arabic-Black.woff') format('woff'),
+         url('/fonts/Montserrat-Arabic-Black.ttf') format('truetype'),
+         url('/fonts/Montserrat-Arabic-Black.eot?#iefix') format('embedded-opentype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+  }
+}
+
+/* * {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
@@ -8,7 +69,6 @@ html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
 body {
@@ -65,3 +125,4 @@ body {
   border-radius: 4px;
   font-size: 14px;
 }
+*/

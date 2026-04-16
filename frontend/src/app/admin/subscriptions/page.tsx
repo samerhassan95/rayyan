@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import StatGroup from '../../components/StateCard';
+
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
@@ -262,171 +264,32 @@ export default function AdminSubscriptions() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(4, 1fr)', 
-        gap: '24px', 
-        marginBottom: '32px' 
-      }}>
-        <div style={{
-          background: 'white',
-          padding: '24px',
-          borderRadius: '12px',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-        }}>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '12px',
-            marginBottom: '8px'
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '18px'
-            }}>
-              📊
-            </div>
-            <div style={{ fontSize: '32px', fontWeight: '700', color: '#1a202c' }}>
-              {analytics.totalSubscriptions || '0'}
-            </div>
-          </div>
-          <div style={{ 
-            fontSize: '14px', 
-            color: '#718096', 
-            textTransform: 'uppercase', 
-            letterSpacing: '0.5px',
-            fontWeight: '500'
-          }}>
-            Total Subscriptions
-          </div>
-        </div>
-        <div style={{
-          background: 'white',
-          padding: '24px',
-          borderRadius: '12px',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-        }}>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '12px',
-            marginBottom: '8px'
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '18px'
-            }}>
-              ⚡
-            </div>
-            <div style={{ fontSize: '32px', fontWeight: '700', color: '#1a202c' }}>
-              {analytics.activePlans || '0'}
-            </div>
-          </div>
-          <div style={{ 
-            fontSize: '14px', 
-            color: '#718096', 
-            textTransform: 'uppercase', 
-            letterSpacing: '0.5px',
-            fontWeight: '500'
-          }}>
-            Active Plans
-          </div>
-        </div>
-
-        <div style={{
-          background: 'white',
-          padding: '24px',
-          borderRadius: '12px',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-        }}>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '12px',
-            marginBottom: '8px'
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '18px'
-            }}>
-              📉
-            </div>
-            <div style={{ fontSize: '32px', fontWeight: '700', color: '#1a202c' }}>
-              {analytics.canceledMTD || '0'}
-            </div>
-          </div>
-          <div style={{ 
-            fontSize: '14px', 
-            color: '#718096', 
-            textTransform: 'uppercase', 
-            letterSpacing: '0.5px',
-            fontWeight: '500'
-          }}>
-            Canceled (MTD)
-          </div>
-        </div>
-        <div style={{
-          background: 'white',
-          padding: '24px',
-          borderRadius: '12px',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-        }}>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '12px',
-            marginBottom: '8px'
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '18px'
-            }}>
-              📈
-            </div>
-            <div style={{ fontSize: '32px', fontWeight: '700', color: '#1a202c' }}>
-              {analytics.churnRate || '0'}%
-            </div>
-          </div>
-          <div style={{ 
-            fontSize: '14px', 
-            color: '#718096', 
-            textTransform: 'uppercase', 
-            letterSpacing: '0.5px',
-            fontWeight: '500'
-          }}>
-            Churn Rate
-          </div>
-        </div>
-      </div>
+   {/* Stats Cards */}
+<StatGroup 
+  items={[
+    { 
+      icon: '📊', 
+      label: 'Total Subscriptions', 
+      value: analytics.totalSubscriptions 
+    },
+    { 
+      icon: '⚡', 
+      label: 'Active Plans', 
+      value: analytics.activePlans 
+    },
+    { 
+      icon: '📉', 
+      label: 'Canceled (MTD)', 
+      value: analytics.canceledMTD 
+    },
+    { 
+      icon: '📈', 
+      label: 'Churn Rate', 
+      value: analytics.churnRate, 
+      suffix: '%' 
+    },
+  ]} 
+/>
 
       {/* Controls */}
       <div style={{ 
