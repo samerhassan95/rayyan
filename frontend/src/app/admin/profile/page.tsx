@@ -425,7 +425,7 @@ export default function AdminProfile() {
                   Recent Activity
                 </h3>
 
-                <div style={{ space: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {activityLog.length > 0 ? activityLog.map((activity, index) => (
                     <div key={index} style={{ 
                       display: 'flex',
@@ -498,7 +498,7 @@ export default function AdminProfile() {
                   Active Sessions
                 </h3>
 
-                <div style={{ space: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {sessions.length > 0 ? sessions.map((session, index) => (
                     <div key={session.id || index} style={{ 
                       display: 'flex',
