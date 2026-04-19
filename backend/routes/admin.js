@@ -1,12 +1,53 @@
 const express = require('express');
 const pool = require('../config/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 const router = express.Router();
+
+// Multer configuration for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = 'uploads/profiles';
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'profile-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    const filetypes = /jpeg|jpg|png|webp/;
+    const mimetype = filetypes.test(file.mimetype);
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error('Only images are allowed!'));
+  }
+});
 
 // Apply authentication and admin check to all routes
 router.use(authenticateToken);
 router.use(requireAdmin);
+
+// Upload profile photo
+router.post('/upload-profile-photo', upload.single('photo'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'Please upload a file' });
+  }
+  const photoUrl = `/uploads/profiles/${req.file.filename}`;
+  res.json({ photoUrl });
+});
 
 // Dashboard statistics
 router.get('/dashboard/stats', async (req, res) => {
@@ -380,7 +421,7 @@ router.get('/users/:id', async (req, res) => {
 
     // Get user details
     const [users] = await pool.execute(`
-      SELECT id, username, email, role, status, phone, address, job_title, bio,
+      SELECT id, username, email, role, status, phone, address, job_title, bio, profile_image,
              two_factor_enabled, last_login, created_at, updated_at, acquisition_source
       FROM users WHERE id = ?
     `, [userId]);
@@ -493,7 +534,7 @@ router.post('/users', async (req, res) => {
 router.put('/users/:id', async (req, res) => {
   try {
     const userId = req.params.id;
-    const { username, email, phone, address, job_title, bio, status, role } = req.body;
+    const { username, email, phone, address, job_title, bio, status, role, profile_image } = req.body;
     
     // Build dynamic update query
     const updates = [];
@@ -531,6 +572,10 @@ router.put('/users/:id', async (req, res) => {
       updates.push('role = ?');
       params.push(role);
     }
+    if (profile_image !== undefined) {
+      updates.push('profile_image = ?');
+      params.push(profile_image);
+    }
     
     if (updates.length === 0) {
       return res.status(400).json({ error: 'No fields to update' });
@@ -551,6 +596,7 @@ router.put('/users/:id', async (req, res) => {
 
     res.json({ message: 'User updated successfully' });
   } catch (error) {
+    console.error('Update user error:', error);
     res.status(500).json({ error: error.message });
   }
 });

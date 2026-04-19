@@ -564,12 +564,30 @@ export default function AdminLayout({
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 style={{ cursor: 'pointer' }}
               >
-                <img
-                  src="/api/placeholder/32/32"
-                  alt={user.username}
-                  className="user-avatar"
-                />
-                <span className="user-name">{user.username}</span>
+                <div className="user-avatar-container" style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  background: '#1a202c',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: '600'
+                }}>
+                  {user?.profile_image ? (
+                    <img
+                      src={user.profile_image.startsWith('http') ? user.profile_image : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}${user.profile_image}`}
+                      alt={user.username}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <span>{user?.username?.charAt(0)?.toUpperCase() || 'A'}</span>
+                  )}
+                </div>
+                <span className="user-name">{user?.username || 'Admin'}</span>
                 <span className="user-dropdown">▼</span>
               </div>
 
