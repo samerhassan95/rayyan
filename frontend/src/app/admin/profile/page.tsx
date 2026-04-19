@@ -86,8 +86,9 @@ export default function AdminProfile() {
       
       setMessage('✅ Profile updated successfully!')
       setTimeout(() => setMessage(''), 3000)
-    } catch (error) {
-      setMessage('❌ Failed to update profile')
+    } catch (error: any) {
+      console.error('Update failed:', error)
+      setMessage(`❌ Failed to update profile: ${error.response?.data?.error || error.message}`)
       setTimeout(() => setMessage(''), 3000)
     } finally {
       setSaving(false)
@@ -134,6 +135,37 @@ export default function AdminProfile() {
     } catch (error) {
       setMessage('❌ Failed to terminate session')
       setTimeout(() => setMessage(''), 3000)
+    }
+  }
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const formData = new FormData()
+    formData.append('photo', file)
+
+    setSaving(true)
+    setMessage('⏳ Uploading photo...')
+
+    try {
+      const token = localStorage.getItem('token')
+      const headers = { 
+        Authorization: `Bearer ${token}`
+      }
+
+      const response = await axios.post(`${API_URL}/api/admin/upload-profile-photo`, formData, { headers })
+      const photoUrl = response.data.photoUrl
+
+      setProfileData(prev => ({ ...prev, profile_image: photoUrl }))
+      setMessage('✅ Photo uploaded! Don\'t forget to save changes.')
+      setTimeout(() => setMessage(''), 3000)
+    } catch (error: any) {
+      console.error('Upload failed:', error)
+      setMessage(`❌ Upload failed: ${error.response?.data?.error || 'Unknown error'}`)
+      setTimeout(() => setMessage(''), 3000)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -193,21 +225,64 @@ export default function AdminProfile() {
           {/* Profile Card */}
           <div className="content-card" style={{ marginBottom: '24px' }}>
             <div className="card-content" style={{ textAlign: 'center' }}>
-              <div style={{
-                width: '80px',
-                height: '80px',
-                borderRadius: '50%',
-                background: '#1a202c',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontSize: '32px',
-                fontWeight: '600',
-                margin: '0 auto 16px'
-              }}>
-                {profileData.username?.charAt(0)?.toUpperCase() || 'A'}
+              <div 
+                onClick={() => document.getElementById('profile-photo-input')?.click()}
+                style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  background: '#1a202c',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontSize: '32px',
+                  fontWeight: '600',
+                  margin: '0 auto 16px',
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  border: '2px solid #e2e8f0'
+                }}
+              >
+                {profileData.profile_image ? (
+                  <img 
+                    src={profileData.profile_image.startsWith('http') ? profileData.profile_image : `${API_URL}${profileData.profile_image}`} 
+                    alt="Profile" 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  profileData.username?.charAt(0)?.toUpperCase() || 'A'
+                )}
+                <div style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  background: 'rgba(0,0,0,0.4)',
+                  color: 'white',
+                  fontSize: '10px',
+                  padding: '2px 0',
+                  opacity: 0,
+                  transition: 'opacity 0.2s',
+                  display: 'flex',
+                  justifyContent: 'center'
+                }} className="photo-hover">
+                  EDIT
+                </div>
               </div>
+              <input 
+                id="profile-photo-input"
+                type="file" 
+                accept="image/*" 
+                onChange={handlePhotoChange} 
+                style={{ display: 'none' }}
+              />
+              <style jsx>{`
+                div:hover .photo-hover {
+                  opacity: 1 !important;
+                }
+              `}</style>
               <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '4px' }}>
                 {profileData.username || 'Admin User'}
               </h3>

@@ -68,7 +68,8 @@ router.post('/login', async (req, res) => {
         email: user.email,
         role: user.role,
         phone: user.phone,
-        address: user.address
+        address: user.address,
+        profile_image: user.profile_image
       }
     });
   } catch (error) {
@@ -113,7 +114,8 @@ router.post('/admin/login', async (req, res) => {
         id: user.id,
         username: user.username,
         email: user.email,
-        role: user.role
+        role: user.role,
+        profile_image: user.profile_image
       }
     });
   } catch (error) {
