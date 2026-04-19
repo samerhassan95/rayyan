@@ -21,14 +21,15 @@ import plansIconActive from '../../assets/sidebar-icons/plans-active.svg'
 import settingsIconActive from '../../assets/sidebar-icons/settings-active.svg'
 
 //========================
-import arrow from '../../assets/icons/arrow-square-right.svg'
+import arrowIcon from '../../assets/icons/arrow-square-right.svg'
 //header icons
 import notification from '../../assets/icons/notification.svg'
 import search from '../../assets/icons/search-normal.svg'
 import logout from '../../assets/sidebar-icons/logout.svg'
-import night from '../../assets/icons/night.svg'
-
-
+import night from '../../assets/icons/moon.svg'
+import nightWhite from '../../assets/icons/night-white.svg'
+import sun from '../../assets/icons/sun.svg'
+import sunWhite from '../../assets/icons/sun-light.svg'
 
 import Link from 'next/link'
 export default function AdminLayout({
@@ -220,8 +221,8 @@ export default function AdminLayout({
       { name: 'Notification Settings', type: 'section', path: '/admin/settings#notifications', description: 'Manage system alerts' },
     ];
 
-    const results = navigationLinks.filter(item => 
-      item.name.toLowerCase().includes(query.toLowerCase()) || 
+    const results = navigationLinks.filter(item =>
+      item.name.toLowerCase().includes(query.toLowerCase()) ||
       item.description.toLowerCase().includes(query.toLowerCase())
     ).map(item => ({
       ...item,
@@ -298,9 +299,18 @@ export default function AdminLayout({
             <h2>{sidebarOpen ? 'RAYYAN' : 'R'}</h2>
           </div>
 
-          {/* زرار الإغلاق يظهر دائماً في الموبايل أو في الديسكتوب لو السايدبار مفتوح */}
-          <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
-            {sidebarOpen ? '✕' : '☰'}
+          <button
+            className="flex items-center justify-center p-1 bg-transparent border-none cursor-pointer sidebar-toggle" // تنسيقات تيلوند للزرار
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            <Image
+              src={arrowIcon}
+              alt="toggle sidebar"
+              width={20}
+              height={20}
+              className={`
+   block  w-4 h-4  transition-transform duration-300 ease-in-out  ${sidebarOpen ? 'rotate-180' : 'rotate-0'}`}
+            />
           </button>
         </div>
 
@@ -355,13 +365,36 @@ export default function AdminLayout({
           <div className="header-right">
             {/* Dark Mode Toggle */}
             <button
-              className="header-btn"
               onClick={toggleDarkMode}
+              className="relative flex items-center justify-between w-20 h-10 p-1 transition-colors duration-300 bg-[#F8F8F880] rounded-full cursor-pointer border border-[#F8F8F8]"
               title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
-              {darkMode ? '☀️' : '🌙'}
-            </button>
+              <div
+                className={`absolute w-8 h-8 bg-[#4d8680] rounded-full transition-transform duration-300 ease-in-out ${darkMode ? 'translate-x-10' : 'translate-x-0'
+                  }`}
+              />
 
+              {/* حاوية الأيقونات */}
+              <div className="relative z-10 flex items-center justify-between w-full h-full px-1.5">
+                {/* الجزء الخاص بالوضع الفاتح */}
+                <div className="flex items-center justify-center">
+                  <Image
+                    src={darkMode ? sun : sunWhite}
+                    alt="Light Mode"
+                    className="block w-5 h-5 "
+                  />
+                </div>
+
+                {/* الجزء الخاص بالوضع المظلم */}
+                <div className="flex items-center justify-center">
+                  <Image
+                    src={darkMode ? nightWhite : night}
+                    alt="Dark Mode"
+                    className="block w-5 h-5"
+                  /> 
+                </div>
+              </div>
+            </button>
             {/* Search */}
             <div style={{ position: 'relative' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

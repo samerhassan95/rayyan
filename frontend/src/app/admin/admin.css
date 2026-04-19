@@ -192,6 +192,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: #f7fafc;
 }
 
 .header-btn:hover {
@@ -915,3 +916,5 @@ body.dark-mode .admin-layout svg text {
     /* إزاحة خفيفة عند الظهور لليمين لتعطي إحساس بالحركة */
     transform: translateY(-50%) translateX(20px); 
 }
+
+/* toggle button */
