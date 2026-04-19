@@ -22,6 +22,8 @@ import settingsIconActive from '../../assets/sidebar-icons/settings-active.svg'
 
 //========================
 import arrowIcon from '../../assets/icons/arrow-square-right.svg'
+
+
 //header icons
 import notification from '../../assets/icons/notification.svg'
 import search from '../../assets/icons/search-normal.svg'
@@ -30,6 +32,7 @@ import night from '../../assets/icons/moon.svg'
 import nightWhite from '../../assets/icons/night-white.svg'
 import sun from '../../assets/icons/sun.svg'
 import sunWhite from '../../assets/icons/sun-light.svg'
+import profile from '../../assets/icons/profile.svg'
 
 import Link from 'next/link'
 export default function AdminLayout({
@@ -396,11 +399,11 @@ export default function AdminLayout({
               </div>
             </button>
             {/* Search */}
-            <div style={{ position: 'relative' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="relative left-3.5">
+              <div className="flex items-center gap-2 p-3.5 ">
                 <input
                   type="text"
-                  placeholder="Search users, transactions... (Ctrl+K)"
+                  placeholder="Search here... (Ctrl+K)"
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value)
@@ -417,16 +420,9 @@ export default function AdminLayout({
                       setShowSearchResults(false)
                     }
                   }}
-                  style={{
-                    padding: '8px 12px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    width: '250px'
-                  }}
-                />
+                  className="px-3 py-2 border border-slate-200 rounded-full text-sm w-[250px] focus:outline-none focus:ring-teal-500/20 focus:border-[#4d8680] placeholder:text-sm placeholder:text-[#a9a9a9] placeholder:font-light" />
                 <button
-                  className="header-btn"
+                  className="absolute right-4 header-btn "
                   onClick={handleSearchSubmit}
                   title="Search"
                 >
@@ -436,57 +432,37 @@ export default function AdminLayout({
 
               {/* Search Results Dropdown */}
               {showSearchResults && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  background: 'white',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                  zIndex: 1000,
-                  marginTop: '8px',
-                  maxHeight: '300px',
-                  overflowY: 'auto'
-                }}>
+                <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg z-[1000] mt-2 max-h-[300px] overflow-y-auto">
                   {searchResults.length > 0 ? (
                     <>
-                      <div style={{ padding: '12px 16px', borderBottom: '1px solid #f7fafc', fontWeight: '600', fontSize: '14px' }}>
+                      <div className="px-4 py-3 text-sm font-semibold border-b border-slate-50">
                         Search Results
                       </div>
                       {searchResults.map((result: any, index) => (
                         <div
                           key={index}
-                          style={{
-                            padding: '12px 16px',
-                            borderBottom: '1px solid #f7fafc',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px'
-                          }}
+                          className="flex items-center gap-3 px-4 py-3 transition-colors border-b cursor-pointer border-slate-50 hover:bg-slate-50"
                           onClick={() => navigateToSearchResult(result)}
                         >
-                          <span style={{ fontSize: '16px' }}>
+                          {/* <span className="text-base">
                             {result.icon}
-                          </span>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: '500', fontSize: '14px' }}>
+                          </span> */}
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-slate-900">
                               {result.title}
                             </div>
-                            <div style={{ fontSize: '12px', color: '#718096' }}>
+                            <div className="text-xs text-slate-500">
                               {result.subtitle}
                             </div>
                           </div>
-                          <div style={{ fontSize: '11px', color: '#319795', textTransform: 'uppercase', fontWeight: '800' }}>
+                          {/* <div className="text-[11px] text-teal-600 uppercase font-extrabold">
                             {result.type}
-                          </div>
+                          </div> */}
                         </div>
                       ))}
                     </>
                   ) : (
-                    <div style={{ padding: '16px', textAlign: 'center', color: '#718096' }}>
+                    <div className="p-4 text-sm text-center text-slate-500">
                       No results found for "{searchQuery}"
                     </div>
                   )}
@@ -495,16 +471,16 @@ export default function AdminLayout({
             </div>
 
             {/* Notifications */}
-            <div style={{ position: 'relative' }}>
+            <div className="relative">
               <button
-                className="relative header-btn" // بديل لـ position: relative
+                className="relative header-btn"
                 onClick={() => setShowNotifications(!showNotifications)}
                 title="Notifications"
               >
                 <Image src={notification} alt="Notifications" width={24} height={24} />
 
                 {notifications.length > 0 && (
-                  <span className="absolute -top-1 -left-1.5 bg-red-600 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center">
                     {notifications.length}
                   </span>
                 )}
@@ -634,7 +610,7 @@ export default function AdminLayout({
                         router.push('/admin/profile');
                       }}
                     >
-                      <span>👤</span> Profile
+                      <Image src={profile} alt='profile' width={16} height={16} /> Profile
                     </button>
 
                     <hr className="my-1 border-slate-100" />
