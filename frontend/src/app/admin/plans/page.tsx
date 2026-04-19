@@ -12,6 +12,10 @@ export default function AdminPlans() {
   const [discountCodes, setDiscountCodes] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreatePlan, setShowCreatePlan] = useState(false)
+  const [showEditPlan, setShowEditPlan] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [editingPlan, setEditingPlan] = useState<any>(null)
+  const [planToDelete, setPlanToDelete] = useState<number | null>(null)
   const [showCreateCode, setShowCreateCode] = useState(false)
   const [newPlan, setNewPlan] = useState({
     name: '',
@@ -117,20 +121,45 @@ export default function AdminPlans() {
     }
   }
 
-  const deletePlan = async (planId: number) => {
-    if (!confirm('Are you sure you want to delete this plan?')) return
+  const deletePlan = async () => {
+    if (!planToDelete) return
 
     try {
       const token = localStorage.getItem('token')
       const headers = { Authorization: `Bearer ${token}` }
 
-      await axios.delete(`${API_URL}/api/plans/${planId}`, { headers })
+      await axios.delete(`${API_URL}/api/plans/${planToDelete}`, { headers })
       setMessage('✅ Plan deleted successfully!')
+      setShowDeleteConfirm(false)
+      setPlanToDelete(null)
       fetchData()
       setTimeout(() => setMessage(''), 3000)
     } catch (error: any) {
       setMessage(`❌ ${error.response?.data?.error || 'Failed to delete plan'}`)
       setTimeout(() => setMessage(''), 3000)
+    }
+  }
+
+  const handleEditClick = (plan: any) => {
+    setEditingPlan({ ...plan })
+    setShowEditPlan(true)
+  }
+
+  const saveEditedPlan = async () => {
+    if (!editingPlan) return
+    try {
+      await updatePlan(editingPlan.id, {
+        name: editingPlan.name,
+        tier: editingPlan.tier,
+        monthlyPrice: parseFloat(editingPlan.monthlyPrice),
+        yearlyPrice: parseFloat(editingPlan.yearlyPrice),
+        description: editingPlan.description,
+        features: editingPlan.features
+      })
+      setShowEditPlan(false)
+      setEditingPlan(null)
+    } catch (error) {
+      // Message handled by updatePlan
     }
   }
 
@@ -352,12 +381,10 @@ export default function AdminPlans() {
                   background: 'none', 
                   border: 'none', 
                   cursor: 'pointer', 
-                  color: plan.recommended ? 'rgba(255,255,255,0.8)' : '#718096' 
+                  color: plan.recommended ? 'rgba(255,255,255,0.8)' : '#718096',
+                  fontSize: '18px'
                 }}
-                onClick={() => {
-                  const newName = prompt('Enter new plan name:', plan.name)
-                  if (newName) updatePlan(plan.id, { name: newName })
-                }}
+                onClick={() => handleEditClick(plan)}
               >
                 ✏️
               </button>
@@ -366,9 +393,13 @@ export default function AdminPlans() {
                   background: 'none', 
                   border: 'none', 
                   cursor: 'pointer', 
-                  color: plan.recommended ? 'rgba(255,255,255,0.8)' : '#718096' 
+                  color: plan.recommended ? 'rgba(255,255,255,0.8)' : '#e53e3e',
+                  fontSize: '18px'
                 }}
-                onClick={() => deletePlan(plan.id)}
+                onClick={() => {
+                  setPlanToDelete(plan.id)
+                  setShowDeleteConfirm(true)
+                }}
               >
                 🗑️
               </button>
@@ -488,6 +519,220 @@ export default function AdminPlans() {
         </div>
       </div>
 
+      {/* Edit Plan Modal */}
+      {showEditPlan && editingPlan && (
+        <div className="modal-overlay" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          backdropFilter: 'blur(4px)'
+        }}>
+          <div className="modal-content" style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '32px',
+            width: '550px',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+          }}>
+            <h3 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '8px' }}>Edit Plan</h3>
+            <p style={{ color: '#718096', marginBottom: '24px' }}>Modify the details of your subscription plan.</p>
+            
+            <div className="form-group">
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Plan Name</label>
+              <input
+                type="text"
+                value={editingPlan.name}
+                onChange={(e) => setEditingPlan((prev: any) => ({ ...prev, name: e.target.value }))}
+                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
+              />
+            </div>
+
+            <div className="form-group">
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Tier</label>
+              <input
+                type="text"
+                value={editingPlan.tier}
+                onChange={(e) => setEditingPlan((prev: any) => ({ ...prev, tier: e.target.value }))}
+                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+              <div className="form-group">
+                <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Monthly Price ($)</label>
+                <input
+                  type="number"
+                  value={editingPlan.monthlyPrice}
+                  onChange={(e) => setEditingPlan((prev: any) => ({ ...prev, monthlyPrice: e.target.value }))}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
+                />
+              </div>
+              <div className="form-group">
+                <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Yearly Price ($)</label>
+                <input
+                  type="number"
+                  value={editingPlan.yearlyPrice}
+                  onChange={(e) => setEditingPlan((prev: any) => ({ ...prev, yearlyPrice: e.target.value }))}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Description</label>
+              <textarea
+                value={editingPlan.description}
+                onChange={(e) => setEditingPlan((prev: any) => ({ ...prev, description: e.target.value }))}
+                rows={3}
+                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
+              />
+            </div>
+
+            <div className="form-group">
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Features</label>
+              {(editingPlan.features || []).map((feature: string, index: number) => (
+                <div key={index} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                  <input
+                    type="text"
+                    value={feature}
+                    onChange={(e) => {
+                      const newFeatures = [...editingPlan.features]
+                      newFeatures[index] = e.target.value
+                      setEditingPlan((prev: any) => ({ ...prev, features: newFeatures }))
+                    }}
+                    style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newFeatures = editingPlan.features.filter((_: any, i: number) => i !== index)
+                      setEditingPlan((prev: any) => ({ ...prev, features: newFeatures }))
+                    }}
+                    style={{ background: '#fed7d7', color: '#e53e3e', border: 'none', borderRadius: '8px', padding: '10px 14px', cursor: 'pointer' }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setEditingPlan((prev: any) => ({ ...prev, features: [...(prev.features || []), ''] }))}
+                style={{ 
+                  background: '#e6fffa', 
+                  color: '#319795', 
+                  border: '1px dashed #319795', 
+                  borderRadius: '8px', 
+                  padding: '10px', 
+                  width: '100%',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+              >
+                + Add Feature
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', marginTop: '32px' }}>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowEditPlan(false)}
+                style={{ flex: 1, padding: '12px', borderRadius: '8px' }}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={saveEditedPlan}
+                style={{ flex: 1, padding: '12px', borderRadius: '8px' }}
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="modal-overlay" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1100,
+          backdropFilter: 'blur(4px)'
+        }}>
+          <div className="modal-content" style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '32px',
+            width: '400px',
+            textAlign: 'center',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{ 
+              width: '64px', 
+              height: '64px', 
+              background: '#fff5f5', 
+              borderRadius: '50%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              margin: '0 auto 20px',
+              fontSize: '32px'
+            }}>
+              ⚠️
+            </div>
+            <h3 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '12px' }}>Delete Plan?</h3>
+            <p style={{ color: '#718096', marginBottom: '32px', lineHeight: '1.5' }}>
+              This action cannot be undone. Any users currently linked to this plan will remain subscribed, but the plan will no longer be available for new signups.
+            </p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                className="btn btn-secondary"
+                onClick={() => {
+                  setShowDeleteConfirm(false)
+                  setPlanToDelete(null)
+                }}
+                style={{ flex: 1, padding: '12px', borderRadius: '8px' }}
+              >
+                Keep Plan
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={deletePlan}
+                style={{ 
+                  flex: 1, 
+                  padding: '12px', 
+                  borderRadius: '8px',
+                  background: '#e53e3e',
+                  color: 'white',
+                  border: 'none',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Create Plan Modal */}
       {showCreatePlan && (
         <div style={{
@@ -500,71 +745,78 @@ export default function AdminPlans() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000
+          zIndex: 1000,
+          backdropFilter: 'blur(4px)'
         }}>
           <div style={{
             background: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            width: '500px',
-            maxHeight: '80vh',
-            overflow: 'auto'
+            borderRadius: '16px',
+            padding: '32px',
+            width: '550px',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
           }}>
-            <h3 style={{ marginBottom: '20px' }}>Create New Plan</h3>
+            <h3 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '24px' }}>Create New Plan</h3>
             
             <div className="form-group">
-              <label>Plan Name</label>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Plan Name</label>
               <input
                 type="text"
                 value={newPlan.name}
                 onChange={(e) => setNewPlan(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="e.g., Premium"
+                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
               />
             </div>
 
             <div className="form-group">
-              <label>Tier</label>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Tier</label>
               <input
                 type="text"
                 value={newPlan.tier}
                 onChange={(e) => setNewPlan(prev => ({ ...prev, tier: e.target.value }))}
                 placeholder="e.g., PROFESSIONAL"
+                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
               <div className="form-group">
-                <label>Monthly Price ($)</label>
+                <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Monthly Price ($)</label>
                 <input
                   type="number"
                   value={newPlan.monthlyPrice}
                   onChange={(e) => setNewPlan(prev => ({ ...prev, monthlyPrice: e.target.value }))}
                   placeholder="29"
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
                 />
               </div>
               <div className="form-group">
-                <label>Yearly Price ($)</label>
+                <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Yearly Price ($)</label>
                 <input
                   type="number"
                   value={newPlan.yearlyPrice}
                   onChange={(e) => setNewPlan(prev => ({ ...prev, yearlyPrice: e.target.value }))}
                   placeholder="290"
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
                 />
               </div>
             </div>
 
             <div className="form-group">
-              <label>Description</label>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Description</label>
               <textarea
                 value={newPlan.description}
                 onChange={(e) => setNewPlan(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Perfect for..."
                 rows={3}
+                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
               />
             </div>
 
             <div className="form-group">
-              <label>Features</label>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Features</label>
               {newPlan.features.map((feature, index) => (
                 <div key={index} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                   <input
@@ -572,12 +824,12 @@ export default function AdminPlans() {
                     value={feature}
                     onChange={(e) => updateFeature(index, e.target.value)}
                     placeholder="Feature description"
-                    style={{ flex: 1 }}
+                    style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
                   />
                   <button
                     type="button"
                     onClick={() => removeFeature(index)}
-                    style={{ background: '#e53e3e', color: 'white', border: 'none', borderRadius: '4px', padding: '8px' }}
+                    style={{ background: '#fed7d7', color: '#e53e3e', border: 'none', borderRadius: '4px', padding: '10px 14px', cursor: 'pointer' }}
                   >
                     ✕
                   </button>
@@ -586,24 +838,33 @@ export default function AdminPlans() {
               <button
                 type="button"
                 onClick={addFeature}
-                style={{ background: '#319795', color: 'white', border: 'none', borderRadius: '4px', padding: '8px 16px' }}
+                style={{ 
+                  background: '#e6fffa', 
+                  color: '#319795', 
+                  border: '1px dashed #319795', 
+                  borderRadius: '8px', 
+                  padding: '10px', 
+                  width: '100%',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
               >
-                Add Feature
+                + Add Feature
               </button>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '32px' }}>
               <button
                 className="btn btn-secondary"
                 onClick={() => setShowCreatePlan(false)}
-                style={{ flex: 1 }}
+                style={{ flex: 1, padding: '12px', borderRadius: '8px' }}
               >
                 Cancel
               </button>
               <button
                 className="btn btn-primary"
                 onClick={createPlan}
-                style={{ flex: 1 }}
+                style={{ flex: 1, padding: '12px', borderRadius: '8px' }}
               >
                 Create Plan
               </button>

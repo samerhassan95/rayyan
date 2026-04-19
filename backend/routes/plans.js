@@ -15,19 +15,32 @@ router.get('/', async (req, res) => {
       SELECT * FROM plans WHERE status = 'active' ORDER BY monthly_price ASC
     `);
 
-    const formattedPlans = plans.map(plan => ({
-      id: plan.id,
-      name: plan.name,
-      tier: plan.tier,
-      monthlyPrice: parseFloat(plan.monthly_price),
-      yearlyPrice: parseFloat(plan.yearly_price),
-      description: plan.description,
-      features: plan.features ? JSON.parse(plan.features) : [],
-      recommended: plan.recommended,
-      buttonText: plan.recommended ? 'Upgrade to Pro' : 
-                 plan.name === 'Enterprise' ? 'Contact Sales' : `Configure ${plan.name}`,
-      buttonStyle: plan.recommended ? 'primary' : 'secondary'
-    }));
+    const formattedPlans = plans.map(plan => {
+      let features = [];
+      try {
+        if (typeof plan.features === 'string') {
+          features = JSON.parse(plan.features);
+        } else if (Array.isArray(plan.features)) {
+          features = plan.features;
+        }
+      } catch (e) {
+        console.error('Error parsing features for plan', plan.id, e);
+      }
+
+      return {
+        id: plan.id,
+        name: plan.name,
+        tier: plan.tier,
+        monthlyPrice: parseFloat(plan.monthly_price),
+        yearlyPrice: parseFloat(plan.yearly_price),
+        description: plan.description,
+        features: features,
+        recommended: plan.recommended,
+        buttonText: plan.recommended ? 'Upgrade to Pro' : 
+                   plan.name === 'Enterprise' ? 'Contact Sales' : `Configure ${plan.name}`,
+        buttonStyle: plan.recommended ? 'primary' : 'secondary'
+      };
+    });
 
     res.json(formattedPlans);
   } catch (error) {
@@ -128,13 +141,32 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const planId = req.params.id;
-    const { name, tier, monthlyPrice, yearlyPrice, description, features, recommended } = req.body;
+    const { name, tier, monthlyPrice, yearlyPrice, description, features, recommended, status } = req.body;
+
+    // Build dynamic update query
+    const updates = [];
+    const params = [];
+
+    if (name !== undefined) { updates.push('name = ?'); params.push(name); }
+    if (tier !== undefined) { updates.push('tier = ?'); params.push(tier); }
+    if (monthlyPrice !== undefined) { updates.push('monthly_price = ?'); params.push(monthlyPrice); }
+    if (yearlyPrice !== undefined) { updates.push('yearly_price = ?'); params.push(yearlyPrice); }
+    if (description !== undefined) { updates.push('description = ?'); params.push(description); }
+    if (features !== undefined) { updates.push('features = ?'); params.push(JSON.stringify(features)); }
+    if (recommended !== undefined) { updates.push('recommended = ?'); params.push(recommended); }
+    if (status !== undefined) { updates.push('status = ?'); params.push(status); }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    params.push(planId);
 
     await pool.execute(`
       UPDATE plans 
-      SET name = ?, tier = ?, monthly_price = ?, yearly_price = ?, description = ?, features = ?, recommended = ?
+      SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `, [name, tier, monthlyPrice, yearlyPrice, description, JSON.stringify(features), recommended, planId]);
+    `, params);
 
     res.json({ 
       message: 'Plan updated successfully',
