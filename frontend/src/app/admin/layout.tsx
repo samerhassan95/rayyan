@@ -391,7 +391,7 @@ export default function AdminLayout({
                     src={darkMode ? nightWhite : night}
                     alt="Dark Mode"
                     className="block w-5 h-5"
-                  /> 
+                  />
                 </div>
               </div>
             </button>
@@ -497,27 +497,14 @@ export default function AdminLayout({
             {/* Notifications */}
             <div style={{ position: 'relative' }}>
               <button
-                className="header-btn"
+                className="relative header-btn" // بديل لـ position: relative
                 onClick={() => setShowNotifications(!showNotifications)}
                 title="Notifications"
-                style={{ position: 'relative' }}
               >
                 <Image src={notification} alt="Notifications" width={24} height={24} />
+
                 {notifications.length > 0 && (
-                  <span style={{
-                    position: 'absolute',
-                    top: '-2px',
-                    right: '-2px',
-                    background: '#e53e3e',
-                    color: 'white',
-                    borderRadius: '50%',
-                    width: '16px',
-                    height: '16px',
-                    fontSize: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
+                  <span className="absolute -top-1 -left-1.5 bg-red-600 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center">
                     {notifications.length}
                   </span>
                 )}
@@ -525,98 +512,66 @@ export default function AdminLayout({
 
               {/* Notifications Dropdown */}
               {showNotifications && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  background: 'white',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  minWidth: '350px',
-                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                  zIndex: 1000,
-                  marginTop: '8px'
-                }}>
-                  <div style={{ padding: '16px', borderBottom: '1px solid #f7fafc' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Notifications</h4>
+                <div className="absolute top-full right-0 bg-white border border-slate-200 rounded-lg min-w-[350px] shadow-md z-[1000] mt-2">
+                  {/* Header */}
+                  <div className="p-4 border-b border-slate-50">
+                    <div className="flex items-center justify-between">
+                      <h4 className="m-0 text-base font-semibold text-slate-900">Notifications</h4>
                       {loadingNotifications && (
-                        <div style={{ fontSize: '12px', color: '#718096' }}>Refreshing...</div>
+                        <div className="text-xs text-slate-500 animate-pulse">Refreshing...</div>
                       )}
                     </div>
                   </div>
-                  <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+
+                  {/* Notifications List */}
+                  <div className="max-h-[400px] overflow-y-auto">
                     {loadingNotifications ? (
-                      <div style={{ padding: '20px', textAlign: 'center', color: '#718096' }}>
+                      <div className="p-5 text-center text-slate-500">
                         Loading notifications...
                       </div>
                     ) : notifications.length > 0 ? (
-                      notifications.map(notification => (
+                      notifications.map((notification) => (
                         <div
                           key={notification.id}
-                          style={{
-                            padding: '12px 16px',
-                            borderBottom: '1px solid #f7fafc',
-                            cursor: 'pointer',
-                            backgroundColor: notification.is_read ? 'transparent' : '#f0fff4'
-                          }}
+                          className={`p-3 px-4 border-b border-slate-50 cursor-pointer transition-colors duration-200 ${notification.is_read ? 'bg-transparent hover:bg-slate-50' : 'bg-emerald-50 hover:bg-emerald-100'
+                            }`}
                           onClick={() => markNotificationAsRead(notification.id)}
                         >
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            gap: '12px'
-                          }}>
-                            <span style={{
-                              fontSize: '18px',
-                              color: notification.type === 'error' ? '#e53e3e' :
-                                notification.type === 'success' ? '#38a169' : '#3182ce'
-                            }}>
+                          <div className="flex items-start gap-3">
+                            <span className={`text-lg ${notification.type === 'error' ? 'text-red-600' :
+                              notification.type === 'success' ? 'text-green-600' : 'text-blue-600'
+                              }`}>
                               {notification.type === 'error' ? '⚠️' :
                                 notification.type === 'success' ? '✅' : 'ℹ️'}
                             </span>
-                            <div style={{ flex: 1 }}>
-                              <div style={{
-                                fontSize: '14px',
-                                marginBottom: '4px',
-                                fontWeight: notification.is_read ? 'normal' : '500'
-                              }}>
+
+                            <div className="flex-1">
+                              <div className={`text-sm mb-1 ${notification.is_read ? 'font-normal' : 'font-semibold text-slate-800'}`}>
                                 {notification.message}
                               </div>
-                              <div style={{ fontSize: '12px', color: '#718096' }}>
+                              <div className="text-xs text-slate-500">
                                 {new Date(notification.created_at).toLocaleString()}
                               </div>
                             </div>
+
                             {!notification.is_read && (
-                              <div style={{
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '50%',
-                                backgroundColor: '#319795'
-                              }} />
+                              <div className="w-2 h-2 rounded-full bg-teal-600 mt-1.5" />
                             )}
                           </div>
                         </div>
                       ))
                     ) : (
-                      <div style={{ padding: '20px', textAlign: 'center', color: '#718096' }}>
+                      <div className="p-5 text-center text-slate-500">
                         No notifications
                       </div>
                     )}
                   </div>
-                  <div style={{ padding: '12px 16px', textAlign: 'center', borderTop: '1px solid #f7fafc' }}>
+
+                  {/* Footer */}
+                  <div className="p-3 px-4 text-center border-t border-slate-50">
                     <button
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#319795',
-                        cursor: 'pointer',
-                        fontSize: '14px'
-                      }}
-                      onClick={() => {
-                        setShowNotifications(false)
-                        // In a real app, navigate to notifications page
-                      }}
+                      className="text-sm font-medium text-teal-600 bg-transparent border-none cursor-pointer hover:underline"
+                      onClick={() => setShowNotifications(false)}
                     >
                       View All Notifications
                     </button>
@@ -626,110 +581,72 @@ export default function AdminLayout({
             </div>
 
             {/* User Menu */}
-            <div style={{ position: 'relative' }}>
+            <div className="relative">
+              {/* User Toggle Button */}
               <div
-                className="user-menu"
+                className="flex items-center gap-2 cursor-pointer group"
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                style={{ cursor: 'pointer' }}
               >
-                <div className="user-avatar-container" style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  background: '#1a202c',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontSize: '14px',
-                  fontWeight: '600'
-                }}>
+                <div className="flex items-center justify-center w-8 h-8 overflow-hidden text-sm font-semibold text-white border rounded-full bg-slate-900 border-slate-200">
                   {user?.profile_image ? (
                     <img
                       src={user.profile_image.startsWith('http') ? user.profile_image : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}${user.profile_image}`}
                       alt={user.username}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      className="object-cover w-full h-full"
                     />
                   ) : (
                     <span>{user?.username?.charAt(0)?.toUpperCase() || 'A'}</span>
                   )}
                 </div>
-                <span className="user-name">{user?.username || 'Admin'}</span>
-                <span className="user-dropdown">▼</span>
+                <span className="text-sm font-medium transition-colors text-slate-700 group-hover:text-slate-900">
+                  {user?.username || 'Admin'}
+                </span>
+                <span className={`text-[10px] text-slate-400 transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`}>
+                  ▼
+                </span>
               </div>
 
               {/* User Dropdown Menu */}
               {showUserMenu && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  background: 'white',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  minWidth: '200px',
-                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                  zIndex: 1000,
-                  marginTop: '8px'
-                }}>
-                  <div style={{ padding: '12px 16px', borderBottom: '1px solid #f7fafc' }}>
-                    <div style={{ fontWeight: '600' }}>{user.username}</div>
-                    <div style={{ fontSize: '12px', color: '#718096' }}>{user.email}</div>
+                <div className="absolute top-full right-0 mt-2 min-w-[200px] bg-white border border-slate-200 rounded-lg shadow-xl z-[1000] overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                  {/* User Info Header */}
+                  <div className="p-4 border-b border-slate-50 bg-slate-50/30">
+                    <div className="font-semibold truncate text-slate-800">{user?.username}</div>
+                    <div className="text-xs truncate text-slate-500">{user?.email}</div>
                   </div>
-                  <div>
+
+                  {/* Menu Actions */}
+                  <div className="py-1">
                     <button
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        background: 'none',
-                        border: 'none',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        fontSize: '14px'
-                      }}
+                      className="w-full px-4 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 flex items-center gap-2 transition-colors"
                       onClick={() => {
-                        setShowUserMenu(false)
-                        router.push('/admin/settings')
+                        setShowUserMenu(false);
+                        router.push('/admin/settings');
                       }}
                     >
-                      ⚙️ Settings
+                      <Image src={settingsIcon} alt='settings' /> Settings
                     </button>
+
                     <button
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        background: 'none',
-                        border: 'none',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        fontSize: '14px'
-                      }}
+                      className="w-full px-4 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 flex items-center gap-2 transition-colors"
                       onClick={() => {
-                        setShowUserMenu(false)
-                        router.push('/admin/profile')
+                        setShowUserMenu(false);
+                        router.push('/admin/profile');
                       }}
                     >
-                      👤 Profile
+                      <span>👤</span> Profile
                     </button>
-                    <hr style={{ margin: '8px 0', border: 'none', borderTop: '1px solid #f7fafc' }} />
+
+                    <hr className="my-1 border-slate-100" />
+
                     <button
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        background: 'none',
-                        border: 'none',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        color: '#e53e3e'
-                      }}
+                      className="w-full px-4 py-2.5 text-left text-sm text-red-500 hover:bg-red-50 flex items-center gap-2 transition-colors font-medium"
                       onClick={() => {
-                        setShowUserMenu(false)
-                        handleLogout()
+                        setShowUserMenu(false);
+                        handleLogout();
                       }}
                     >
-                      🚪 Logout
+                      <Image src={logout} alt='logout' width={16} height={16} /> Logout
                     </button>
                   </div>
                 </div>
