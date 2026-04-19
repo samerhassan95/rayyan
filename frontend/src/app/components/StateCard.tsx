@@ -1,7 +1,7 @@
 import React from 'react';
 
 const StatCard = ({ icon, value, label, suffix = "" }) => (
-  <div className="bg-white p-6 py-7 rounded-xl  transition-all hover:shadow-md">
+  <div className="p-6 transition-all bg-white py-7 rounded-xl hover:shadow-md">
     <div className="flex justify-between gap-3 mb-2">
       <div className="w-12 h-12 rounded-full bg-[#F8F8F8] flex items-center justify-center ">
         {icon?.src ? (
@@ -22,7 +22,7 @@ const StatCard = ({ icon, value, label, suffix = "" }) => (
 
 const StatGroup = ({ items = [] }) => {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2 xl:grid-cols-4">
       {items.map((item, index) => (
         <StatCard
           key={index}

@@ -570,9 +570,9 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', marginTop: '30px' }}>
+      <div className='grid gap-4 lg:grid-cols-12'>
         {/* Recent Transactions */}
-        <div className="content-card">
+        <div className="content-card lg:col-span-8">
           <div className="card-header">
             <div>
               <h3 className="card-title">Recent Transactions</h3>
@@ -767,7 +767,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* User Acquisition */}
-        <div className="content-card">
+        <div className="content-card lg:col-span-4">
           <div className="card-header">
             <div>
               <h3 className="card-title">User Acquisition</h3>

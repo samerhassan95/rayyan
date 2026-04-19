@@ -20,7 +20,8 @@ import transactionsIconActive from '../../assets/sidebar-icons/transactions-acti
 import plansIconActive from '../../assets/sidebar-icons/plans-active.svg'
 import settingsIconActive from '../../assets/sidebar-icons/settings-active.svg'
 
-
+//========================
+import arrow from '../../assets/icons/arrow-square-right.svg'
 //header icons
 import notification from '../../assets/icons/notification.svg'
 import search from '../../assets/icons/search-normal.svg'
@@ -53,8 +54,11 @@ export default function AdminLayout({
   const [showSearchResults, setShowSearchResults] = useState(false)
   const [notifications, setNotifications] = useState([])
   const [loadingNotifications, setLoadingNotifications] = useState(false)
+  const [isMobile, setIsMobile] = useState(false);
+
+
   const router = useRouter()
-  const pathname = usePathname() // للحصول على المسار الحالي
+  const pathname = usePathname()
 
   //sidebar items
   const navItems = [
@@ -129,6 +133,26 @@ export default function AdminLayout({
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [router])
+
+  useEffect(() => {
+    const checkResizing = () => {
+      const width = window.innerWidth;
+      const mobileStatus = width <= 768; // يمكنك تعديل هذا الرقم حسب حاجتك
+      setIsMobile(mobileStatus);
+
+      // إذا كانت شاشة صغيرة (موبايل)، اجعل السايدبار مقفول ديفولت
+      if (mobileStatus) {
+        setSidebarOpen(false);
+      } else {
+        // اختياري: لو شاشة كبيرة خليه مفتوح ديفولت
+        setSidebarOpen(true);
+      }
+    };
+
+    checkResizing(); // تشغيل عند أول تحميل
+    window.addEventListener('resize', checkResizing);
+    return () => window.removeEventListener('resize', checkResizing);
+  }, []);
 
   const fetchNotifications = async () => {
     try {
@@ -256,21 +280,33 @@ export default function AdminLayout({
   // }
 
   return (
-    <div className="admin-layout">
-      {/* Sidebar */}
+    <div className={`admin-layout ${sidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
+
+      {/* زرار يظهر فقط في الموبايل والسايدبار مقفول */}
+      {isMobile && !sidebarOpen && (
+        <button
+          className="fixed top-4 left-4 z-[100] bg-teal-500 text-white rounded-md w-8 h-8 flex items-center justify-center lg:hidden"
+          onClick={() => setSidebarOpen(true)}
+        >
+          ☰
+        </button>
+      )}
+
+      {/* السايدبار */}
       <aside className={`admin-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
-        <div className="sidebar-header flex justify-between items-center">
+        <div className="flex items-center justify-between p-4 sidebar-header">
           <div className="logo">
-            <h2>{sidebarOpen ? 'RAYYAN' : 'R'}</h2>          </div>
-          <div>
-            <button
-              className="sidebar-toggle"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              ☰
-            </button>
+            <h2>{sidebarOpen ? 'RAYYAN' : 'R'}</h2>
           </div>
+
+          {/* زرار الإغلاق يظهر دائماً في الموبايل أو في الديسكتوب لو السايدبار مفتوح */}
+          <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            {sidebarOpen ? '✕' : '☰'}
+          </button>
         </div>
+
+        {/* Sidebar */}
+
 
         <div className="sidebar-section">
           {sidebarOpen && <span className="section-title">Platform</span>}
@@ -281,15 +317,15 @@ export default function AdminLayout({
                 <Link
                   key={item.path}
                   href={item.path}
-                  className={`nav-item ${isActive ? 'active' : ''}`}
-                  title={!sidebarOpen ? item.name : ''}
+                  className={`nav-item ${sidebarOpen ? 'w-[90%] rounded-full' : 'mx-auto rounded-[8px] w-[50%]'} ${isActive ? 'active' : ''}`}
+                  // نضع النص في data-tooltip فقط لما يكون السايدبار مقفول
+                  data-tooltip={!sidebarOpen ? item.name : ''}
                 >
                   <Image
                     src={isActive ? item.activeIcon : item.icon}
                     alt={item.name}
-                    className="nav-icon-img me-2"
+                    className="nav-icon-img"
                   />
-                  {/* 2- إخفاء النص عند الكولابس */}
                   {sidebarOpen && <span className="nav-text">{item.name}</span>}
                 </Link>
               );
@@ -298,9 +334,9 @@ export default function AdminLayout({
         </div>
 
         <div className="sidebar-footer">
-          <button onClick={handleLogout} className="logout-btn">
-            <Image src={logout} alt="Logout" className={`logout-icon me-2 `} />
-            <span className={` ${sidebarOpen ? 'block' : ' '}`}>Logout</span>
+          <button onClick={handleLogout} className="logout-btn" title={!sidebarOpen ? 'Logout' : ''}>
+            <Image src={logout} alt="Logout" className=" logout-icon" />
+            {sidebarOpen && <span className="mx-1 logout-text">Logout</span>}
           </button>
         </div>
       </aside>
@@ -311,10 +347,9 @@ export default function AdminLayout({
         <header className="admin-header mt-2.5 rounded-[1rem] mb-4">
           <div className="header-left">
 
-            <div className="breadcrumb">
-              <span className="breadcrumb-item">Overview</span>
-              <span className="breadcrumb-separator">•</span>
-              <span className="breadcrumb-current">Welcome back, {user.username}</span>
+            <div>
+              <p className='font-light text-[#7d7d7d]'>Overview</p>
+              <p className="text-lg md:text-2xl font-semibold leading-[100%]">Welcome back, {user.username}</p>
             </div>
           </div>
 
@@ -684,6 +719,10 @@ export default function AdminLayout({
             setShowSearchResults(false)
           }}
         />
+      )}
+
+      {isMobile && sidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>
       )}
     </div>
   )
