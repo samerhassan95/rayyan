@@ -199,27 +199,39 @@ export default function AdminLayout({
     document.body.classList.toggle('dark-mode', newDarkMode)
   }
 
-  const handleSearch = async (query: string) => {
-    if (!query || query.length < 2) {
+  const handleSearch = (query: string) => {
+    if (!query || query.length < 1) {
       setSearchResults([])
       setShowSearchResults(false)
       return
     }
 
-    try {
-      const token = localStorage.getItem('token')
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/admin/search?q=${encodeURIComponent(query)}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+    const navigationLinks = [
+      { name: 'Overview', type: 'page', path: '/admin', description: 'Main dashboard analytics and stats' },
+      { name: 'Performance Trend', type: 'section', path: '/admin#performance', description: 'Revenue and subscription charts' },
+      { name: 'User Acquisition', type: 'section', path: '/admin#acquisition', description: 'Traffic sources and referrals' },
+      { name: 'Users Management', type: 'page', path: '/admin/users', description: 'View and manage platform users' },
+      { name: 'Subscriptions', type: 'page', path: '/admin/subscriptions', description: 'Manage active plans and billing' },
+      { name: 'Transactions', type: 'page', path: '/admin/transactions', description: 'View all payment activities' },
+      { name: 'Plans & Pricing', type: 'page', path: '/admin/plans', description: 'Configure subscription packages' },
+      { name: 'Settings', type: 'page', path: '/admin/settings', description: 'System and profile configurations' },
+      { name: 'Profile Settings', type: 'section', path: '/admin/settings#profile', description: 'Update administrator profile' },
+      { name: 'Security', type: 'section', path: '/admin/settings#security', description: 'Password and access controls' },
+      { name: 'Notification Settings', type: 'section', path: '/admin/settings#notifications', description: 'Manage system alerts' },
+    ];
 
-      if (response.ok) {
-        const data = await response.json()
-        setSearchResults(data.results || [])
-        setShowSearchResults(true)
-      }
-    } catch (error) {
-      console.error('Search failed:', error)
-    }
+    const results = navigationLinks.filter(item => 
+      item.name.toLowerCase().includes(query.toLowerCase()) || 
+      item.description.toLowerCase().includes(query.toLowerCase())
+    ).map(item => ({
+      ...item,
+      title: item.name,
+      subtitle: item.description,
+      icon: item.type === 'page' ? '📄' : '📍'
+    }));
+
+    setSearchResults(results as any)
+    setShowSearchResults(true)
   }
 
   const handleSearchSubmit = () => {
@@ -231,20 +243,7 @@ export default function AdminLayout({
   const navigateToSearchResult = (result: any) => {
     setShowSearchResults(false)
     setSearchQuery('')
-
-    switch (result.type) {
-      case 'user':
-        router.push(`/admin/users?search=${result.username}`)
-        break
-      case 'transaction':
-        router.push(`/admin/transactions?search=${result.id}`)
-        break
-      case 'setting':
-        router.push('/admin/settings')
-        break
-      default:
-        break
-    }
+    router.push(result.path)
   }
 
   const markNotificationAsRead = async (notificationId: number) => {
@@ -437,25 +436,17 @@ export default function AdminLayout({
                           onClick={() => navigateToSearchResult(result)}
                         >
                           <span style={{ fontSize: '16px' }}>
-                            {result.type === 'user' ? '👤' :
-                              result.type === 'transaction' ? '💳' :
-                                result.type === 'setting' ? '⚙️' : '📄'}
+                            {result.icon}
                           </span>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontWeight: '500', fontSize: '14px' }}>
-                              {result.type === 'user' ? result.username :
-                                result.type === 'transaction' ? `Transaction ${result.id}` :
-                                  result.type === 'setting' ? result.setting_key :
-                                    'Unknown'}
+                              {result.title}
                             </div>
                             <div style={{ fontSize: '12px', color: '#718096' }}>
-                              {result.type === 'user' ? result.email :
-                                result.type === 'transaction' ? `$${result.amount} - ${result.status}` :
-                                  result.type === 'setting' ? result.setting_value :
-                                    ''}
+                              {result.subtitle}
                             </div>
                           </div>
-                          <div style={{ fontSize: '12px', color: '#319795', textTransform: 'capitalize' }}>
+                          <div style={{ fontSize: '11px', color: '#319795', textTransform: 'uppercase', fontWeight: '800' }}>
                             {result.type}
                           </div>
                         </div>
