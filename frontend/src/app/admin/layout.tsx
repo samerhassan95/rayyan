@@ -37,15 +37,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [user, setUser] = useState<any>(() => {
-    if (typeof window !== 'undefined') {
-      const userData = localStorage.getItem('user');
-      try {
-        return userData ? JSON.parse(userData) : null;
-      } catch { return null; }
-    }
-    return null;
-  });
+  const [user, setUser] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [showNotifications, setShowNotifications] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -358,7 +350,7 @@ export default function AdminLayout({
 
             <div>
               <p className='font-light text-[#7d7d7d]'>Overview</p>
-              <p className="text-lg md:text-2xl font-semibold leading-[100%]">Welcome back, {user.username}</p>
+              <p className="text-lg md:text-2xl font-semibold leading-[100%]">Welcome back, {user?.username || 'Admin'}</p>
             </div>
           </div>
 
@@ -591,7 +583,7 @@ export default function AdminLayout({
                   {user?.profile_image ? (
                     <img
                       src={user.profile_image.startsWith('http') ? user.profile_image : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}${user.profile_image}`}
-                      alt={user.username}
+                      alt={user?.username || 'User'}
                       className="object-cover w-full h-full"
                     />
                   ) : (
