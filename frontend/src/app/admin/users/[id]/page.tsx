@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import axios from 'axios'
+import { useLanguage } from '../../../../i18n/LanguageContext'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
@@ -292,6 +293,7 @@ const UsageActivityChart = ({ period, userId }: { period: string, userId: string
   )
 }
 export default function UserDetail() {
+  const { t, isRTL } = useLanguage()
   const [userDetail, setUserDetail] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [isEditingProfile, setIsEditingProfile] = useState(false)
@@ -349,7 +351,7 @@ export default function UserDetail() {
       await axios.put(`${API_URL}/api/admin/users/${userId}`, editForm, { headers })
       setIsEditingProfile(false)
       fetchUserDetail(Number(userId))
-      setModalMessage('Profile updated successfully!')
+      setModalMessage(t('profile_updated_success') || 'Profile updated successfully!')
       setShowSuccessModal(true)
     } catch (error) {
       console.error('Failed to update profile:', error)
@@ -410,7 +412,7 @@ export default function UserDetail() {
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px', fontSize: '18px', color: '#718096' }}>
-        Loading user details...
+        {t('loading_user_details')}
       </div>
     )
   }
@@ -419,20 +421,20 @@ export default function UserDetail() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '400px', color: '#718096', textAlign: 'center' }}>
         <div style={{ fontSize: '64px', marginBottom: '24px' }}>❌</div>
-        <h3 style={{ fontSize: '24px', fontWeight: '600', color: '#1a202c', marginBottom: '12px' }}>User Not Found</h3>
+        <h3 style={{ fontSize: '24px', fontWeight: '600', color: '#1a202c', marginBottom: '12px' }}>{t('user_not_found')}</h3>
         <button onClick={() => router.push('/admin/users')} style={{ background: '#319795', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer' }}>
-          ← Back to Users
+          ← {t('back_to_users')}
         </button>
       </div>
     )
   }
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', direction: isRTL ? 'rtl' : 'ltr' }}>
       {/* Header */}
       <div style={{ marginBottom: '32px' }}>
         <button onClick={() => router.push('/admin/users')} style={{ background: 'none', border: '1px solid #e2e8f0', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', marginBottom: '16px' }}>
-          ← Back to Users
+          {isRTL ? 'Back to Users ←' : '← Back to Users'}
         </button>
       </div>
 
@@ -525,11 +527,11 @@ export default function UserDetail() {
                   {userDetail.user.username}
                 </h1>
                 <p style={{ color: '#718096', fontSize: '16px', marginBottom: '16px' }}>
-                  {userDetail.user.job_title || 'Platform User'}
+                  {userDetail.user.job_title || t('platform_user')}
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '16px' }}>
                   <span>📧 {userDetail.user.email}</span>
-                  <span>📍 {userDetail.user.address || 'Location not set'}</span>
+                  <span>📍 {userDetail.user.address || t('location_not_set')}</span>
                 </div>
                 {userDetail.user.phone && (
                   <div style={{ marginBottom: '8px' }}>
@@ -572,19 +574,19 @@ export default function UserDetail() {
             {!isEditingProfile ? (
               <>
                 <button onClick={() => setIsEditingProfile(true)} style={{ background: '#e2e8f0', color: '#4a5568', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer' }}>
-                  ✏️ Edit Profile
+                  ✏️ {t('edit_profile')}
                 </button>
                 <button onClick={suspendUser} style={{ background: '#e53e3e', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer' }}>
-                  {userDetail.user.status === 'active' ? '🚫 Suspend' : '✅ Activate'}
+                  {userDetail.user.status === 'active' ? `🚫 ${t('suspend')}` : `✅ ${t('activate')}`}
                 </button>
               </>
             ) : (
               <>
                 <button onClick={handleSaveProfile} style={{ background: '#319795', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer' }}>
-                  💾 Save
+                  💾 {t('save')}
                 </button>
                 <button onClick={() => setIsEditingProfile(false)} style={{ background: '#e2e8f0', color: '#4a5568', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer' }}>
-                  ❌ Cancel
+                  ❌ {t('cancel')}
                 </button>
               </>
             )}
@@ -598,7 +600,7 @@ export default function UserDetail() {
             ${userDetail?.statistics?.totalPayments || '0.00'}
           </div>
           <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            TOTAL PAYMENTS
+            {t('total_payments_label')}
           </div>
         </div>
         <div style={{ textAlign: 'center', padding: '20px', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
@@ -606,7 +608,7 @@ export default function UserDetail() {
             {userDetail?.statistics?.activeSubscriptions || '0'}
           </div>
           <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            ACTIVE SUBSCRIPTIONS
+            {t('active_subscriptions_label')}
           </div>
         </div>
         <div style={{ textAlign: 'center', padding: '20px', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
@@ -614,7 +616,7 @@ export default function UserDetail() {
             ${userDetail?.statistics?.totalSpend || '0.00'}
           </div>
           <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            TOTAL SPEND
+            {t('total_spend_label')}
           </div>
         </div>
         <div style={{ textAlign: 'center', padding: '20px', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
@@ -622,7 +624,7 @@ export default function UserDetail() {
             {userDetail?.statistics?.openTickets || '0'} Open
           </div>
           <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            SUPPORT TICKETS
+            {t('support_tickets')}
           </div>
         </div>
       </div>
@@ -634,8 +636,8 @@ export default function UserDetail() {
           <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '24px', marginBottom: '32px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div>
-                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1a202c', marginBottom: '4px' }}>Usage Activity</h3>
-                <p style={{ color: '#718096', fontSize: '14px' }}>Resource consumption over the selected period</p>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1a202c', marginBottom: '4px' }}>{t('usage_activity')}</h3>
+                <p style={{ color: '#718096', fontSize: '14px' }}>{t('usage_activity_desc')}</p>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 {['Week', 'Month', 'Year'].map(period => (
@@ -645,7 +647,7 @@ export default function UserDetail() {
                     border: 'none', fontSize: '12px', padding: '6px 12px',
                     borderRadius: '6px', cursor: 'pointer', fontWeight: '500'
                   }} onClick={() => setChartPeriod(period)}>
-                    {period}
+                    {t(period.toLowerCase())}
                   </button>
                 ))}
               </div>
@@ -656,13 +658,13 @@ export default function UserDetail() {
           {/* Support Tickets */}
           <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1a202c' }}>Support Tickets</h3>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1a202c' }}>{t('support_tickets')}</h3>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <select value={supportTicketsFilter} onChange={(e) => setSupportTicketsFilter(e.target.value)} style={{ padding: '4px 8px', border: '1px solid #e2e8f0', borderRadius: '4px', fontSize: '12px' }}>
-                  <option value="all">All Tickets</option>
-                  <option value="open">Open</option>
-                  <option value="pending">Pending</option>
-                  <option value="resolved">Resolved</option>
+                  <option value="all">{t('all_tickets')}</option>
+                  <option value="open">{t('open')}</option>
+                  <option value="pending">{t('pending')}</option>
+                  <option value="resolved">{t('resolved')}</option>
                 </select>
               </div>
             </div>
@@ -671,9 +673,9 @@ export default function UserDetail() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: '#f8fafc' }}>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096' }}>TICKET ID</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096' }}>SUBJECT</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096' }}>STATUS</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096' }}>{t('ticket_id')}</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096' }}>{t('subject')}</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096' }}>{t('status')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -697,7 +699,7 @@ export default function UserDetail() {
                       </tr>
                     ))
                   ) : (
-                    <tr><td colSpan={3} style={{ textAlign: 'center', padding: '40px', color: '#718096' }}>No support tickets found</td></tr>
+                    <tr><td colSpan={3} style={{ textAlign: 'center', padding: '40px', color: '#718096' }}>{t('no_support_tickets')}</td></tr>
                   )}
                 </tbody>
               </table>
@@ -707,25 +709,25 @@ export default function UserDetail() {
         {/* Right Column - Security Context */}
         <div>
           <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '24px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1a202c', marginBottom: '20px' }}>Security Context</h3>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1a202c', marginBottom: '20px' }}>{t('security_context')}</h3>
             
             <div style={{ marginBottom: '24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#4a5568' }}>🔐 2FA Status</span>
+                <span style={{ fontSize: '14px', color: '#4a5568' }}>🔐 {t('two_factor_status')}</span>
                 <button onClick={toggleTwoFactor} style={{
                   background: userDetail?.user?.two_factor_enabled ? '#e6fffa' : '#fed7d7',
                   color: userDetail?.user?.two_factor_enabled ? '#319795' : '#e53e3e',
                   padding: '2px 8px', borderRadius: '4px', fontSize: '12px',
                   fontWeight: '600', border: 'none', cursor: 'pointer'
                 }}>
-                  {userDetail?.user?.two_factor_enabled ? 'ENABLED' : 'DISABLED'}
+                  {userDetail?.user?.two_factor_enabled ? t('enabled') : t('disabled')}
                 </button>
               </div>
             </div>
 
             <div style={{ marginBottom: '24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#4a5568' }}>🔒 Data Encryption</span>
+                <span style={{ fontSize: '14px', color: '#4a5568' }}>🔒 {t('data_encryption')}</span>
                 <span style={{ background: '#e6fffa', color: '#319795', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: '600' }}>
                   AES-256
                 </span>
@@ -734,7 +736,7 @@ export default function UserDetail() {
 
             <div style={{ marginBottom: '24px' }}>
               <div style={{ marginBottom: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#4a5568' }}>Access Tier</span>
+                <span style={{ fontSize: '14px', color: '#4a5568' }}>{t('access_tier')}</span>
               </div>
               <div style={{ marginBottom: '8px' }}>
                 <span style={{ fontSize: '16px', fontWeight: '600', color: '#1a202c' }}>Level 4</span>
@@ -761,7 +763,7 @@ export default function UserDetail() {
                 setShowSuccessModal(true)
               }}
             >
-              + Add New Permission
+              + {t('add_permission')}
             </button>
           </div>
         </div>

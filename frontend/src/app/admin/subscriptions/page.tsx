@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import StatGroup from '../../components/StateCard';
+import { useLanguage } from '../../../i18n/LanguageContext'
 
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export default function AdminSubscriptions() {
+  const { t, isRTL, language } = useLanguage()
   const [subscriptions, setSubscriptions] = useState<any[]>([])
   const [analytics, setAnalytics] = useState<any>({})
   const [loading, setLoading] = useState(true)
@@ -111,7 +113,7 @@ export default function AdminSubscriptions() {
         box-shadow: 0 4px 12px rgba(245, 101, 101, 0.3);
         font-size: 14px; font-weight: 500;
       `
-      errorDiv.textContent = 'Please fill in all required fields'
+      errorDiv.textContent = t('fill_required_fields')
       document.body.appendChild(errorDiv)
       
       setTimeout(() => {
@@ -217,13 +219,13 @@ export default function AdminSubscriptions() {
         fontSize: '16px',
         color: '#718096'
       }}>
-        Loading subscriptions...
+        {t('loading')}...
       </div>
     )
   }
 
   return (
-    <div>
+    <div style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       {/* Header */}
       <div style={{ marginBottom: '32px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
@@ -235,10 +237,10 @@ export default function AdminSubscriptions() {
               marginBottom: '8px',
               letterSpacing: '-0.5px'
             }}>
-              Subscription Management
+              {t('subscription_management')}
             </h1>
             <p style={{ color: '#718096', fontSize: '16px' }}>
-              Monitor and manage all recurring customer plans.
+              {t('subscription_management_desc')}
             </p>
           </div>
           <button 
@@ -259,7 +261,7 @@ export default function AdminSubscriptions() {
               transition: 'all 0.2s'
             }}
           >
-            + New Subscription
+            + {t('new_subscription')}
           </button>
         </div>
       </div>
@@ -269,22 +271,22 @@ export default function AdminSubscriptions() {
   items={[
     { 
       icon: '📊', 
-      label: 'Total Subscriptions', 
+      label: t('total_subscriptions'), 
       value: analytics.totalSubscriptions 
     },
     { 
       icon: '⚡', 
-      label: 'Active Plans', 
+      label: t('active_plans'), 
       value: analytics.activePlans 
     },
     { 
       icon: '📉', 
-      label: 'Canceled (MTD)', 
+      label: t('canceled_mtd'), 
       value: analytics.canceledMTD 
     },
     { 
       icon: '📈', 
-      label: 'Churn Rate', 
+      label: t('churn_rate'), 
       value: analytics.churnRate, 
       suffix: '%' 
     },
@@ -315,7 +317,7 @@ export default function AdminSubscriptions() {
           }}
             onClick={() => setFilter('Monthly')}
           >
-            Monthly
+            {t('monthly')}
           </button>
           <button 
             style={{
@@ -332,7 +334,7 @@ export default function AdminSubscriptions() {
             }}
             onClick={() => setFilter('Yearly')}
           >
-            Yearly
+            {t('yearly')}
           </button>
 
           <select 
@@ -350,10 +352,10 @@ export default function AdminSubscriptions() {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
-            <option value="">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="past_due">Past Due</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="">{t('all_statuses')}</option>
+            <option value="active">{t('active')}</option>
+            <option value="past_due">{t('past_due')}</option>
+            <option value="cancelled">{t('cancelled')}</option>
           </select>
 
           {(statusFilter || dateRange.start !== '2025-01-01' || dateRange.end !== '2026-12-31') && (
@@ -373,7 +375,7 @@ export default function AdminSubscriptions() {
                 setDateRange({ start: '2025-01-01', end: '2026-12-31' })
               }}
             >
-              Clear Filters
+              {t('clear_filters')}
             </button>
           )}
         </div>
@@ -392,7 +394,7 @@ export default function AdminSubscriptions() {
               color: (dateRange.start !== '2025-01-01') ? '#319795' : '#4a5568'
             }}
           />
-          <span style={{ color: '#718096', fontSize: '14px' }}>to</span>
+          <span style={{ color: '#718096', fontSize: '14px' }}>{t('to')}</span>
           <input
             type="date"
             value={dateRange.end}
@@ -412,9 +414,9 @@ export default function AdminSubscriptions() {
 
       <div style={{ color: '#718096', fontSize: '14px', marginBottom: '16px' }}>
         {subscriptions.length > 0 ? (
-          `Showing ${((currentPage - 1) * 10) + 1} to ${Math.min(currentPage * 10, analytics.totalSubscriptions || 0)} of ${analytics.totalSubscriptions || 0} subscriptions`
+          `${t('showing')} ${((currentPage - 1) * 10) + 1} ${t('to')} ${Math.min(currentPage * 10, analytics.totalSubscriptions || 0)} ${t('of')} ${analytics.totalSubscriptions || 0} ${t('subscriptions')}`
         ) : (
-          'No subscriptions found'
+          t('no_subscriptions_found')
         )}
       </div>
       {/* Subscriptions Table */}
@@ -441,7 +443,7 @@ export default function AdminSubscriptions() {
             fontSize: '14px',
             color: '#718096'
           }}>
-            Applying filters...
+            {t('applying_filters')}
           </div>
         )}
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -456,7 +458,7 @@ export default function AdminSubscriptions() {
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px'
               }}>
-                USER
+                {t('user_header')}
               </th>
               <th style={{ 
                 padding: '16px 20px', 
@@ -467,7 +469,7 @@ export default function AdminSubscriptions() {
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px'
               }}>
-                PLAN
+                {t('plan_header')}
               </th>
               <th style={{ 
                 padding: '16px 20px', 
@@ -478,7 +480,7 @@ export default function AdminSubscriptions() {
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px'
               }}>
-                STATUS
+                {t('status')}
               </th>
               <th style={{ 
                 padding: '16px 20px', 
@@ -489,7 +491,7 @@ export default function AdminSubscriptions() {
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px'
               }}>
-                BILLING CYCLE
+                {t('billing_cycle')}
               </th>
               <th style={{ 
                 padding: '16px 20px', 
@@ -500,7 +502,7 @@ export default function AdminSubscriptions() {
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px'
               }}>
-                NEXT PAYMENT
+                {t('next_payment')}
               </th>
             </tr>
           </thead>
@@ -564,7 +566,7 @@ export default function AdminSubscriptions() {
                       color: sub.status === 'active' ? '#155724' : 
                              sub.status === 'past_due' ? '#856404' : '#721c24'
                     }}>
-                      {sub.status === 'past_due' ? 'PAST DUE' : sub.status.toUpperCase()}
+                      {sub.status === 'past_due' ? t('past_due').toUpperCase() : t(sub.status).toUpperCase()}
                     </span>
                   </td>
                   <td style={{ padding: '16px 20px', fontSize: '14px', color: '#4a5568' }}>
@@ -613,12 +615,12 @@ export default function AdminSubscriptions() {
                         color: '#1a202c', 
                         marginBottom: '8px' 
                       }}>
-                        No subscriptions found
+                        {t('no_subscriptions_found')}
                       </h3>
                       <p style={{ fontSize: '14px', color: '#718096' }}>
                         {statusFilter || (dateRange.start !== '2025-01-01' || dateRange.end !== '2026-12-31') 
-                          ? 'No subscriptions match your current filters. Try adjusting your search criteria.'
-                          : 'No subscriptions available at the moment.'
+                          ? t('no_subscriptions_filter')
+                          : t('no_subscriptions_available')
                         }
                       </p>
                     </div>
@@ -638,7 +640,7 @@ export default function AdminSubscriptions() {
                           fontSize: '14px'
                         }}
                       >
-                        Clear Filters
+                        {t('clear_filters')}
                       </button>
                     )}
                   </div>
@@ -659,9 +661,9 @@ export default function AdminSubscriptions() {
       }}>
         <div style={{ color: '#718096', fontSize: '14px' }}>
           {subscriptions && subscriptions.length > 0 ? (
-            `Showing ${((currentPage - 1) * 10) + 1} to ${Math.min(currentPage * 10, analytics.totalSubscriptions || 0)} of ${analytics.totalSubscriptions || 0} subscriptions`
+            `${t('showing')} ${((currentPage - 1) * 10) + 1} ${t('to')} ${Math.min(currentPage * 10, analytics.totalSubscriptions || 0)} ${t('of')} ${analytics.totalSubscriptions || 0} ${t('subscriptions')}`
           ) : (
-            'No subscriptions found'
+            t('no_subscriptions_found')
           )}
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -737,7 +739,7 @@ export default function AdminSubscriptions() {
             color: '#1a202c', 
             marginBottom: '20px' 
           }}>
-            Revenue Growth Projection
+            {t('revenue_growth_projection')}
           </h3>
           <div style={{ 
             height: '240px', 
@@ -793,7 +795,7 @@ export default function AdminSubscriptions() {
                 color: '#718096',
                 fontSize: '14px'
               }}>
-                No revenue data available
+                {t('no_revenue_data')}
               </div>
             }
           </div>
@@ -814,16 +816,16 @@ export default function AdminSubscriptions() {
               color: '#1a202c', 
               marginBottom: '4px' 
             }}>
-              Plan Distribution
+              {t('plan_distribution')}
             </h3>
             <p style={{ fontSize: '14px', color: '#718096' }}>
-              User preference by plan type
+              {t('user_preference_by_plan')}
             </p>
           </div>
           
           <div style={{ marginBottom: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ fontSize: '14px', color: '#4a5568', fontWeight: '500' }}>BASIC</span>
+              <span style={{ fontSize: '14px', color: '#4a5568', fontWeight: '500' }}>{t('basic')}</span>
               <span style={{ fontSize: '14px', fontWeight: '600', color: '#1a202c' }}>
                 {analytics.planDistribution?.['Basic'] || 0}%
               </span>
@@ -845,7 +847,7 @@ export default function AdminSubscriptions() {
 
           <div style={{ marginBottom: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ fontSize: '14px', color: '#4a5568', fontWeight: '500' }}>PROFESSIONAL</span>
+              <span style={{ fontSize: '14px', color: '#4a5568', fontWeight: '500' }}>{t('professional')}</span>
               <span style={{ fontSize: '14px', fontWeight: '600', color: '#1a202c' }}>
                 {analytics.planDistribution?.['Professional'] || 0}%
               </span>
@@ -867,7 +869,7 @@ export default function AdminSubscriptions() {
 
           <div style={{ marginBottom: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ fontSize: '14px', color: '#4a5568', fontWeight: '500' }}>ENTERPRISE</span>
+              <span style={{ fontSize: '14px', color: '#4a5568', fontWeight: '500' }}>{t('enterprise')}</span>
               <span style={{ fontSize: '14px', fontWeight: '600', color: '#1a202c' }}>
                 {analytics.planDistribution?.['Enterprise'] || 0}%
               </span>
@@ -900,7 +902,7 @@ export default function AdminSubscriptions() {
             transition: 'all 0.2s',
             boxShadow: '0 2px 8px rgba(49, 151, 149, 0.2)'
           }}>
-            Detailed Analytics
+            {t('detailed_analytics')}
           </button>
         </div>
       </div>
@@ -931,7 +933,7 @@ export default function AdminSubscriptions() {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#1a202c', margin: 0 }}>
-                Create New Subscription
+                {t('create_new_subscription')}
               </h2>
               <button 
                 onClick={() => setShowNewSubscriptionModal(false)}
@@ -951,7 +953,7 @@ export default function AdminSubscriptions() {
             <form onSubmit={createNewSubscription} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                  User Email *
+                  {t('user_email')} *
                 </label>
                 <input
                   type="email"
@@ -972,7 +974,7 @@ export default function AdminSubscriptions() {
 
               <div>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                  Plan *
+                  {t('plan_header')} *
                 </label>
                 <select 
                   value={newSubscriptionData.planId}
@@ -988,7 +990,7 @@ export default function AdminSubscriptions() {
                     background: 'white'
                   }}
                 >
-                  <option value="">Select a plan</option>
+                  <option value="">{t('select_plan')}</option>
                   <option value="1">Basic - $29/month</option>
                   <option value="2">Professional - $79/month</option>
                   <option value="3">Enterprise - $249/month</option>
@@ -997,7 +999,7 @@ export default function AdminSubscriptions() {
 
               <div>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                  Billing Cycle *
+                  {t('billing_cycle')} *
                 </label>
                 <select 
                   value={newSubscriptionData.billingCycle}
@@ -1012,8 +1014,8 @@ export default function AdminSubscriptions() {
                     background: 'white'
                   }}
                 >
-                  <option value="monthly">Monthly</option>
-                  <option value="yearly">Yearly</option>
+                  <option value="monthly">{t('monthly')}</option>
+                  <option value="yearly">{t('yearly')}</option>
                 </select>
               </div>
 
@@ -1040,7 +1042,7 @@ export default function AdminSubscriptions() {
                     cursor: 'pointer'
                   }}
                 >
-                  Cancel
+                  {t('cancel')}
                 </button>
                 <button
                   type="submit"
@@ -1057,7 +1059,7 @@ export default function AdminSubscriptions() {
                     cursor: createLoading ? 'not-allowed' : 'pointer'
                   }}
                 >
-                  {createLoading ? 'Creating...' : 'Create Subscription'}
+                  {createLoading ? t('creating') + '...' : t('create_subscription')}
                 </button>
               </div>
             </form>

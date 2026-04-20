@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
+import { useLanguage } from '../../../i18n/LanguageContext'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export default function AdminUsers() {
+  const { t, isRTL } = useLanguage()
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [statistics, setStatistics] = useState<any>(null)
@@ -68,22 +70,22 @@ export default function AdminUsers() {
         fontSize: '18px',
         color: '#718096'
       }}>
-        Loading users...
+        {t('loading')}...
       </div>
     )
   }
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', direction: isRTL ? 'rtl' : 'ltr' }}>
       {/* Header */}
       <div style={{ marginBottom: '32px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
             <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#1a202c', margin: 0, marginBottom: '8px' }}>
-              Users Management
+              {t('users_management_title')}
             </h1>
             <p style={{ color: '#718096', fontSize: '16px', margin: 0 }}>
-              Manage user accounts, permissions, and view detailed analytics
+              {t('users_management_desc')}
             </p>
           </div>
           <div style={{ 
@@ -98,7 +100,7 @@ export default function AdminUsers() {
             gap: '8px'
           }}>
             <span>👥</span>
-            {pagination?.total || users.length} Total Users
+            {pagination?.total || users.length} {t('total_users')}
           </div>
         </div>
 
@@ -106,7 +108,7 @@ export default function AdminUsers() {
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <input
             type="text"
-            placeholder="Search users by name, email, or job title..."
+            placeholder={t('search_users_placeholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
@@ -131,7 +133,7 @@ export default function AdminUsers() {
               fontWeight: '500'
             }}
           >
-            🔍 Search
+            🔍 {t('search')}
           </button>
         </div>
       </div>
@@ -143,7 +145,7 @@ export default function AdminUsers() {
             {statistics?.seatUtilization || 0}%
           </div>
           <div style={{ color: '#718096', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Seat Utilization
+            {t('seat_utilization')}
           </div>
         </div>
         <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
@@ -151,7 +153,7 @@ export default function AdminUsers() {
             {statistics?.twoFactorEnabled || 0}
           </div>
           <div style={{ color: '#718096', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            2FA Enabled
+            {t('two_factor_enabled_label')}
           </div>
         </div>
         <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
@@ -159,7 +161,7 @@ export default function AdminUsers() {
             {statistics?.avgActivation || 0}%
           </div>
           <div style={{ color: '#718096', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Recent Activity
+            {t('recent_activity')}
           </div>
         </div>
         <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
@@ -167,7 +169,7 @@ export default function AdminUsers() {
             {statistics?.recentInvites || 0}
           </div>
           <div style={{ color: '#718096', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            New This Month
+            {t('new_this_month')}
           </div>
         </div>
       </div>
@@ -176,7 +178,7 @@ export default function AdminUsers() {
       <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
         <div style={{ padding: '24px', borderBottom: '1px solid #e2e8f0' }}>
           <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#1a202c', margin: 0 }}>
-            All Users
+            {t('all_users_title')}
           </h2>
         </div>
 
@@ -185,22 +187,22 @@ export default function AdminUsers() {
             <thead>
               <tr style={{ background: '#f8fafc' }}>
                 <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  User
+                  {t('user_header')}
                 </th>
                 <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Contact
+                  {t('contact_header')}
                 </th>
                 <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Role & Status
+                  {t('role_status_header')}
                 </th>
                 <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Security
+                  {t('security_header')}
                 </th>
                 <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Joined
+                  {t('joined_header')}
                 </th>
                 <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Actions
+                  {t('actions_header')}
                 </th>
               </tr>
             </thead>
@@ -238,7 +240,7 @@ export default function AdminUsers() {
                           {user.username}
                         </div>
                         <div style={{ color: '#718096', fontSize: '14px' }}>
-                          {user.job_title || 'User'}
+                          {user.job_title || t('platform_user')}
                         </div>
                       </div>
                     </div>
@@ -249,7 +251,7 @@ export default function AdminUsers() {
                         {user.email}
                       </div>
                       <div style={{ color: '#718096', fontSize: '13px' }}>
-                        {user.phone || 'No phone'}
+                        {user.phone || t('no_phone')}
                       </div>
                     </div>
                   </td>
@@ -277,7 +279,7 @@ export default function AdminUsers() {
                         textTransform: 'capitalize',
                         width: 'fit-content'
                       }}>
-                        {user.status}
+                        {t(user.status)}
                       </span>
                     </div>
                   </td>
@@ -291,7 +293,7 @@ export default function AdminUsers() {
                         fontSize: '12px',
                         fontWeight: '500'
                       }}>
-                        {user.two_factor_enabled ? '🔐 2FA' : '🔓 No 2FA'}
+                        {user.two_factor_enabled ? '🔐 2FA' : '🔓 ' + t('no_2fa')}
                       </span>
                     </div>
                   </td>
@@ -316,7 +318,7 @@ export default function AdminUsers() {
                             fontWeight: '500'
                           }}
                         >
-                          Suspend
+                          {t('suspend')}
                         </button>
                       ) : (
                         <button
@@ -332,7 +334,7 @@ export default function AdminUsers() {
                             fontWeight: '500'
                           }}
                         >
-                          Activate
+                          {t('activate')}
                         </button>
                       )}
                     </div>
@@ -346,7 +348,7 @@ export default function AdminUsers() {
         {/* Pagination */}
         <div style={{ padding: '20px 24px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ color: '#718096', fontSize: '14px' }}>
-            Showing {((currentPage - 1) * 15) + 1} to {Math.min(currentPage * 15, pagination?.total || 0)} of {pagination?.total || 0} users
+            {t('showing')} {((currentPage - 1) * 15) + 1} {t('to')} {Math.min(currentPage * 15, pagination?.total || 0)} {t('of')} {pagination?.total || 0} {t('users')}
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button 
@@ -363,7 +365,7 @@ export default function AdminUsers() {
                 fontWeight: '500'
               }}
             >
-              Previous
+              {t('previous')}
             </button>
             <span style={{ 
               padding: '8px 16px', 
@@ -372,7 +374,7 @@ export default function AdminUsers() {
               display: 'flex',
               alignItems: 'center'
             }}>
-              Page {currentPage} of {pagination?.pages || 1}
+              {t('page_count')} {currentPage} {t('of')} {pagination?.pages || 1}
             </span>
             <button 
               onClick={() => setCurrentPage(Math.min(pagination?.pages || 1, currentPage + 1))}
@@ -388,7 +390,7 @@ export default function AdminUsers() {
                 fontWeight: '500'
               }}
             >
-              Next
+              {t('next')}
             </button>
           </div>
         </div>

@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
+import { useLanguage } from '../../../../i18n/LanguageContext'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export default function UserAcquisitionAnalytics() {
+  const { t, isRTL } = useLanguage()
   const [analyticsData, setAnalyticsData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [selectedPeriod, setSelectedPeriod] = useState('6months')
@@ -31,7 +33,7 @@ export default function UserAcquisitionAnalytics() {
   }
 
   if (loading) {
-    return <div className="loading">Loading analytics...</div>
+    return <div className="loading">{t('loading')}...</div>
   }
 
   const totalBySource = analyticsData?.totalBySource || []
@@ -39,7 +41,7 @@ export default function UserAcquisitionAnalytics() {
   const totalUsers = totalBySource.reduce((sum: number, item: any) => sum + item.total_count, 0)
 
   return (
-    <div>
+    <div style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <button 
@@ -53,13 +55,13 @@ export default function UserAcquisitionAnalytics() {
             fontSize: '14px'
           }}
         >
-          ← Back to Dashboard
+          {isRTL ? t('back_to_dashboard') + ' ←' : '← ' + t('back_to_dashboard')}
         </button>
         <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#1a202c', marginBottom: '8px' }}>
-          User Acquisition Analytics
+          {t('user_acquisition_analytics')}
         </h1>
         <p style={{ color: '#718096' }}>
-          Detailed analysis of user acquisition sources and trends
+          {t('user_acquisition_desc')}
         </p>
       </div>
 
@@ -70,7 +72,7 @@ export default function UserAcquisitionAnalytics() {
             {totalUsers.toLocaleString()}
           </div>
           <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Total Users
+            {t('total_users_label')}
           </div>
         </div>
 
@@ -79,7 +81,7 @@ export default function UserAcquisitionAnalytics() {
             {totalBySource.find((s: any) => s.source === 'direct')?.total_count || 0}
           </div>
           <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Direct Traffic
+            {t('direct_traffic')}
           </div>
         </div>
 
@@ -88,7 +90,7 @@ export default function UserAcquisitionAnalytics() {
             {totalBySource.find((s: any) => s.source === 'referral')?.total_count || 0}
           </div>
           <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Referrals
+            {t('referrals')}
           </div>
         </div>
 
@@ -97,7 +99,7 @@ export default function UserAcquisitionAnalytics() {
             {totalBySource.find((s: any) => s.source === 'social')?.total_count || 0}
           </div>
           <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Social Media
+            {t('social_media')}
           </div>
         </div>
       </div>
@@ -106,8 +108,8 @@ export default function UserAcquisitionAnalytics() {
         {/* Source Breakdown */}
         <div className="content-card">
           <div className="card-header">
-            <h3 className="card-title">Acquisition Source Breakdown</h3>
-            <p className="card-subtitle">Distribution of user acquisition channels</p>
+            <h3 className="card-title">{t('source_breakdown')}</h3>
+            <p className="card-subtitle">{t('source_breakdown_desc')}</p>
           </div>
           <div className="card-content">
             {totalBySource.map((source: any, index: number) => {
@@ -123,7 +125,7 @@ export default function UserAcquisitionAnalytics() {
                     <div style={{ textAlign: 'right' }}>
                       <span style={{ fontSize: '14px', fontWeight: '600' }}>{percentage}%</span>
                       <div style={{ fontSize: '12px', color: '#718096' }}>
-                        {source.total_count.toLocaleString()} users
+                        {source.total_count.toLocaleString()} {t('users').toLowerCase()}
                       </div>
                     </div>
                   </div>
@@ -149,8 +151,8 @@ export default function UserAcquisitionAnalytics() {
         {/* Monthly Trends */}
         <div className="content-card">
           <div className="card-header">
-            <h3 className="card-title">Monthly Acquisition Trends</h3>
-            <p className="card-subtitle">User acquisition over time</p>
+            <h3 className="card-title">{t('monthly_acquisition_trends')}</h3>
+            <p className="card-subtitle">{t('monthly_acquisition_trends_desc')}</p>
           </div>
           <div className="card-content">
             <div style={{ 
@@ -181,7 +183,7 @@ export default function UserAcquisitionAnalytics() {
                         marginBottom: '8px',
                         cursor: 'pointer'
                       }}
-                      title={`${month.month}: ${month.total_users} users`}
+                      title={`${month.month}: ${month.total_users} ${t('users').toLowerCase()}`}
                     ></div>
                     <div style={{ fontSize: '10px', color: '#718096' }}>
                       {month.month.split('-')[1]}/{month.month.split('-')[0].slice(-2)}
@@ -197,18 +199,18 @@ export default function UserAcquisitionAnalytics() {
       {/* Detailed Table */}
       <div className="content-card">
         <div className="card-header">
-          <h3 className="card-title">Detailed Source Analysis</h3>
-          <p className="card-subtitle">Complete breakdown by acquisition source</p>
+          <h3 className="card-title">{t('detailed_source_analysis')}</h3>
+          <p className="card-subtitle">{t('detailed_source_analysis_desc')}</p>
         </div>
         <div className="card-content" style={{ padding: 0 }}>
           <table className="data-table">
             <thead>
               <tr>
-                <th>Source</th>
-                <th>Total Users</th>
-                <th>Percentage</th>
-                <th>Avg. Monthly</th>
-                <th>Trend</th>
+                <th>{t('source')}</th>
+                <th>{t('total_users_label')}</th>
+                <th>{t('percentage')}</th>
+                <th>{t('avg_monthly')}</th>
+                <th>{t('trend')}</th>
               </tr>
             </thead>
             <tbody>
@@ -273,21 +275,21 @@ export default function UserAcquisitionAnalytics() {
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
           <button 
             className="btn btn-secondary"
-            onClick={() => alert('Export to CSV functionality would be implemented here')}
+            onClick={() => alert(t('coming_soon') || 'Functionality coming soon')}
           >
-            📊 Export to CSV
+            📊 {t('export_csv')}
           </button>
           <button 
             className="btn btn-secondary"
-            onClick={() => alert('Export to PDF functionality would be implemented here')}
+            onClick={() => alert(t('coming_soon') || 'Functionality coming soon')}
           >
-            📄 Export to PDF
+            📄 {t('export_pdf')}
           </button>
           <button 
             className="btn btn-primary"
             onClick={() => window.print()}
           >
-            🖨️ Print Report
+            🖨️ {t('print_report')}
           </button>
         </div>
       </div>

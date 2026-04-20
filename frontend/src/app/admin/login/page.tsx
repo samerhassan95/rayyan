@@ -3,10 +3,12 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
+import { useLanguage } from '../../../i18n/LanguageContext'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export default function AdminLogin() {
+  const { t, isRTL, language, setLanguage } = useLanguage()
   const [email, setEmail] = useState('admin@rayyan.com')
   const [password, setPassword] = useState('password')
   const [loading, setLoading] = useState(false)
@@ -32,12 +34,12 @@ export default function AdminLogin() {
         if (response.data.user.role === 'admin') {
           router.push('/admin')
         } else {
-          setError('Access denied. Admin privileges required.')
+          setError(t('access_denied') || 'Access denied. Admin privileges required.')
         }
       }
     } catch (error: any) {
       console.error('Login error:', error)
-      setError(error.response?.data?.error || 'Login failed. Please try again.')
+      setError(error.response?.data?.error || t('login_failed') || 'Login failed. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -47,11 +49,38 @@ export default function AdminLogin() {
     <div style={{
       minHeight: '100vh',
       display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: '20px'
+      padding: '20px',
+      direction: isRTL ? 'rtl' : 'ltr'
     }}>
+      {/* Language Toggle */}
+      <div style={{
+        position: 'absolute',
+        top: '20px',
+        right: isRTL ? 'auto' : '20px',
+        left: isRTL ? '20px' : 'auto',
+        zIndex: 10
+      }}>
+        <button 
+          onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
+          style={{
+            background: 'white',
+            border: 'none',
+            padding: '8px 16px',
+            borderRadius: '20px',
+            fontWeight: '600',
+            color: '#319795',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+          }}
+        >
+          {language === 'ar' ? 'English' : 'العربية'}
+        </button>
+      </div>
+
       <div style={{
         background: 'white',
         padding: '40px',
@@ -67,10 +96,10 @@ export default function AdminLogin() {
             color: '#1a202c',
             marginBottom: '8px'
           }}>
-            Admin Login
+            {t('admin_login_title')}
           </h1>
           <p style={{ color: '#718096', fontSize: '16px' }}>
-            Sign in to access the admin dashboard
+            {t('admin_login_subtitle')}
           </p>
         </div>
 
@@ -83,7 +112,7 @@ export default function AdminLogin() {
               color: '#374151',
               marginBottom: '8px'
             }}>
-              Email Address
+              {t('email_address')}
             </label>
             <input
               type="email"
@@ -113,7 +142,7 @@ export default function AdminLogin() {
               color: '#374151',
               marginBottom: '8px'
             }}>
-              Password
+              {t('password_label')}
             </label>
             <input
               type="password"
@@ -166,7 +195,7 @@ export default function AdminLogin() {
               boxShadow: loading ? 'none' : '0 4px 12px rgba(49, 151, 149, 0.3)'
             }}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? t('signing_in') : t('sign_in')}
           </button>
         </form>
 
@@ -178,11 +207,11 @@ export default function AdminLogin() {
           fontSize: '14px'
         }}>
           <div style={{ fontWeight: '600', color: '#374151', marginBottom: '8px' }}>
-            Default Admin Credentials:
+            {t('default_credentials')}
           </div>
           <div style={{ color: '#6b7280' }}>
-            Email: admin@rayyan.com<br />
-            Password: password
+            {t('email_address')}: admin@rayyan.com<br />
+            {t('password_label')}: password
           </div>
         </div>
 
@@ -195,7 +224,7 @@ export default function AdminLogin() {
               fontSize: '14px'
             }}
           >
-            ← Back to User Login
+            {isRTL ? t('back_to_user_login') + ' ←' : '← ' + t('back_to_user_login')}
           </a>
         </div>
       </div>
