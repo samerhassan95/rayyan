@@ -127,6 +127,11 @@
   margin-left: 20px;
 }
 
+.admin-main[dir="rtl"] {
+  margin-right: 20px;
+  margin-left: 0;
+}
+
 .admin-main.sidebar-closed {
   margin-left: 20px;
 }
@@ -867,7 +872,7 @@ body.dark-mode .admin-layout svg text {
 .nav-item[data-tooltip]:not([data-tooltip=""])::after {
     content: attr(data-tooltip); /* جلب النص من data-tooltip في JSX */
     position: absolute;
-    left: 74%; /* يبدأ من أقصى يمين الأيقونة */
+    inset-inline-start: 74%; /* يبدأ من أقصى يمين الأيقونة */
     top: 50%;
     transform: translateY(-50%) translateX(15px); /* إزاحة لليمين قليلاً وتوسيط رأسي */
     

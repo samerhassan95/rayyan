@@ -24,6 +24,7 @@ import settingsIconActive from '../../assets/sidebar-icons/settings-active.svg'
 //========================
 import arrowIcon from '../../assets/icons/arrow-square-right.svg'
 import arrowDown from '../../assets/icons/arrow-down.svg'
+import translate from '../../assets/icons/translate.svg'
 
 //header icons
 import notification from '../../assets/icons/notification.svg'
@@ -286,7 +287,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // }
 
   return (
-    <div 
+    <div
       className={`admin-layout ${sidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'}`}
       style={{ direction: isRTL ? 'rtl' : 'ltr' }}
     >
@@ -379,7 +380,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
               <div
-                className={`absolute w-8 h-8 bg-[#4d8680] rounded-full transition-transform duration-300 ease-in-out ${darkMode ? 'translate-x-10' : 'translate-x-0'
+                className={`absolute w-8 h-8 bg-[#4d8680] rounded-full transition-transform duration-300 ease-in-out ${darkMode ? 'translate-x-10 rtl:-translate-x-10' : 'rtl:translate-x-0 translate-x-0'
                   }`}
               />
 
@@ -404,16 +405,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </div>
               </div>
             </button>
-            
+
             {/* Language Switcher */}
             <button
               onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
-              className="flex items-center justify-center p-2 rounded-full cursor-pointer bg-[#F8F8F8] border border-[#eee] hover:bg-[#e2e8f0] transition-colors gap-2 font-medium"
+              className="header-btn"
               title={language === 'ar' ? 'Switch to English' : 'التبديل للعربية'}
             >
-              <span className="text-sm text-[#4d8680] uppercase px-1">
-                {language === 'ar' ? 'EN' : 'عربي'}
-              </span>
+
+              <Image src={translate} alt="Translate" width={20} height={20} className="inline-block" />
+
             </button>
 
             {/* Search */}
@@ -598,12 +599,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   )}
                 </div>
                 <div>
-                   <span className="text-xs font-medium transition-colors text-slate-700 group-hover:text-slate-900 leading-[100%]">
-                  {user?.username || 'Admin'}
-                </span>
-                <p className="text-[8px] font-light text-[#656769] leading-[100%]">{user?.email || 'admin@example.com'}</p>
+                  <span className="text-xs font-medium transition-colors text-slate-700 group-hover:text-slate-900 leading-[100%]">
+                    {user?.username || 'Admin'}
+                  </span>
+                  <p className="text-[8px] font-light text-[#656769] leading-[100%]">{user?.email || 'admin@example.com'}</p>
                 </div>
-               
+
                 <span className={`text-[10px] text-slate-400 transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`}>
                   <Image src={arrowDown} alt='chevron down' width={12} height={12} />
                 </span>
