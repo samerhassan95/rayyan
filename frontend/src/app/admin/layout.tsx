@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import './admin.css'
 import Image from 'next/image'
+import { useLanguage } from '../../i18n/LanguageContext'
 //===
 //sidebar icons
 import overviewIcon from '../../assets/sidebar-icons/overview.svg'
@@ -35,11 +36,8 @@ import sunWhite from '../../assets/icons/sun-light.svg'
 import profile from '../../assets/icons/profile.svg'
 
 import Link from 'next/link'
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const { t, isRTL, language, setLanguage } = useLanguage()
   const [user, setUser] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -58,12 +56,12 @@ export default function AdminLayout({
 
   //sidebar items
   const navItems = [
-    { name: 'Overview', path: '/admin', icon: overviewIcon, activeIcon: overviewIconActive },
-    { name: 'USERS', path: '/admin/users', icon: usersIcon, activeIcon: usersIconActive },
-    { name: 'Subscriptions', path: '/admin/subscriptions', icon: subscriptionsIcon, activeIcon: subscriptionsIconActive },
-    { name: 'Transactions', path: '/admin/transactions', icon: transactionsIcon, activeIcon: transactionsIconActive },
-    { name: 'Plans', path: '/admin/plans', icon: plansIcon, activeIcon: plansIconActive },
-    { name: 'Settings', path: '/admin/settings', icon: settingsIcon, activeIcon: settingsIconActive },
+    { name: t('overview'), path: '/admin', icon: overviewIcon, activeIcon: overviewIconActive },
+    { name: t('users').toUpperCase(), path: '/admin/users', icon: usersIcon, activeIcon: usersIconActive },
+    { name: t('subscriptions'), path: '/admin/subscriptions', icon: subscriptionsIcon, activeIcon: subscriptionsIconActive },
+    { name: t('transactions'), path: '/admin/transactions', icon: transactionsIcon, activeIcon: transactionsIconActive },
+    { name: t('plans'), path: '/admin/plans', icon: plansIcon, activeIcon: plansIconActive },
+    { name: t('settings'), path: '/admin/settings', icon: settingsIcon, activeIcon: settingsIconActive },
   ];
 
 
@@ -275,7 +273,10 @@ export default function AdminLayout({
   // }
 
   return (
-    <div className={`admin-layout ${sidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
+    <div 
+      className={`admin-layout ${sidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'}`}
+      style={{ direction: isRTL ? 'rtl' : 'ltr' }}
+    >
 
       {/* زرار يظهر فقط في الموبايل والسايدبار مقفول */}
       {isMobile && !sidebarOpen && (
@@ -313,7 +314,7 @@ export default function AdminLayout({
 
 
         <div className="sidebar-section">
-          {sidebarOpen && <span className="section-title">Platform</span>}
+          {sidebarOpen && <span className="section-title">{t('platform')}</span>}
           <nav className="sidebar-nav">
             {navItems.map((item) => {
               const isActive = pathname === item.path;
@@ -338,9 +339,9 @@ export default function AdminLayout({
         </div>
 
         <div className="sidebar-footer">
-          <button onClick={handleLogout} className="logout-btn" title={!sidebarOpen ? 'Logout' : ''}>
+          <button onClick={handleLogout} className="logout-btn" title={!sidebarOpen ? t('logout') : ''}>
             <Image src={logout} alt="Logout" className=" logout-icon" />
-            {sidebarOpen && <span className="mx-1 logout-text">Logout</span>}
+            {sidebarOpen && <span className="mx-1 logout-text">{t('logout')}</span>}
           </button>
         </div>
       </aside>
@@ -352,8 +353,8 @@ export default function AdminLayout({
           <div className="header-left">
 
             <div>
-              <p className='font-light text-[#7d7d7d]'>Overview</p>
-              <p className="text-lg md:text-2xl font-semibold leading-[100%]">Welcome back, {user?.username || 'Admin'}</p>
+              <p className='font-light text-[#7d7d7d]'>{pathname === '/admin' ? t('overview') : pathname.split('/').pop()?.toUpperCase()}</p>
+              <p className="text-lg md:text-2xl font-semibold leading-[100%]">{t('welcome_back')}, {user?.username || 'Admin'}</p>
             </div>
           </div>
 
@@ -390,12 +391,24 @@ export default function AdminLayout({
                 </div>
               </div>
             </button>
+            
+            {/* Language Switcher */}
+            <button
+              onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
+              className="flex items-center justify-center p-2 rounded-full cursor-pointer bg-[#F8F8F8] border border-[#eee] hover:bg-[#e2e8f0] transition-colors gap-2 font-medium"
+              title={language === 'ar' ? 'Switch to English' : 'التبديل للعربية'}
+            >
+              <span className="text-sm text-[#4d8680] uppercase px-1">
+                {language === 'ar' ? 'EN' : 'عربي'}
+              </span>
+            </button>
+
             {/* Search */}
             <div className="relative left-3.5">
               <div className="flex items-center gap-2 p-3.5 ">
                 <input
                   type="text"
-                  placeholder="Search here... (Ctrl+K)"
+                  placeholder={t('search_placeholder')}
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value)
@@ -428,7 +441,7 @@ export default function AdminLayout({
                   {searchResults.length > 0 ? (
                     <>
                       <div className="px-4 py-3 text-sm font-semibold border-b border-slate-50">
-                        Search Results
+                        {t('search_results')}
                       </div>
                       {searchResults.map((result: any, index) => (
                         <div
@@ -455,7 +468,7 @@ export default function AdminLayout({
                     </>
                   ) : (
                     <div className="p-4 text-sm text-center text-slate-500">
-                      No results found for "{searchQuery}"
+                      {t('no_results_found')} "{searchQuery}"
                     </div>
                   )}
                 </div>
@@ -484,9 +497,9 @@ export default function AdminLayout({
                   {/* Header */}
                   <div className="p-4 border-b border-slate-50">
                     <div className="flex items-center justify-between">
-                      <h4 className="m-0 text-base font-semibold text-slate-900">Notifications</h4>
+                      <h4 className="m-0 text-base font-semibold text-slate-900">{t('notifications')}</h4>
                       {loadingNotifications && (
-                        <div className="text-xs text-slate-500 animate-pulse">Refreshing...</div>
+                        <div className="text-xs text-slate-500 animate-pulse">{t('loading')}...</div>
                       )}
                     </div>
                   </div>
@@ -541,7 +554,7 @@ export default function AdminLayout({
                       className="text-sm font-medium text-teal-600 bg-transparent border-none cursor-pointer hover:underline"
                       onClick={() => setShowNotifications(false)}
                     >
-                      View All Notifications
+                      {t('view_all_notifications')}
                     </button>
                   </div>
                 </div>
@@ -592,7 +605,7 @@ export default function AdminLayout({
                         router.push('/admin/settings');
                       }}
                     >
-                      <Image src={settingsIcon} alt='settings' /> Settings
+                      <Image src={settingsIcon} alt='settings' /> {t('settings')}
                     </button>
 
                     <button
@@ -602,7 +615,7 @@ export default function AdminLayout({
                         router.push('/admin/profile');
                       }}
                     >
-                      <Image src={profile} alt='profile' width={16} height={16} /> Profile
+                      <Image src={profile} alt='profile' width={16} height={16} /> {t('profile')}
                     </button>
 
                     <hr className="my-1 border-slate-100" />
@@ -614,7 +627,7 @@ export default function AdminLayout({
                         handleLogout();
                       }}
                     >
-                      <Image src={logout} alt='logout' width={16} height={16} /> Logout
+                      <Image src={logout} alt='logout' width={16} height={16} /> {t('logout')}
                     </button>
                   </div>
                 </div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
 import StatGroup from '../components/StateCard';
+import { useLanguage } from '../../i18n/LanguageContext'
 
 
 //icons import
@@ -17,12 +18,13 @@ import wallet from '../../assets/icons/wallet-money.svg'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export default function AdminDashboard() {
+  const { t, isRTL, language } = useLanguage()
   const [stats, setStats] = useState<any>(null)
   const [recentTransactions, setRecentTransactions] = useState<any[]>([])
   const [monthlyRevenue, setMonthlyRevenue] = useState<any[]>([])
   const [userAcquisition, setUserAcquisition] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [chartPeriod, setChartPeriod] = useState('Last 6 Months')
+  const [chartPeriod, setChartPeriod] = useState(language === 'ar' ? 'أخر 6 شهور' : 'Last 6 Months')
   const [showTransactionFilter, setShowTransactionFilter] = useState(false)
   const [filteredTransactions, setFilteredTransactions] = useState<any[]>([])
   const [isFilteringTransactions, setIsFilteringTransactions] = useState(false)
@@ -229,35 +231,35 @@ export default function AdminDashboard() {
   const displayTransactions = filteredTransactions.length > 0 ? filteredTransactions : recentTransactions
 
   if (loading) {
-    return <div className="loading">Loading dashboard...</div>
+    return <div className="loading">{t('loading')}...</div>
   }
 
   return (
-    <div>
+    <div style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       {/* Stats Grid */}
      <StatGroup 
   items={[
     { 
       icon: userOctagon, 
-      label: 'Total Users', 
+      label: t('total_users'), 
       // ندمج الرقم مع النسبة في الـ value مباشرة
       value: `${stats?.totalUsers?.toLocaleString() || '0'} (${stats?.userGrowth || 0}%)` 
     },
     { 
       icon: wallet, 
-      label: 'Revenue', 
+      label: t('revenue'), 
       value: stats?.totalRevenue >= 1000000 
              ? `$${(stats.totalRevenue / 1000000).toFixed(1)}M` 
              : `$${(stats.totalRevenue / 1000).toFixed(0)}K`
     },
     { 
       icon: crown, 
-      label: 'Active Subs', 
+      label: t('active_subs'), 
       value: `${stats?.activeSubscriptions?.toLocaleString() || '0'} (+${stats?.subsGrowth || 0}%)`
     },
     { 
       icon: chart, 
-      label: 'Growth Rate', 
+      label: t('growth_rate'), 
       value: `${stats?.growthRate || 0}%`
     },
   ]} 
@@ -267,18 +269,18 @@ export default function AdminDashboard() {
       <div className="content-card" style={{ marginBottom: '30px' }}>
         <div className="card-header">
           <div>
-            <h3 className="card-title">Performance Trend</h3>
-            <p className="card-subtitle">Monthly revenue vs subscription growth</p>
+            <h3 className="card-title">{t('performance_trend')}</h3>
+            <p className="card-subtitle">{t('monthly_revenue_vs_growth')}</p>
           </div>
           <select 
             value={chartPeriod}
             onChange={(e) => handleChartPeriodChange(e.target.value)}
             style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #e2e8f0' }}
           >
-            <option>Last 6 Months</option>
-            <option>Last 12 Months</option>
-            <option>Last 3 Months</option>
-            <option>This Year</option>
+            <option>{isRTL ? 'أخر 6 شهور' : 'Last 6 Months'}</option>
+            <option>{isRTL ? 'أخر 12 شهر' : 'Last 12 Months'}</option>
+            <option>{isRTL ? 'أخر 3 شهور' : 'Last 3 Months'}</option>
+            <option>{isRTL ? 'هذا العام' : 'This Year'}</option>
           </select>
         </div>
         <div className="card-content">
@@ -552,7 +554,7 @@ export default function AdminDashboard() {
                   fontWeight: '500',
                   border: '1px solid #e2e8f0'
                 }}>
-                  Revenue Trend - {chartPeriod}
+                  {t('performance_trend')} - {chartPeriod}
                 </div>
               </>
             ) : (
@@ -563,7 +565,7 @@ export default function AdminDashboard() {
                 height: '100%',
                 color: '#718096'
               }}>
-                Loading chart data for {chartPeriod}...
+                {t('loading')}...
               </div>
             )}
           </div>
@@ -575,8 +577,8 @@ export default function AdminDashboard() {
         <div className="content-card lg:col-span-8">
           <div className="card-header">
             <div>
-              <h3 className="card-title">Recent Transactions</h3>
-              <p className="card-subtitle">Reviewing the latest 10 activities</p>
+              <h3 className="card-title">{t('recent_transactions')}</h3>
+              <p className="card-subtitle">{t('reviewing_latest_10')}</p>
             </div>
             <div style={{ position: 'relative' }}>
               <button 
@@ -587,7 +589,7 @@ export default function AdminDashboard() {
                   color: filteredTransactions.length > 0 ? 'white' : undefined
                 }}
               >
-                Filter {filteredTransactions.length > 0 && `(${filteredTransactions.length})`}
+                {t('filter')} {filteredTransactions.length > 0 && `(${filteredTransactions.length})`}
               </button>
               
               {/* Filter Dropdown */}
@@ -604,7 +606,7 @@ export default function AdminDashboard() {
                   boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
                   zIndex: 1000
                 }}>
-                  <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '600' }}>Filter Transactions</h4>
+                  <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '600' }}>{t('filter_transactions')}</h4>
                   
                   <div style={{ marginBottom: '12px' }}>
                     <label style={{ display: 'block', fontSize: '12px', marginBottom: '4px' }}>Status</label>
@@ -688,7 +690,7 @@ export default function AdminDashboard() {
                           textDecoration: 'underline'
                         }}
                       >
-                        Clear
+                        {t('clear')}
                       </button>
                     </div>
                   )}
@@ -700,12 +702,12 @@ export default function AdminDashboard() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Transaction ID</th>
-                  <th>Client</th>
-                  <th>Date</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th>{t('transaction_id')}</th>
+                  <th>{t('client')}</th>
+                  <th>{t('date')}</th>
+                  <th>{t('amount')}</th>
+                  <th>{t('status')}</th>
+                  <th>{t('actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -749,7 +751,7 @@ export default function AdminDashboard() {
                 )) : (
                   <tr>
                     <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: '#718096' }}>
-                      No transactions found
+                      {t('no_transactions_found')}
                     </td>
                   </tr>
                 )}
@@ -760,7 +762,7 @@ export default function AdminDashboard() {
                 className="btn btn-secondary"
                 onClick={handleShowAllActivity}
               >
-                Show All Activity
+                {t('view_all')}
               </button>
             </div>
           </div>
@@ -770,8 +772,8 @@ export default function AdminDashboard() {
         <div className="content-card lg:col-span-4">
           <div className="card-header">
             <div>
-              <h3 className="card-title">User Acquisition</h3>
-              <p className="card-subtitle">Source distribution</p>
+              <h3 className="card-title">{t('user_acquisition')}</h3>
+              <p className="card-subtitle">{t('source_distribution')}</p>
             </div>
           </div>
           <div className="card-content">

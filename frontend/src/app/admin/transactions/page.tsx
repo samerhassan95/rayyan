@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import { useLanguage } from '../../../i18n/LanguageContext'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export default function AdminTransactions() {
+  const { t, isRTL, language } = useLanguage()
   const [transactions, setTransactions] = useState<any[]>([])
   const [analytics, setAnalytics] = useState<any>({})
   const [loading, setLoading] = useState(true)
@@ -125,7 +127,7 @@ export default function AdminTransactions() {
         box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3);
         font-size: 14px; font-weight: 500;
       `
-      successDiv.textContent = 'Export initiated! Download will start shortly.'
+      successDiv.textContent = t('export_initiated')
       document.body.appendChild(successDiv)
       
       setTimeout(() => {
@@ -143,7 +145,7 @@ export default function AdminTransactions() {
         box-shadow: 0 4px 12px rgba(245, 101, 101, 0.3);
         font-size: 14px; font-weight: 500;
       `
-      errorDiv.textContent = 'Export failed. Please try again.'
+      errorDiv.textContent = t('export_failed')
       document.body.appendChild(errorDiv)
       
       setTimeout(() => {
@@ -153,18 +155,18 @@ export default function AdminTransactions() {
   }
 
   if (loading) {
-    return <div className="loading">Loading transactions...</div>
+    return <div className="loading">{t('loading')}...</div>
   }
 
   return (
-    <div>
+    <div style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#1a202c', marginBottom: '8px' }}>
-          Transactions
+          {t('transactions_title')}
         </h1>
         <p style={{ color: '#718096' }}>
-          Monitor and manage all financial activity across the platform.
+          {t('transactions_desc')}
         </p>
       </div>
 
@@ -174,13 +176,13 @@ export default function AdminTransactions() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
             <div>
               <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
-                TOTAL REVENUE
+                {t('revenue')}
               </div>
               <div style={{ fontSize: '28px', fontWeight: '700', color: '#1a202c' }}>
                 ${analytics.totalRevenue?.toLocaleString() || '0'}
               </div>
               <div style={{ fontSize: '12px', color: '#718096', marginTop: '4px' }}>
-                📈 vs. previous 30 days
+                📈 {t('vs_previous_30_days')}
               </div>
             </div>
             <div style={{ 
@@ -200,13 +202,13 @@ export default function AdminTransactions() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
             <div>
               <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
-                MONTHLY VOLUME
+                {t('monthly_volume')}
               </div>
               <div style={{ fontSize: '28px', fontWeight: '700', color: '#1a202c' }}>
                 ${analytics.monthlyVolume?.toLocaleString() || '0'}
               </div>
               <div style={{ fontSize: '12px', color: '#718096', marginTop: '4px' }}>
-                📊 Processed this month
+                📊 {t('processed_this_month')}
               </div>
             </div>
             <div style={{ 
@@ -226,13 +228,13 @@ export default function AdminTransactions() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
             <div>
               <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
-                FAILED TRANSACTIONS
+                {t('failed_transactions')}
               </div>
               <div style={{ fontSize: '28px', fontWeight: '700', color: '#1a202c' }}>
                 {analytics.failedTransactions || 0}%
               </div>
               <div style={{ fontSize: '12px', color: '#718096', marginTop: '4px' }}>
-                ⚠️ Industry avg: 2.1%
+                ⚠️ {t('industry_avg')}: 2.1%
               </div>
             </div>
             <div style={{ 
@@ -253,26 +255,26 @@ export default function AdminTransactions() {
       <div className="content-card" style={{ marginBottom: '30px' }}>
         <div className="card-header">
           <div>
-            <h3 className="card-title">Revenue Trends</h3>
+            <h3 className="card-title">{t('revenue_trends')}</h3>
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
             <button 
               className={`btn ${filter === 'Daily' ? 'btn-primary' : 'btn-secondary'}`}
               onClick={() => setFilter('Daily')}
             >
-              Daily
+              {t('daily')}
             </button>
             <button 
               className={`btn ${filter === 'Weekly' ? 'btn-primary' : 'btn-secondary'}`}
               onClick={() => setFilter('Weekly')}
             >
-              Weekly
+              {t('weekly')}
             </button>
             <button 
               className={`btn ${filter === 'Monthly' ? 'btn-primary' : 'btn-secondary'}`}
               onClick={() => setFilter('Monthly')}
             >
-              Monthly
+              {t('monthly')}
             </button>
           </div>
         </div>
@@ -345,8 +347,8 @@ export default function AdminTransactions() {
                 fontSize: '12px',
                 color: '#718096'
               }}>
-                <span>Period: {filter}</span>
-                <span>Total: ${analytics.revenueData.reduce((sum: number, item: any) => sum + item.amount, 0).toLocaleString()}</span>
+                <span>{t('period')}: {t(filter.toLowerCase())}</span>
+                <span>{t('total')}: ${analytics.revenueData.reduce((sum: number, item: any) => sum + item.amount, 0).toLocaleString()}</span>
               </div>
             </div>
           ) : (
@@ -362,8 +364,8 @@ export default function AdminTransactions() {
               gap: '12px'
             }}>
               <div style={{ fontSize: '48px' }}>📈</div>
-              <div>No revenue data available for selected period</div>
-              <div style={{ fontSize: '12px' }}>Try adjusting your date range or filters</div>
+              <div>{t('no_revenue_data')}</div>
+              <div style={{ fontSize: '12px' }}>{t('adjust_filters')}</div>
             </div>
           )}
         </div>
@@ -392,7 +394,7 @@ export default function AdminTransactions() {
                 fontSize: '14px'
               }}
             />
-            <span style={{ color: '#718096', fontSize: '14px' }}>to</span>
+            <span style={{ color: '#718096', fontSize: '14px' }}>{t('to')}</span>
             <input
               type="date"
               value={dateRange.end}
@@ -418,11 +420,11 @@ export default function AdminTransactions() {
             value={paymentTypeFilter}
             onChange={(e) => setPaymentTypeFilter(e.target.value)}
           >
-            <option value="">All Payment Types</option>
-            <option value="credit_card">Credit Card</option>
-            <option value="bank_transfer">Bank Transfer</option>
-            <option value="digital_wallet">Digital Wallet</option>
-            <option value="paypal">PayPal</option>
+            <option value="">{t('all_payment_types')}</option>
+            <option value="credit_card">{t('credit_card')}</option>
+            <option value="bank_transfer">{t('bank_transfer')}</option>
+            <option value="digital_wallet">{t('digital_wallet')}</option>
+            <option value="paypal">{t('paypal')}</option>
           </select>
 
           {/* Status Filter */}
@@ -437,10 +439,10 @@ export default function AdminTransactions() {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
-            <option value="">All Status</option>
-            <option value="successful">Successful</option>
-            <option value="pending">Pending</option>
-            <option value="failed">Failed</option>
+            <option value="">{t('all_status')}</option>
+            <option value="successful">{t('successful')}</option>
+            <option value="pending">{t('pending')}</option>
+            <option value="failed">{t('failed')}</option>
           </select>
         </div>
 
@@ -458,7 +460,7 @@ export default function AdminTransactions() {
               cursor: 'pointer'
             }}
           >
-            Clear Filters
+            {t('clear_filters')}
           </button>
           <button 
             className="btn btn-primary"
@@ -473,16 +475,16 @@ export default function AdminTransactions() {
               cursor: 'pointer'
             }}
           >
-            ↓ Export Report
+            ↓ {t('export_report')}
           </button>
         </div>
       </div>
 
       <div style={{ color: '#718096', fontSize: '14px', marginBottom: '16px' }}>
         {transactions.length > 0 ? (
-          `Showing ${((currentPage - 1) * 10) + 1} to ${Math.min(currentPage * 10, analytics.totalTransactions || transactions.length)} of ${analytics.totalTransactions || transactions.length} results`
+          `${t('showing')} ${((currentPage - 1) * 10) + 1} ${t('to')} ${Math.min(currentPage * 10, analytics.totalTransactions || transactions.length)} ${t('of')} ${analytics.totalTransactions || transactions.length} ${t('results')}`
         ) : (
-          'No transactions found'
+          t('no_transactions_found')
         )}
       </div>
 
@@ -492,12 +494,12 @@ export default function AdminTransactions() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>USER</th>
-                <th>AMOUNT</th>
-                <th>DATE</th>
-                <th>PAYMENT METHOD</th>
-                <th>STATUS</th>
-                <th>ACTIONS</th>
+                <th>{t('user_header')}</th>
+                <th>{t('amount_header')}</th>
+                <th>{t('date')}</th>
+                <th>{t('payment_method_header')}</th>
+                <th>{t('status')}</th>
+                <th>{t('actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -541,7 +543,7 @@ export default function AdminTransactions() {
                   </td>
                   <td>
                     <span className={`status-badge ${transaction.status}`}>
-                      {transaction.status.toUpperCase()}
+                      {t(transaction.status).toUpperCase()}
                     </span>
                   </td>
                   <td>

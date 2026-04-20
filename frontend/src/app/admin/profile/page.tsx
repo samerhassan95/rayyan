@@ -3,15 +3,17 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
+import { useLanguage } from '../../i18n/LanguageContext'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export default function AdminProfile() {
+  const { t, isRTL } = useLanguage()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
-  const [activeTab, setActiveTab] = useState('Personal Info')
+  const [activeTab, setActiveTab] = useState(t('personal_info'))
   const [profileData, setProfileData] = useState({
     username: '',
     email: '',
@@ -170,18 +172,18 @@ export default function AdminProfile() {
   }
 
   const tabs = [
-    { id: 'Personal Info', icon: '👤' },
-    { id: 'Security', icon: '🔒' },
-    { id: 'Activity', icon: '📊' },
-    { id: 'Sessions', icon: '💻' }
+    { id: t('personal_info'), icon: '👤' },
+    { id: t('security'), icon: '🔒' },
+    { id: t('activity'), icon: '📊' },
+    { id: t('sessions'), icon: '💻' }
   ]
 
   if (loading) {
-    return <div className="loading">Loading profile...</div>
+    return <div className="loading">{t('loading')}...</div>
   }
 
   return (
-    <div>
+    <div style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <button 
@@ -195,13 +197,13 @@ export default function AdminProfile() {
             fontSize: '14px'
           }}
         >
-          ← Back to Dashboard
+          {isRTL ? t('back_to_dashboard') + ' ←' : '← ' + t('back_to_dashboard')}
         </button>
         <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#1a202c', marginBottom: '8px' }}>
-          Admin Profile
+          {t('admin_profile')}
         </h1>
         <p style={{ color: '#718096' }}>
-          Manage your account settings and preferences
+          {t('manage_account_settings')}
         </p>
       </div>
 
@@ -298,7 +300,7 @@ export default function AdminProfile() {
                 fontWeight: '600',
                 display: 'inline-block'
               }}>
-                ADMIN
+                {t('admin_user')}
               </div>
             </div>
           </div>
@@ -337,15 +339,15 @@ export default function AdminProfile() {
         {/* Profile Content */}
         <div className="content-card">
           <div className="card-content">
-            {activeTab === 'Personal Info' && (
+            {activeTab === t('personal_info') && (
               <div>
                 <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '24px' }}>
-                  Personal Information
+                  {t('personal_info')}
                 </h3>
 
                 <div className="form-grid">
                   <div className="form-group">
-                    <label>USERNAME</label>
+                    <label>{t('username_label').toUpperCase()}</label>
                     <input 
                       type="text" 
                       value={profileData.username}
@@ -353,7 +355,7 @@ export default function AdminProfile() {
                     />
                   </div>
                   <div className="form-group">
-                    <label>EMAIL</label>
+                    <label>{t('email_label').toUpperCase()}</label>
                     <input 
                       type="email" 
                       value={profileData.email}
@@ -361,13 +363,13 @@ export default function AdminProfile() {
                       disabled
                       style={{ background: '#f7fafc', cursor: 'not-allowed' }}
                     />
-                    <small style={{ color: '#718096', fontSize: '12px' }}>Email cannot be changed</small>
+                    <small style={{ color: '#718096', fontSize: '12px' }}>{t('email_cannot_be_changed')}</small>
                   </div>
                 </div>
 
                 <div className="form-grid">
                   <div className="form-group">
-                    <label>PHONE</label>
+                    <label>{t('phone').toUpperCase()}</label>
                     <input 
                       type="tel" 
                       value={profileData.phone}
@@ -376,7 +378,7 @@ export default function AdminProfile() {
                     />
                   </div>
                   <div className="form-group">
-                    <label>JOB TITLE</label>
+                    <label>{t('job_title_label').toUpperCase()}</label>
                     <input 
                       type="text" 
                       value={profileData.job_title}
@@ -387,7 +389,7 @@ export default function AdminProfile() {
                 </div>
 
                 <div className="form-group">
-                  <label>ADDRESS</label>
+                  <label>{t('address').toUpperCase()}</label>
                   <input 
                     type="text" 
                     value={profileData.address}
@@ -397,7 +399,7 @@ export default function AdminProfile() {
                 </div>
 
                 <div className="form-group">
-                  <label>BIO</label>
+                  <label>{t('bio').toUpperCase()}</label>
                   <textarea 
                     rows={4}
                     value={profileData.bio}
@@ -411,49 +413,49 @@ export default function AdminProfile() {
                   onClick={updateProfile}
                   disabled={saving}
                 >
-                  {saving ? 'Saving...' : 'Save Changes'}
+                  {saving ? t('saving') + '...' : t('save_changes')}
                 </button>
               </div>
             )}
 
-            {activeTab === 'Security' && (
+            {activeTab === t('security') && (
               <div>
                 <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '24px' }}>
-                  Security Settings
+                  {t('security_settings')}
                 </h3>
 
                 <div style={{ marginBottom: '32px' }}>
                   <h4 style={{ fontSize: '16px', fontWeight: '500', marginBottom: '16px' }}>
-                    Change Password
+                    {t('change_password')}
                   </h4>
 
                   <div className="form-group">
-                    <label>CURRENT PASSWORD</label>
+                    <label>{t('current_password').toUpperCase()}</label>
                     <input 
                       type="password" 
                       value={passwordData.currentPassword}
                       onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                      placeholder="Enter current password"
+                      placeholder={t('enter_current_password')}
                     />
                   </div>
 
                   <div className="form-grid">
                     <div className="form-group">
-                      <label>NEW PASSWORD</label>
+                      <label>{t('new_password').toUpperCase()}</label>
                       <input 
                         type="password" 
                         value={passwordData.newPassword}
                         onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                        placeholder="Enter new password"
+                        placeholder={t('enter_new_password')}
                       />
                     </div>
                     <div className="form-group">
-                      <label>CONFIRM PASSWORD</label>
+                      <label>{t('confirm_password').toUpperCase()}</label>
                       <input 
                         type="password" 
                         value={passwordData.confirmPassword}
                         onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                        placeholder="Confirm new password"
+                        placeholder={t('confirm_new_password')}
                       />
                     </div>
                   </div>
@@ -463,13 +465,13 @@ export default function AdminProfile() {
                     onClick={changePassword}
                     disabled={saving || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
                   >
-                    {saving ? 'Updating...' : 'Change Password'}
+                    {saving ? t('updating') + '...' : t('change_password')}
                   </button>
                 </div>
 
                 <div>
                   <h4 style={{ fontSize: '16px', fontWeight: '500', marginBottom: '16px' }}>
-                    Two-Factor Authentication
+                    {t('two_factor_auth')}
                   </h4>
                   <div style={{ 
                     background: '#f7fafc',
@@ -480,13 +482,13 @@ export default function AdminProfile() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <span style={{ fontSize: '24px' }}>📱</span>
                       <div>
-                        <div style={{ fontWeight: '500', color: '#1a202c' }}>Authenticator App</div>
+                        <div style={{ fontWeight: '500', color: '#1a202c' }}>{t('authenticator_app')}</div>
                         <div style={{ fontSize: '14px', color: '#718096' }}>
-                          Add an extra layer of security to your account
+                          {t('add_extra_security')}
                         </div>
                       </div>
                       <button className="btn btn-secondary" style={{ marginLeft: 'auto' }}>
-                        Enable 2FA
+                        {t('enable_2fa')}
                       </button>
                     </div>
                   </div>
@@ -494,10 +496,10 @@ export default function AdminProfile() {
               </div>
             )}
 
-            {activeTab === 'Activity' && (
+            {activeTab === t('activity') && (
               <div>
                 <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '24px' }}>
-                  Recent Activity
+                  {t('recent_activity')}
                 </h3>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -567,10 +569,10 @@ export default function AdminProfile() {
               </div>
             )}
 
-            {activeTab === 'Sessions' && (
+            {activeTab === t('sessions') && (
               <div>
                 <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '24px' }}>
-                  Active Sessions
+                  {t('active_sessions')}
                 </h3>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -598,7 +600,7 @@ export default function AdminProfile() {
                           {session.location} • {session.ip_address}
                         </div>
                         <div style={{ fontSize: '12px', color: '#718096' }}>
-                          Last active: {new Date(session.last_activity).toLocaleString()}
+                          {t('last_active')}: {new Date(session.last_activity).toLocaleString()}
                         </div>
                       </div>
                       {session.is_current ? (
@@ -610,7 +612,7 @@ export default function AdminProfile() {
                           fontSize: '12px',
                           fontWeight: '500'
                         }}>
-                          Current
+                          {t('current')}
                         </div>
                       ) : (
                         <button 
@@ -618,7 +620,7 @@ export default function AdminProfile() {
                           style={{ fontSize: '12px', padding: '4px 8px' }}
                           onClick={() => terminateSession(session.id)}
                         >
-                          Terminate
+                          {t('terminate')}
                         </button>
                       )}
                     </div>
@@ -651,7 +653,7 @@ export default function AdminProfile() {
                             {session.location} • {session.ip_address}
                           </div>
                           <div style={{ fontSize: '12px', color: '#718096' }}>
-                            Last active: {session.last_activity.toLocaleString()}
+                            {t('last_active')}: {session.last_activity.toLocaleString()}
                           </div>
                         </div>
                         {session.is_current ? (
@@ -663,7 +665,7 @@ export default function AdminProfile() {
                             fontSize: '12px',
                             fontWeight: '500'
                           }}>
-                            Current
+                            {t('current')}
                           </div>
                         ) : (
                           <button 
@@ -671,7 +673,7 @@ export default function AdminProfile() {
                             style={{ fontSize: '12px', padding: '4px 8px' }}
                             onClick={() => terminateSession(session.id)}
                           >
-                            Terminate
+                            {t('terminate')}
                           </button>
                         )}
                       </div>

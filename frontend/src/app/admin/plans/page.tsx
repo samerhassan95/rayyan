@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import { useLanguage } from '../../../i18n/LanguageContext'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export default function AdminPlans() {
-  const [billingPeriod, setBillingPeriod] = useState('Yearly')
+  const { t, isRTL, language } = useLanguage()
+  const [billingPeriod, setBillingPeriod] = useState(language === 'ar' ? t('yearly') : 'Yearly')
   const [plans, setPlans] = useState<any[]>([])
   const [analytics, setAnalytics] = useState<any>({})
   const [discountCodes, setDiscountCodes] = useState<any[]>([])
@@ -208,14 +210,14 @@ export default function AdminPlans() {
   }
 
   return (
-    <div>
+    <div style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#1a202c', marginBottom: '8px' }}>
-          Pricing Plans
+          {t('pricing_plans_title')}
         </h1>
         <p style={{ color: '#718096' }}>
-          Manage your global subscription tiers and feature access.
+          {t('pricing_plans_desc')}
         </p>
       </div>
 
@@ -246,18 +248,18 @@ export default function AdminPlans() {
           padding: '4px'
         }}>
           <button 
-            className={`btn ${billingPeriod === 'Monthly' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setBillingPeriod('Monthly')}
+            className={`btn ${billingPeriod === 'Monthly' || billingPeriod === t('monthly') ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setBillingPeriod(language === 'ar' ? t('monthly') : 'Monthly')}
             style={{ margin: 0, borderRadius: '6px' }}
           >
-            Monthly
+            {t('monthly')}
           </button>
           <button 
-            className={`btn ${billingPeriod === 'Yearly' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setBillingPeriod('Yearly')}
+            className={`btn ${billingPeriod === 'Yearly' || billingPeriod === t('yearly') ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setBillingPeriod(language === 'ar' ? t('yearly') : 'Yearly')}
             style={{ margin: 0, borderRadius: '6px' }}
           >
-            Yearly
+            {t('yearly')}
           </button>
         </div>
       </div>
@@ -292,7 +294,7 @@ export default function AdminPlans() {
                 fontSize: '12px',
                 fontWeight: '600'
               }}>
-                RECOMMENDED
+                {t('recommended')}
               </div>
             )}
             <div className="card-header" style={{ 
@@ -323,13 +325,13 @@ export default function AdminPlans() {
                   fontWeight: '700', 
                   color: plan.recommended ? 'white' : '#1a202c' 
                 }}>
-                  ${billingPeriod === 'Monthly' ? plan.monthlyPrice : plan.yearlyPrice}
+                  ${(billingPeriod === 'Monthly' || billingPeriod === t('monthly')) ? plan.monthlyPrice : plan.yearlyPrice}
                 </span>
                 <span style={{ 
                   fontSize: '16px', 
                   color: plan.recommended ? 'rgba(255,255,255,0.8)' : '#718096' 
                 }}>
-                  /{billingPeriod === 'Monthly' ? 'mo' : 'yr'}
+                  /{(billingPeriod === 'Monthly' || billingPeriod === t('monthly')) ? t('mo') : t('yr')}
                 </span>
               </div>
               <p style={{ 
@@ -366,7 +368,7 @@ export default function AdminPlans() {
                   fontWeight: '500'
                 } : { width: '100%' }}
               >
-                {plan.recommended ? 'Remove Recommendation' : 'Make Recommended'}
+                {plan.recommended ? t('remove_recommendation') : t('make_recommended')}
               </button>
             </div>
             <div style={{ 
@@ -413,8 +415,8 @@ export default function AdminPlans() {
         {/* Create New Tier */}
         <div className="content-card">
           <div className="card-header">
-            <h3 className="card-title">Create New Tier</h3>
-            <p className="card-subtitle">Add a custom plan for specific clients or promotional events.</p>
+            <h3 className="card-title">{t('create_new_tier')}</h3>
+            <p className="card-subtitle">{t('create_new_tier_desc')}</p>
           </div>
           <div className="card-content" style={{ textAlign: 'center' }}>
             <button 
@@ -431,7 +433,7 @@ export default function AdminPlans() {
               +
             </button>
             <p style={{ color: '#718096', fontSize: '14px' }}>
-              Configure pricing, features, and availability
+              {t('configure_pricing_features')}
             </p>
           </div>
         </div>
@@ -440,14 +442,14 @@ export default function AdminPlans() {
         <div className="content-card">
           <div className="card-header">
             <div>
-              <h3 className="card-title">Global Discount Codes</h3>
-              <p className="card-subtitle">Manage active coupons and referral percentage rules.</p>
+              <h3 className="card-title">{t('global_discount_codes')}</h3>
+              <p className="card-subtitle">{t('global_discount_codes_desc')}</p>
             </div>
             <button 
               className="btn btn-secondary"
               onClick={() => setShowCreateCode(true)}
             >
-              Manage Codes
+              {t('manage_codes')}
             </button>
           </div>
           <div className="card-content">
@@ -472,7 +474,7 @@ export default function AdminPlans() {
                   borderRadius: '4px',
                   fontSize: '12px'
                 }}>
-                  {code.active ? 'Active' : 'Inactive'}
+                  {code.active ? t('active') : t('inactive')}
                 </span>
               </div>
             ))}
@@ -484,7 +486,7 @@ export default function AdminPlans() {
       <div className="stats-grid">
         <div className="stat-card">
           <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
-            TOTAL MONTHLY REVENUE
+            {t('total_monthly_revenue')}
           </div>
           <div style={{ fontSize: '32px', fontWeight: '700', color: '#1a202c', marginBottom: '8px' }}>
             ${analytics.totalMonthlyRevenue?.toLocaleString() || '0'}
@@ -496,19 +498,19 @@ export default function AdminPlans() {
 
         <div className="stat-card">
           <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
-            ACTIVE SUBSCRIPTIONS
+            {t('active_subscriptions_label')}
           </div>
           <div style={{ fontSize: '32px', fontWeight: '700', color: '#1a202c', marginBottom: '8px' }}>
             {analytics.activeSubscriptions?.toLocaleString() || '0'}
           </div>
           <div style={{ fontSize: '12px', color: '#718096' }}>
-            Professional tier is {analytics.professionalTierPercentage || 0}% of users
+            {t('professional_tier_is')} {analytics.professionalTierPercentage || 0}% {t('of_users')}
           </div>
         </div>
 
         <div className="stat-card">
           <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
-            CHURN RATE
+            {t('churn_rate')}
           </div>
           <div style={{ fontSize: '32px', fontWeight: '700', color: '#1a202c', marginBottom: '8px' }}>
             {analytics.churnRate || 0}%
@@ -543,11 +545,11 @@ export default function AdminPlans() {
             overflow: 'auto',
             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
           }}>
-            <h3 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '8px' }}>Edit Plan</h3>
-            <p style={{ color: '#718096', marginBottom: '24px' }}>Modify the details of your subscription plan.</p>
+            <h3 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '8px' }}>{t('edit_plan')}</h3>
+            <p style={{ color: '#718096', marginBottom: '24px' }}>{t('edit_plan_desc')}</p>
             
             <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Plan Name</label>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('plan_name')}</label>
               <input
                 type="text"
                 value={editingPlan.name}
@@ -557,7 +559,7 @@ export default function AdminPlans() {
             </div>
 
             <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Tier</label>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('tier')}</label>
               <input
                 type="text"
                 value={editingPlan.tier}
@@ -568,7 +570,7 @@ export default function AdminPlans() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
               <div className="form-group">
-                <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Monthly Price ($)</label>
+                <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('monthly_price')} ($)</label>
                 <input
                   type="number"
                   value={editingPlan.monthlyPrice}
@@ -577,7 +579,7 @@ export default function AdminPlans() {
                 />
               </div>
               <div className="form-group">
-                <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Yearly Price ($)</label>
+                <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('yearly_price')} ($)</label>
                 <input
                   type="number"
                   value={editingPlan.yearlyPrice}
@@ -588,7 +590,7 @@ export default function AdminPlans() {
             </div>
 
             <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Description</label>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('description')}</label>
               <textarea
                 value={editingPlan.description}
                 onChange={(e) => setEditingPlan((prev: any) => ({ ...prev, description: e.target.value }))}
@@ -598,7 +600,7 @@ export default function AdminPlans() {
             </div>
 
             <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Features</label>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('features')}</label>
               {(editingPlan.features || []).map((feature: string, index: number) => (
                 <div key={index} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                   <input
@@ -637,7 +639,7 @@ export default function AdminPlans() {
                   fontWeight: '500'
                 }}
               >
-                + Add Feature
+                + {t('add_feature')}
               </button>
             </div>
 
@@ -647,14 +649,14 @@ export default function AdminPlans() {
                 onClick={() => setShowEditPlan(false)}
                 style={{ flex: 1, padding: '12px', borderRadius: '8px' }}
               >
-                Cancel
+                {t('cancel')}
               </button>
               <button
                 className="btn btn-primary"
                 onClick={saveEditedPlan}
                 style={{ flex: 1, padding: '12px', borderRadius: '8px' }}
               >
-                Save Changes
+                {t('save_changes')}
               </button>
             </div>
           </div>
@@ -697,9 +699,9 @@ export default function AdminPlans() {
             }}>
               ⚠️
             </div>
-            <h3 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '12px' }}>Delete Plan?</h3>
+            <h3 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '12px' }}>{t('delete_plan_confirm_title')}</h3>
             <p style={{ color: '#718096', marginBottom: '32px', lineHeight: '1.5' }}>
-              This action cannot be undone. Any users currently linked to this plan will remain subscribed, but the plan will no longer be available for new signups.
+              {t('delete_plan_confirm_desc')}
             </p>
             <div style={{ display: 'flex', gap: '12px' }}>
               <button
@@ -710,7 +712,7 @@ export default function AdminPlans() {
                 }}
                 style={{ flex: 1, padding: '12px', borderRadius: '8px' }}
               >
-                Keep Plan
+                {t('keep_plan')}
               </button>
               <button
                 className="btn btn-danger"
@@ -726,7 +728,7 @@ export default function AdminPlans() {
                   cursor: 'pointer'
                 }}
               >
-                Yes, Delete
+                {t('yes_delete')}
               </button>
             </div>
           </div>
@@ -757,10 +759,10 @@ export default function AdminPlans() {
             overflow: 'auto',
             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
           }}>
-            <h3 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '24px' }}>Create New Plan</h3>
+            <h3 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '24px' }}>{t('create_new_plan')}</h3>
             
             <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Plan Name</label>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('plan_name')}</label>
               <input
                 type="text"
                 value={newPlan.name}
@@ -771,7 +773,7 @@ export default function AdminPlans() {
             </div>
 
             <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Tier</label>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('tier')}</label>
               <input
                 type="text"
                 value={newPlan.tier}
@@ -783,7 +785,7 @@ export default function AdminPlans() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
               <div className="form-group">
-                <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Monthly Price ($)</label>
+                <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('monthly_price')} ($)</label>
                 <input
                   type="number"
                   value={newPlan.monthlyPrice}
@@ -793,7 +795,7 @@ export default function AdminPlans() {
                 />
               </div>
               <div className="form-group">
-                <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Yearly Price ($)</label>
+                <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('yearly_price')} ($)</label>
                 <input
                   type="number"
                   value={newPlan.yearlyPrice}
@@ -805,7 +807,7 @@ export default function AdminPlans() {
             </div>
 
             <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Description</label>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('description')}</label>
               <textarea
                 value={newPlan.description}
                 onChange={(e) => setNewPlan(prev => ({ ...prev, description: e.target.value }))}
@@ -816,7 +818,7 @@ export default function AdminPlans() {
             </div>
 
             <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>Features</label>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('features')}</label>
               {newPlan.features.map((feature, index) => (
                 <div key={index} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                   <input
@@ -849,7 +851,7 @@ export default function AdminPlans() {
                   fontWeight: '500'
                 }}
               >
-                + Add Feature
+                + {t('add_feature')}
               </button>
             </div>
 
@@ -859,14 +861,14 @@ export default function AdminPlans() {
                 onClick={() => setShowCreatePlan(false)}
                 style={{ flex: 1, padding: '12px', borderRadius: '8px' }}
               >
-                Cancel
+                {t('cancel')}
               </button>
               <button
                 className="btn btn-primary"
                 onClick={createPlan}
                 style={{ flex: 1, padding: '12px', borderRadius: '8px' }}
               >
-                Create Plan
+                {t('create_plan_btn')}
               </button>
             </div>
           </div>
@@ -893,10 +895,10 @@ export default function AdminPlans() {
             padding: '24px',
             width: '400px'
           }}>
-            <h3 style={{ marginBottom: '20px' }}>Create Discount Code</h3>
+            <h3 style={{ marginBottom: '20px' }}>{t('create_discount_code')}</h3>
             
             <div className="form-group">
-              <label>Code</label>
+              <label>{t('code')}</label>
               <input
                 type="text"
                 value={newCode.code}
@@ -907,7 +909,7 @@ export default function AdminPlans() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div className="form-group">
-                <label>Discount</label>
+                <label>{t('discount')}</label>
                 <input
                   type="number"
                   value={newCode.discount}
@@ -916,20 +918,20 @@ export default function AdminPlans() {
                 />
               </div>
               <div className="form-group">
-                <label>Type</label>
+                <label>{t('type')}</label>
                 <select
                   value={newCode.type}
                   onChange={(e) => setNewCode(prev => ({ ...prev, type: e.target.value }))}
                 >
-                  <option value="percentage">Percentage</option>
-                  <option value="fixed">Fixed Amount</option>
+                  <option value="percentage">{t('percentage')}</option>
+                  <option value="fixed">{t('fixed_amount')}</option>
                 </select>
               </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div className="form-group">
-                <label>Max Usage</label>
+                <label>{t('max_usage')}</label>
                 <input
                   type="number"
                   value={newCode.maxUsage}
@@ -938,7 +940,7 @@ export default function AdminPlans() {
                 />
               </div>
               <div className="form-group">
-                <label>Expires At</label>
+                <label>{t('expires_at')}</label>
                 <input
                   type="date"
                   value={newCode.expiresAt}
@@ -953,14 +955,14 @@ export default function AdminPlans() {
                 onClick={() => setShowCreateCode(false)}
                 style={{ flex: 1 }}
               >
-                Cancel
+                {t('cancel')}
               </button>
               <button
                 className="btn btn-primary"
                 onClick={createDiscountCode}
                 style={{ flex: 1 }}
               >
-                Create Code
+                {t('create_code')}
               </button>
             </div>
           </div>

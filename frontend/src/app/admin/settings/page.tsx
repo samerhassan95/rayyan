@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import { useLanguage } from '../../../i18n/LanguageContext'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export default function AdminSettings() {
-  const [activeTab, setActiveTab] = useState('Profile Details')
+  const { t, isRTL, language } = useLanguage()
+  const [activeTab, setActiveTab] = useState(language === 'ar' ? t('profile_details') : 'Profile Details')
   const [settings, setSettings] = useState({
     fullName: '',
     professionalTitle: '',
@@ -153,7 +155,7 @@ export default function AdminSettings() {
       setSettings(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }))
       setTimeout(() => setMessage(''), 3000)
     } catch (error: any) {
-      setMessage(`❌ ${error.response?.data?.error || 'Failed to change password'}`)
+      setMessage(`❌ ${error.response?.data?.error || t('failed_to_change_password')}`)
       setTimeout(() => setMessage(''), 3000)
     } finally {
       setSaving(false)
@@ -176,7 +178,7 @@ export default function AdminSettings() {
   }
 
   const terminateAllSessions = async () => {
-    if (!confirm('Are you sure you want to terminate all sessions? You will be logged out.')) return
+    if (!confirm(t('terminate_all_sessions_confirm'))) return
 
     try {
       const token = localStorage.getItem('token')
@@ -195,25 +197,25 @@ export default function AdminSettings() {
   }
 
   const tabs = [
-    { id: 'Profile Details', icon: '👤' },
-    { id: 'Security & Privacy', icon: '🔒' },
-    { id: 'Notifications', icon: '🔔' },
-    { id: 'Appearance', icon: '🎨' }
+    { id: t('profile_details'), icon: '👤' },
+    { id: t('security_privacy'), icon: '🔒' },
+    { id: t('notifications'), icon: '🔔' },
+    { id: t('appearance'), icon: '🎨' }
   ]
 
   const renderProfileDetails = () => (
     <div>
       <div style={{ marginBottom: '32px' }}>
         <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1a202c', marginBottom: '8px' }}>
-          Account Information
+          {t('account_information')}
         </h3>
         <p style={{ color: '#718096', fontSize: '14px', marginBottom: '24px' }}>
-          Basic details for your administrative profile.
+          {t('basic_details_profile')}
         </p>
 
         <div className="form-grid">
           <div className="form-group">
-            <label>FULL NAME</label>
+            <label>{t('full_name')}</label>
             <input 
               type="text" 
               value={settings.fullName}
@@ -221,7 +223,7 @@ export default function AdminSettings() {
             />
           </div>
           <div className="form-group">
-            <label>PROFESSIONAL TITLE</label>
+            <label>{t('professional_title')}</label>
             <input 
               type="text" 
               value={settings.professionalTitle}
@@ -231,7 +233,7 @@ export default function AdminSettings() {
         </div>
 
         <div className="form-group">
-          <label>ADMINISTRATIVE EMAIL</label>
+          <label>{t('admin_email')}</label>
           <input 
             type="email" 
             value={settings.email}
@@ -239,11 +241,11 @@ export default function AdminSettings() {
             disabled
             style={{ background: '#f7fafc', cursor: 'not-allowed' }}
           />
-          <small style={{ color: '#718096', fontSize: '12px' }}>Email cannot be changed from this interface</small>
+          <small style={{ color: '#718096', fontSize: '12px' }}>{t('email_cant_be_changed')}</small>
         </div>
 
         <div className="form-group">
-          <label>BIO / SIGNATURE</label>
+          <label>{t('bio_signature')}</label>
           <textarea 
             rows={3}
             value={settings.bio}
@@ -256,20 +258,20 @@ export default function AdminSettings() {
           onClick={saveSettings}
           disabled={saving}
         >
-          {saving ? 'Saving...' : 'Save Changes'}
+          {saving ? t('saving') + '...' : t('save_changes')}
         </button>
       </div>
 
       <div style={{ marginBottom: '32px' }}>
         <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1a202c', marginBottom: '24px' }}>
-          Interface Preferences
+          {t('interface_preferences')}
         </h3>
 
         <div style={{ marginBottom: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <div>
-              <div style={{ fontWeight: '500', color: '#1a202c' }}>Automatic Theme Transition</div>
-              <div style={{ fontSize: '14px', color: '#718096' }}>Sync dashboard appearance with your OS settings</div>
+              <div style={{ fontWeight: '500', color: '#1a202c' }}>{t('automatic_theme_transition')}</div>
+              <div style={{ fontSize: '14px', color: '#718096' }}>{t('automatic_theme_desc')}</div>
             </div>
             <label style={{ position: 'relative', display: 'inline-block', width: '44px', height: '24px' }}>
               <input 
@@ -308,8 +310,8 @@ export default function AdminSettings() {
         <div style={{ marginBottom: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <div>
-              <div style={{ fontWeight: '500', color: '#1a202c' }}>Real-time Analytics Overlay</div>
-              <div style={{ fontSize: '14px', color: '#718096' }}>Enable live streaming of user activity in header</div>
+              <div style={{ fontWeight: '500', color: '#1a202c' }}>{t('realtime_analytics_overlay')}</div>
+              <div style={{ fontSize: '14px', color: '#718096' }}>{t('realtime_analytics_desc')}</div>
             </div>
             <label style={{ position: 'relative', display: 'inline-block', width: '44px', height: '24px' }}>
               <input 
@@ -359,7 +361,7 @@ export default function AdminSettings() {
             </select>
           </div>
           <div className="form-group">
-            <label>DEFAULT API VERSION</label>
+            <label>{t('default_api_version')}</label>
             <select 
               value={settings.apiVersion}
               onChange={(e) => handleSettingChange('apiVersion', e.target.value)}
@@ -376,7 +378,7 @@ export default function AdminSettings() {
           onClick={saveSettings}
           disabled={saving}
         >
-          {saving ? 'Saving...' : 'Save Preferences'}
+          {saving ? t('saving') + '...' : t('save_preferences')}
         </button>
       </div>
 
@@ -387,16 +389,16 @@ export default function AdminSettings() {
         padding: '16px',
         marginTop: '32px'
       }}>
-        <h4 style={{ color: '#742a2a', marginBottom: '8px' }}>Danger Zone</h4>
+        <h4 style={{ color: '#742a2a', marginBottom: '8px' }}>{t('danger_zone')}</h4>
         <p style={{ color: '#742a2a', fontSize: '14px', marginBottom: '16px' }}>
-          Irreversible actions regarding your administrative environment.
+          {t('danger_zone_desc')}
         </p>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ fontWeight: '500', color: '#742a2a' }}>Archive Project Environment</div>
-            <div style={{ fontSize: '14px', color: '#742a2a' }}>This will move all data to cold storage.</div>
+            <div style={{ fontWeight: '500', color: '#742a2a' }}>{t('archive_project')}</div>
+            <div style={{ fontSize: '14px', color: '#742a2a' }}>{t('archive_project_desc')}</div>
           </div>
-          <button className="btn btn-danger">Archive</button>
+          <button className="btn btn-danger">{t('archive')}</button>
         </div>
       </div>
     </div>
@@ -405,15 +407,15 @@ export default function AdminSettings() {
   const renderAppearance = () => (
     <div>
       <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1a202c', marginBottom: '8px' }}>
-        Appearance
+        {t('appearance')}
       </h3>
       <p style={{ color: '#718096', fontSize: '14px', marginBottom: '32px' }}>
-        Customize the look and feel of your workspace.
+        {t('customize_workspace')}
       </p>
 
       <div style={{ marginBottom: '32px' }}>
         <h4 style={{ fontSize: '16px', fontWeight: '500', color: '#1a202c', marginBottom: '16px' }}>
-          INTERFACE THEME
+          {t('interface_theme')}
         </h4>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
           <div style={{ 
@@ -436,7 +438,7 @@ export default function AdminSettings() {
             }}>
               Light Preview
             </div>
-            <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: '500' }}>Light Mode</div>
+            <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: '500' }}>{t('light_mode')}</div>
             <div style={{ 
               position: 'absolute',
               top: '8px',
@@ -475,17 +477,17 @@ export default function AdminSettings() {
             }}>
               Dark Preview
             </div>
-            <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: '500' }}>Dark Mode</div>
+            <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: '500' }}>{t('dark_mode')}</div>
           </div>
         </div>
       </div>
 
       <div style={{ marginBottom: '32px' }}>
         <h4 style={{ fontSize: '16px', fontWeight: '500', color: '#1a202c', marginBottom: '16px' }}>
-          Accent Color
+          {t('accent_color')}
         </h4>
         <p style={{ fontSize: '14px', color: '#718096', marginBottom: '16px' }}>
-          The signature color for your navigation and controls.
+          {t('accent_color_desc')}
         </p>
         <div style={{ display: 'flex', gap: '12px' }}>
           {['#319795', '#3182ce', '#805ad5', '#d53f8c', '#1a202c'].map((color, index) => (
@@ -507,9 +509,9 @@ export default function AdminSettings() {
 
       <div className="form-grid">
         <div className="form-group">
-          <label>System Language</label>
+          <label>{t('system_language')}</label>
           <p style={{ fontSize: '14px', color: '#718096', marginBottom: '8px' }}>
-            Select your preferred interface language.
+            {t('preferred_lang_desc')}
           </p>
           <select>
             <option>English (United States)</option>
@@ -519,9 +521,9 @@ export default function AdminSettings() {
           </select>
         </div>
         <div className="form-group">
-          <label>Timezone</label>
+          <label>{t('timezone')}</label>
           <p style={{ fontSize: '14px', color: '#718096', marginBottom: '8px' }}>
-            Coordinate your actions with your local time.
+            {t('coordinate_time_desc')}
           </p>
           <select>
             <option>(GMT-08:00) Pacific Time (US & Canada)</option>
@@ -533,8 +535,8 @@ export default function AdminSettings() {
       </div>
 
       <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
-        <button className="btn btn-secondary">Discard changes</button>
-        <button className="btn btn-primary">Save Appearance</button>
+        <button className="btn btn-secondary">{t('discard_changes')}</button>
+        <button className="btn btn-primary">{t('save_appearance')}</button>
       </div>
     </div>
   )
@@ -542,17 +544,17 @@ export default function AdminSettings() {
   const renderNotifications = () => (
     <div>
       <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1a202c', marginBottom: '8px' }}>
-        Communication Channels
+        {t('communication_channels')}
       </h3>
       <p style={{ color: '#718096', fontSize: '14px', marginBottom: '32px' }}>
-        Master switches for global delivery platforms.
+        {t('master_switches_desc')}
       </p>
 
       <div style={{ marginBottom: '32px' }}>
         {[
-          { key: 'emailNotifications', title: 'Email Notifications', desc: 'Receive summary and detail reports via email.', icon: '📧' },
-          { key: 'pushNotifications', title: 'Push Notifications', desc: 'Desktop and mobile browser alerts.', icon: '📱' },
-          { key: 'smsNotifications', title: 'SMS Notifications', desc: 'Direct messages for critical system failures.', icon: '💬' }
+          { key: 'emailNotifications', title: t('email_notifications_label'), desc: t('email_notif_desc'), icon: '📧' },
+          { key: 'pushNotifications', title: t('push_notifications_label'), desc: t('push_notif_desc'), icon: '📱' },
+          { key: 'smsNotifications', title: t('sms_notifications_label'), desc: t('sms_notif_desc'), icon: '💬' }
         ].map((item) => (
           <div key={item.key} style={{ 
             display: 'flex', 
@@ -604,24 +606,24 @@ export default function AdminSettings() {
       </div>
 
       <h4 style={{ fontSize: '16px', fontWeight: '500', color: '#1a202c', marginBottom: '16px' }}>
-        Preference Details
+        {t('preference_details')}
       </h4>
       <p style={{ fontSize: '14px', color: '#718096', marginBottom: '24px' }}>
-        Granular control over specific event triggers.
+        {t('granular_control_desc')}
       </p>
 
       {[
-        { section: 'USER ACTIVITY', items: [
-          { key: 'newUserAlerts', title: 'New user alerts', desc: 'Notify when a new administrator joins the team.' }
+        { section: t('user_activity_section'), items: [
+          { key: 'newUserAlerts', title: t('new_user_alerts'), desc: t('new_user_alerts_desc') }
         ]},
-        { section: 'FINANCIAL UPDATES', items: [
-          { key: 'paymentUpdates', title: 'Payment updates', desc: 'Transaction success, failure, and billing cycle changes.' }
+        { section: t('financial_updates_section'), items: [
+          { key: 'paymentUpdates', title: t('payment_updates'), desc: t('payment_updates_desc') }
         ]},
-        { section: 'PLATFORM GROWTH', items: [
-          { key: 'marketingMessages', title: 'Marketing messages', desc: 'Occasional updates about new features and ecosystem news.' }
+        { section: t('platform_growth_section'), items: [
+          { key: 'marketingMessages', title: t('marketing_messages'), desc: t('marketing_messages_desc') }
         ]},
-        { section: 'SECURITY & CORE', items: [
-          { key: 'systemUpdates', title: 'System updates', desc: 'Critical maintenance schedules and downtime alerts.' }
+        { section: t('security_core_section'), items: [
+          { key: 'systemUpdates', title: t('system_updates'), desc: t('system_updates_desc') }
         ]}
       ].map((section) => (
         <div key={section.section} style={{ marginBottom: '24px' }}>
@@ -682,8 +684,8 @@ export default function AdminSettings() {
       ))}
 
       <div style={{ display: 'flex', gap: '12px', marginTop: '32px' }}>
-        <button className="btn btn-secondary">Discard Changes</button>
-        <button className="btn btn-primary">Save Preferences</button>
+        <button className="btn btn-secondary">{t('discard_changes')}</button>
+        <button className="btn btn-primary">{t('save_preferences')}</button>
       </div>
     </div>
   )
@@ -694,7 +696,7 @@ export default function AdminSettings() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <div>
             <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1a202c', marginBottom: '8px' }}>
-              Change Password
+              {t('change_password')}
             </h3>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -735,7 +737,7 @@ export default function AdminSettings() {
 
         <div className="form-grid">
           <div className="form-group">
-            <label>CURRENT PASSWORD</label>
+            <label>{t('current_password')}</label>
             <input 
               type="password" 
               placeholder="••••••••••" 
@@ -745,7 +747,7 @@ export default function AdminSettings() {
           </div>
           <div></div>
           <div className="form-group">
-            <label>NEW PASSWORD</label>
+            <label>{t('new_password_label')}</label>
             <input 
               type="password" 
               placeholder="••••••••••" 
@@ -754,7 +756,7 @@ export default function AdminSettings() {
             />
           </div>
           <div className="form-group">
-            <label>CONFIRM NEW PASSWORD</label>
+            <label>{t('confirm_new_password')}</label>
             <input 
               type="password" 
               placeholder="••••••••••" 
@@ -769,16 +771,16 @@ export default function AdminSettings() {
           onClick={changePassword}
           disabled={saving || !settings.currentPassword || !settings.newPassword || !settings.confirmPassword}
         >
-          {saving ? 'Updating...' : 'Update Password'}
+          {saving ? t('updating') + '...' : t('update_password')}
         </button>
       </div>
 
       <div style={{ marginBottom: '32px' }}>
         <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1a202c', marginBottom: '8px' }}>
-          Two-Factor Auth
+          {t('two_factor_auth_title')}
         </h3>
         <p style={{ color: '#718096', fontSize: '14px', marginBottom: '24px' }}>
-          Add an extra layer of security to your account by requiring more than just a password to log in.
+          {t('two_factor_auth_desc')}
         </p>
 
         <div style={{ 
@@ -792,9 +794,9 @@ export default function AdminSettings() {
         }}>
           <span style={{ fontSize: '24px' }}>📱</span>
           <div>
-            <div style={{ fontWeight: '500', color: '#1a202c' }}>Authenticator App</div>
+            <div style={{ fontWeight: '500', color: '#1a202c' }}>{t('authenticator_app')}</div>
             <div style={{ fontSize: '14px', color: settings.twoFactorAuth ? '#38a169' : '#e53e3e' }}>
-              {settings.twoFactorAuth ? 'Configured and Active' : 'Not Configured'}
+              {settings.twoFactorAuth ? t('configured_active') : t('not_configured')}
             </div>
           </div>
         </div>
@@ -803,14 +805,14 @@ export default function AdminSettings() {
       <div style={{ marginBottom: '32px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1a202c' }}>
-            Active Sessions
+            {t('sessions_title')}
           </h3>
           <button 
             className="btn btn-danger" 
             style={{ fontSize: '12px', padding: '6px 12px' }}
             onClick={terminateAllSessions}
           >
-            TERMINATE ALL SESSIONS
+            {t('terminate_all_sessions')}
           </button>
         </div>
 
@@ -839,7 +841,7 @@ export default function AdminSettings() {
                   {session.location} • {session.ip_address}
                 </div>
                 <div style={{ fontSize: '12px', color: '#718096' }}>
-                  Last active: {new Date(session.last_activity).toLocaleString()}
+                  {t('last_active')}: {new Date(session.last_activity).toLocaleString()}
                 </div>
               </div>
               {session.is_current ? (
@@ -859,7 +861,7 @@ export default function AdminSettings() {
                   style={{ fontSize: '12px', padding: '4px 8px' }}
                   onClick={() => terminateSession(session.id)}
                 >
-                  Terminate
+                  {t('terminate')}
                 </button>
               )}
             </div>
@@ -871,7 +873,7 @@ export default function AdminSettings() {
               background: '#f7fafc',
               borderRadius: '8px'
             }}>
-              No active sessions found
+              {t('no_active_sessions')}
             </div>
           )}
         </div>
@@ -880,18 +882,18 @@ export default function AdminSettings() {
   )
 
   if (loading) {
-    return <div className="loading">Loading settings...</div>
+    return <div className="loading">{t('loading')}...</div>
   }
 
   return (
-    <div>
+    <div style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#1a202c', marginBottom: '8px' }}>
-          System Settings
+          {t('settings_title')}
         </h1>
         <p style={{ color: '#718096' }}>
-          Manage your organizational identity, security protocols, and integration ecosystem from a centralized command center.
+          {t('settings_desc')}
         </p>
       </div>
 
@@ -931,7 +933,7 @@ export default function AdminSettings() {
                   marginBottom: '4px',
                   fontSize: '14px',
                   fontWeight: '500',
-                  textAlign: 'left',
+                  textAlign: isRTL ? 'right' : 'left',
                   transition: 'all 0.2s ease'
                 }}
               >
@@ -945,10 +947,10 @@ export default function AdminSettings() {
         {/* Settings Content */}
         <div className="content-card">
           <div className="card-content">
-            {activeTab === 'Profile Details' && renderProfileDetails()}
-            {activeTab === 'Appearance' && renderAppearance()}
-            {activeTab === 'Notifications' && renderNotifications()}
-            {activeTab === 'Security & Privacy' && renderSecurityPrivacy()}
+            {activeTab === t('profile_details') && renderProfileDetails()}
+            {activeTab === t('appearance') && renderAppearance()}
+            {activeTab === t('notifications') && renderNotifications()}
+            {activeTab === t('security_privacy') && renderSecurityPrivacy()}
           </div>
         </div>
       </div>
