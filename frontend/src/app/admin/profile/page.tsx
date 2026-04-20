@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
-import { useLanguage } from '../../i18n/LanguageContext'
+import { useLanguage } from '../../../i18n/LanguageContext'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
