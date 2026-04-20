@@ -22,7 +22,7 @@ import settingsIconActive from '../../assets/sidebar-icons/settings-active.svg'
 
 //========================
 import arrowIcon from '../../assets/icons/arrow-square-right.svg'
-
+import arrowDown from '../../assets/icons/arrow-down.svg'
 
 //header icons
 import notification from '../../assets/icons/notification.svg'
@@ -59,10 +59,23 @@ export default function AdminLayout({
   const [notifications, setNotifications] = useState([])
   const [loadingNotifications, setLoadingNotifications] = useState(false)
   const [isMobile, setIsMobile] = useState(false);
-
-
+  // const [isExpanded, setIsExpanded] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const router = useRouter()
   const pathname = usePathname()
+
+  const toggleSearch = () => {
+    if (!isOpen) {
+      setIsOpen(true);
+    } else if (searchQuery === '') {
+      // لو الفيلد مفتوح وفاضي وضغطت تاني يقفل
+      setIsOpen(false);
+      setShowSearchResults(false);
+    } else {
+      // لو فيه نص، الزرار يشتغل كبحث عادي
+      handleSearchSubmit();
+    }
+  };
 
   //sidebar items
   const navItems = [
@@ -312,7 +325,7 @@ export default function AdminLayout({
               width={20}
               height={20}
               className={`
-   block  w-4 h-4  transition-transform duration-300 ease-in-out  ${sidebarOpen ? 'rotate-180' : 'rotate-0'}`}
+                      block  w-4 h-4  transition-transform duration-300 ease-in-out  ${sidebarOpen ? 'rotate-180' : 'rotate-0'}`}
             />
           </button>
         </div>
@@ -399,54 +412,62 @@ export default function AdminLayout({
               </div>
             </button>
             {/* Search */}
-            <div className="relative left-3.5">
-              <div className="flex items-center gap-2 p-3.5 ">
-                <input
-                  type="text"
-                  placeholder="Search here... (Ctrl+K)"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value)
-                    if (e.target.value.length >= 2) {
-                      handleSearch(e.target.value)
-                    } else {
-                      setShowSearchResults(false)
-                    }
-                  }}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearchSubmit()}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Escape') {
-                      setSearchQuery('')
-                      setShowSearchResults(false)
-                    }
-                  }}
-                  className="px-3 py-2 border border-slate-200 rounded-full text-sm w-[250px] focus:outline-none focus:ring-teal-500/20 focus:border-[#4d8680] placeholder:text-sm placeholder:text-[#a9a9a9] placeholder:font-light" />
-                <button
-                  className="absolute right-4 header-btn "
-                  onClick={handleSearchSubmit}
-                  title="Search"
-                >
-                  <Image src={search} alt="Search" className="search-icon" />
-                </button>
+            <div className="relative">
+              <div className="flex items-center justify-end overflow-hidden">
+                <div className={`relative flex items-center transition-all duration-500 ease-in-out ${isOpen ? 'w-[280px] opacity-100' : 'w-10 opacity-100'}`}>
+                  <input
+                    type="text"
+                    placeholder="Search here... (Ctrl+K)"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      if (e.target.value.length >= 2) {
+                        handleSearch(e.target.value);
+                      } else {
+                        setShowSearchResults(false);
+                      }
+                    }}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearchSubmit()}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        setSearchQuery('');
+                        setShowSearchResults(false);
+                        setIsOpen(false);
+                      }
+                    }}
+                    className={`px-4 py-2 border border-slate-200 rounded-full text-sm w-full focus:outline-none focus:ring-teal-500/20 focus:border-[#4d8680] placeholder:text-sm placeholder:text-[#a9a9a9] placeholder:font-light transition-all duration-500 ${isOpen ? 'pr-12 opacity-100' : 'opacity-0 pointer-events-none'
+                      }`}
+                  />
+
+                  <button
+                    title="Search"
+                    className={`absolute  flex items-center justify-center rounded-full transition-all duration-300  ${isOpen ? 'bg-[#4d8680] right-1 w-8 h-8' : 'bg-[#f7fafc] hover:bg-slate-50  w-9 h-9 right-0'
+                      }`}
+                    onClick={toggleSearch}
+                  >
+                    <Image
+                      src={search}
+                      alt="Search"
+                      className={`w-5 h-5 transition-all ${isOpen ? 'brightness-0 invert' : ''}`}
+                    />
+                  </button>
+                </div>
               </div>
 
               {/* Search Results Dropdown */}
-              {showSearchResults && (
-                <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg z-[1000] mt-2 max-h-[300px] overflow-y-auto">
+              {showSearchResults && isOpen && (
+                <div className="absolute top-full right-4 left-auto bg-white border border-slate-200 rounded-lg shadow-lg z-[1000] mt-2 w-[280px] max-h-[300px] overflow-y-auto">
                   {searchResults.length > 0 ? (
                     <>
                       <div className="px-4 py-3 text-sm font-semibold border-b border-slate-50">
                         Search Results
                       </div>
-                      {searchResults.map((result: any, index) => (
+                      {searchResults.map((result: any, index: number) => (
                         <div
                           key={index}
                           className="flex items-center gap-3 px-4 py-3 transition-colors border-b cursor-pointer border-slate-50 hover:bg-slate-50"
                           onClick={() => navigateToSearchResult(result)}
                         >
-                          {/* <span className="text-base">
-                            {result.icon}
-                          </span> */}
                           <div className="flex-1">
                             <div className="text-sm font-medium text-slate-900">
                               {result.title}
@@ -455,9 +476,6 @@ export default function AdminLayout({
                               {result.subtitle}
                             </div>
                           </div>
-                          {/* <div className="text-[11px] text-teal-600 uppercase font-extrabold">
-                            {result.type}
-                          </div> */}
                         </div>
                       ))}
                     </>
@@ -560,10 +578,10 @@ export default function AdminLayout({
             <div className="relative">
               {/* User Toggle Button */}
               <div
-                className="flex items-center gap-2 cursor-pointer group"
+                className="flex items-center gap-2 cursor-pointer group bg-[#f7fafc] p-1.5 px-2 rounded-full"
                 onClick={() => setShowUserMenu(!showUserMenu)}
               >
-                <div className="flex items-center justify-center w-8 h-8 overflow-hidden text-sm font-semibold text-white border rounded-full bg-slate-900 border-slate-200">
+                <div className="flex items-center justify-center w-7 h-7 overflow-hidden text-sm font-medium border rounded-full bg-[#f7fafc] ">
                   {user?.profile_image ? (
                     <img
                       src={user.profile_image.startsWith('http') ? user.profile_image : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}${user.profile_image}`}
@@ -571,14 +589,18 @@ export default function AdminLayout({
                       className="object-cover w-full h-full"
                     />
                   ) : (
-                    <span>{user?.username?.charAt(0)?.toUpperCase() || 'A'}</span>
+                    <span className='text-black'>{user?.username?.charAt(0)?.toUpperCase() || 'A'}</span>
                   )}
                 </div>
-                <span className="text-sm font-medium transition-colors text-slate-700 group-hover:text-slate-900">
+                <div>
+                   <span className="text-xs font-medium transition-colors text-slate-700 group-hover:text-slate-900 leading-[100%]">
                   {user?.username || 'Admin'}
                 </span>
+                <p className="text-[8px] font-light text-[#656769] leading-[100%]">{user?.email || 'admin@example.com'}</p>
+                </div>
+               
                 <span className={`text-[10px] text-slate-400 transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`}>
-                  ▼
+                  <Image src={arrowDown} alt='chevron down' width={12} height={12} />
                 </span>
               </div>
 
@@ -593,7 +615,7 @@ export default function AdminLayout({
 
                   {/* Menu Actions */}
                   <div className="py-1">
-                    <button
+                    {/* <button
                       className="w-full px-4 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 flex items-center gap-2 transition-colors"
                       onClick={() => {
                         setShowUserMenu(false);
@@ -601,7 +623,7 @@ export default function AdminLayout({
                       }}
                     >
                       <Image src={settingsIcon} alt='settings' /> Settings
-                    </button>
+                    </button> */}
 
                     <button
                       className="w-full px-4 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 flex items-center gap-2 transition-colors"
@@ -639,15 +661,7 @@ export default function AdminLayout({
 
       {/* Click outside to close dropdowns */}
       {(showNotifications || showUserMenu || showSearchResults) && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 999
-          }}
+        <div className="fixed inset-0 z-[500]"
           onClick={() => {
             setShowNotifications(false)
             setShowUserMenu(false)
