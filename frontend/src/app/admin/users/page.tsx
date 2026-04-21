@@ -12,6 +12,7 @@ import wallet from '../../../assets/icons/wallet-money.svg'
 
 
 import StatGroup from '../../components/StateCard'
+import DataTable, { Column } from '../../components/GenericTable'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export default function AdminUsers() {
@@ -23,6 +24,29 @@ export default function AdminUsers() {
   const [currentPage, setCurrentPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState('')
   const router = useRouter()
+
+  const columns: Column[] = [
+    { key: 'customer', label: 'Customer', type: 'user' },
+    { key: 'contact', label: 'Contact Details', type: 'userEmail' }, // استخدمنا userEmail عشان فيها سطرين
+    { key: 'plan', label: 'Plan', type: 'plan' },
+    { key: 'status', label: 'Status', type: 'statusِActive' },
+    { key: 'lastActive', label: 'Last Active', type: 'lastActive' },
+    { key: 'actions', label: 'Actions', type: 'action' },
+  ];
+
+const data = [
+    {
+      id: 1,
+      customer: 'Jane Doe',
+      contact: 'alex.t@vanguard.com', // القيمة الأساسية (الاسم في الكود الأصلي)
+      email: '+1 (555) 012-3456',    // القيمة الفرعية
+      plan: 'Enterprise',
+      status: 'Active',
+      lastActive: '2 hours ago',
+    },
+    // كرري البيانات حسب الحاجة...
+  ];
+
 
   useEffect(() => {
     fetchUsers()
@@ -160,130 +184,31 @@ export default function AdminUsers() {
       </div> */}
 
       {/* Users Table */}
-      <div className="overflow-hidden bg-white border border-gray-200 rounded-xl">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="m-0 text-xl font-semibold text-gray-900">
-            {t('all_users_title')}
-          </h2>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-slate-50">
-                {['user_header', 'contact_header', 'role_status_header', 'security_header', 'joined_header', 'actions_header'].map((header) => (
-                  <th key={header} className="px-6 py-4 text-xs font-semibold tracking-wider text-gray-500 uppercase text-start">
-                    {t(header)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr
-                  key={user.id}
-                  onClick={() => handleUserClick(user.id)}
-                  className="transition-colors border-b cursor-pointer border-slate-50 hover:bg-slate-50"
-                >
-                  <td className="px-6 py-5">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center w-12 h-12 text-base font-bold text-white bg-gray-900 rounded-full">
-                        {user.username.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="text-base font-semibold text-gray-900">
-                          {user.username}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {user.job_title || t('platform_user')}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-5">
-                    <div>
-                      <div className="mb-1 text-sm text-gray-700">
-                        {user.email}
-                      </div>
-                      <div className="text-gray-500 text-[13px]">
-                        {user.phone || t('no_phone')}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-5">
-                    <div className="flex flex-col gap-2">
-                      <span className={`px-2 py-1 rounded-xl text-[12px] font-medium capitalize w-fit ${user.role === 'admin' ? 'bg-red-100 text-red-600' : 'bg-teal-50 text-teal-600'
-                        }`}>
-                        {user.role}
-                      </span>
-                      <span className={`px-2 py-1 rounded-xl text-[12px] font-medium capitalize w-fit ${user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                        {t(user.status)}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-5">
-                    <span className={`px-2 py-1 rounded-xl text-[12px] font-medium w-fit ${user.two_factor_enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                      {user.two_factor_enabled ? '🔐 2FA' : '🔓 ' + t('no_2fa')}
-                    </span>
-                  </td>
-                  <td className="px-6 py-5">
-                    <div className="text-sm text-gray-500">
-                      {new Date(user.created_at).toLocaleDateString()}
-                    </div>
-                  </td>
-                  <td className="px-6 py-5">
-                    {user.status === 'active' ? (
-                      <button
-                        onClick={(e) => updateUserStatus(user.id, 'suspended', e)}
-                        className="bg-red-100 text-red-600 border-none px-3 py-1.5 rounded-md text-xs cursor-pointer font-medium hover:bg-red-200 transition-colors"
-                      >
-                        {t('suspend')}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={(e) => updateUserStatus(user.id, 'active', e)}
-                        className="bg-green-100 text-green-800 border-none px-3 py-1.5 rounded-md text-xs cursor-pointer font-medium hover:bg-green-200 transition-colors"
-                      >
-                        {t('activate')}
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-between px-6 py-5 border-t border-gray-200">
-          <div className="text-sm text-gray-500">
-            {t('showing')} {((currentPage - 1) * 15) + 1} {t('to')} {Math.min(currentPage * 15, pagination?.total || 0)} {t('of')} {pagination?.total || 0} {t('users')}
+<DataTable
+        title="All Customers"
+        description="Reviewing the latest 10 activities"
+        columns={columns}
+        data={Array(4).fill(data[0])} // مثال لتكرار الصف 4 مرات كما في الصورة
+        filterSection={
+          <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">
+            <span className="text-lg">≡</span> Filter
+          </button>
+        }
+        footerSection={
+          <div className="flex items-center justify-between text-sm text-gray-500">
+            <span>Showing 1 to 4 of 240 results</span>
+            <div className="flex gap-2">
+               <button className="px-3 py-1 border rounded hover:bg-gray-50">{'<'}</button>
+               <button className="px-3 py-1 text-white bg-[#488981] rounded">1</button>
+               <button className="px-3 py-1 border rounded hover:bg-gray-50">2</button>
+               <button className="px-3 py-1 border rounded hover:bg-gray-50">3</button>
+               <button className="px-3 py-1 border rounded hover:bg-gray-50">{'>'}</button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className={`px-4 py-2 border-none rounded-md text-sm font-medium transition-colors ${currentPage === 1 ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-teal-600 text-white cursor-pointer hover:bg-teal-700'
-                }`}
-            >
-              {t('previous')}
-            </button>
-            <span className="flex items-center px-4 py-2 text-sm text-gray-700">
-              {t('page_count')} {currentPage} {t('of')} {pagination?.pages || 1}
-            </span>
-            <button
-              onClick={() => setCurrentPage(Math.min(pagination?.pages || 1, currentPage + 1))}
-              disabled={currentPage === (pagination?.pages || 1)}
-              className={`px-4 py-2 border-none rounded-md text-sm font-medium transition-colors ${currentPage === (pagination?.pages || 1) ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-teal-600 text-white cursor-pointer hover:bg-teal-700'
-                }`}
-            >
-              {t('next')}
-            </button>
-          </div>
-        </div>
-      </div>
+        }
+      />
+      
+     
     </div>
   )
 }
