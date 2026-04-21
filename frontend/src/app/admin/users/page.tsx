@@ -5,6 +5,13 @@ import { useRouter } from 'next/navigation'
 import axios from 'axios'
 import { useLanguage } from '../../../i18n/LanguageContext'
 
+import userOctagon from '../../../assets/icons/user-octagon.svg'
+import crown from '../../../assets/icons/crown.svg'
+import chart from '../../../assets/icons/chart-2.svg'
+import wallet from '../../../assets/icons/wallet-money.svg'
+
+
+import StatGroup from '../../components/StateCard'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export default function AdminUsers() {
@@ -25,12 +32,12 @@ export default function AdminUsers() {
     try {
       const token = localStorage.getItem('token')
       const headers = { Authorization: `Bearer ${token}` }
-      
+
       const params = new URLSearchParams()
       params.append('page', currentPage.toString())
       params.append('limit', '15')
       if (searchTerm) params.append('search', searchTerm)
-      
+
       const response = await axios.get(`${API_URL}/api/admin/users?${params}`, { headers })
       setUsers(response.data.users || [])
       setStatistics(response.data.statistics || {})
@@ -47,14 +54,14 @@ export default function AdminUsers() {
   }
 
   const updateUserStatus = async (userId: number, status: string, event: React.MouseEvent) => {
-    event.stopPropagation() // Prevent navigation when clicking status button
-    
+    event.stopPropagation()
+
     try {
       const token = localStorage.getItem('token')
       const headers = { Authorization: `Bearer ${token}` }
-      
+
       await axios.put(`${API_URL}/api/admin/users/${userId}/status`, { status }, { headers })
-      fetchUsers() // Refresh the list
+      fetchUsers()
     } catch (error) {
       console.error('Failed to update user status:', error)
     }
@@ -62,282 +69,186 @@ export default function AdminUsers() {
 
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '400px',
-        fontSize: '18px',
-        color: '#718096'
-      }}>
+      <div className="flex items-center justify-center h-screen">
         {t('loading')}...
       </div>
     )
   }
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', direction: isRTL ? 'rtl' : 'ltr' }}>
+    <div className={`mx-auto ${isRTL ? 'rtl' : 'ltr'}`}>
       {/* Header */}
-      <div style={{ marginBottom: '32px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <div>
-            <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#1a202c', margin: 0, marginBottom: '8px' }}>
-              {t('users_management_title')}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className='space-y-1'>
+            <h1 className="m-0 mb-2 text-2xl font-medium text-gray-900 leading-[100%]">
+              Customers
             </h1>
-            <p style={{ color: '#718096', fontSize: '16px', margin: 0 }}>
-              {t('users_management_desc')}
-            </p>
+            <p className="m-0 text-base text-[#7d7d7d] font-light leding-[100%]">
+              Manage, analyze, and support your global customer base from a single ledger.            </p>
           </div>
-          <div style={{ 
-            background: '#e6fffa', 
-            color: '#319795', 
-            padding: '12px 20px', 
-            borderRadius: '12px', 
-            fontSize: '14px', 
-            fontWeight: '600',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <span>👥</span>
-            {pagination?.total || users.length} {t('total_users')}
+          <div >
+            <button className="flex items-center gap-2 px-5 py-2.5 text-base font-medium rounded-full bg-gradient-to-r from-[#488981] to-[#51D1B8] text-white">
+              add user
+            </button>
           </div>
         </div>
 
         {/* Search and Filters */}
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+        {/* <div className="flex items-center gap-4">
           <input
             type="text"
             placeholder={t('search_users_placeholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              flex: 1,
-              padding: '12px 16px',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              fontSize: '14px',
-              background: 'white'
-            }}
+            className="flex-1 px-4 py-3 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-          <button 
+          <button
             onClick={() => fetchUsers()}
-            style={{
-              padding: '12px 20px',
-              background: '#319795',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}
+            className="px-5 py-3 text-sm font-medium text-white transition-colors bg-teal-600 border-none rounded-lg cursor-pointer hover:bg-teal-700"
           >
             🔍 {t('search')}
           </button>
-        </div>
+        </div> */}
+
+        {/* Stats Grid */}
+        <StatGroup
+          items={[
+            {
+              icon: userOctagon,
+              label: t('total_customers'),
+              // ندمج الرقم مع النسبة في الـ value مباشرة
+              value: `12,842`
+            },
+            {
+              icon: crown,
+              label: t('active_subs'),
+              value: "12,842"
+            },
+            {
+              icon: wallet,
+              label: t('new_this_month'),
+              value: "12,842"
+            },
+            {
+              icon: chart,
+              label: t('churn_rate'),
+              value: `2.4%`
+            },
+          ]}
+        />
+
       </div>
 
       {/* Statistics Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }}>
-        <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-          <div style={{ fontSize: '28px', fontWeight: '700', color: '#1a202c', marginBottom: '8px' }}>
-            {statistics?.seatUtilization || 0}%
+      {/* <div className="grid grid-cols-1 gap-5 mb-8 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { label: t('seat_utilization'), value: `${statistics?.seatUtilization || 0}%` },
+          { label: t('two_factor_enabled_label'), value: statistics?.twoFactorEnabled || 0 },
+          { label: t('recent_activity'), value: `${statistics?.avgActivation || 0}%` },
+          { label: t('new_this_month'), value: statistics?.recentInvites || 0 }
+        ].map((stat, idx) => (
+          <div key={idx} className="p-6 bg-white border border-gray-200 rounded-xl">
+            <div className="text-[28px] font-bold text-gray-900 mb-2">
+              {stat.value}
+            </div>
+            <div className="text-sm tracking-wider text-gray-500 uppercase">
+              {stat.label}
+            </div>
           </div>
-          <div style={{ color: '#718096', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            {t('seat_utilization')}
-          </div>
-        </div>
-        <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-          <div style={{ fontSize: '28px', fontWeight: '700', color: '#1a202c', marginBottom: '8px' }}>
-            {statistics?.twoFactorEnabled || 0}
-          </div>
-          <div style={{ color: '#718096', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            {t('two_factor_enabled_label')}
-          </div>
-        </div>
-        <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-          <div style={{ fontSize: '28px', fontWeight: '700', color: '#1a202c', marginBottom: '8px' }}>
-            {statistics?.avgActivation || 0}%
-          </div>
-          <div style={{ color: '#718096', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            {t('recent_activity')}
-          </div>
-        </div>
-        <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-          <div style={{ fontSize: '28px', fontWeight: '700', color: '#1a202c', marginBottom: '8px' }}>
-            {statistics?.recentInvites || 0}
-          </div>
-          <div style={{ color: '#718096', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            {t('new_this_month')}
-          </div>
-        </div>
-      </div>
+        ))}
+      </div> */}
 
       {/* Users Table */}
-      <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-        <div style={{ padding: '24px', borderBottom: '1px solid #e2e8f0' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#1a202c', margin: 0 }}>
+      <div className="overflow-hidden bg-white border border-gray-200 rounded-xl">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="m-0 text-xl font-semibold text-gray-900">
             {t('all_users_title')}
           </h2>
         </div>
 
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
             <thead>
-              <tr style={{ background: '#f8fafc' }}>
-                <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  {t('user_header')}
-                </th>
-                <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  {t('contact_header')}
-                </th>
-                <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  {t('role_status_header')}
-                </th>
-                <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  {t('security_header')}
-                </th>
-                <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  {t('joined_header')}
-                </th>
-                <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  {t('actions_header')}
-                </th>
+              <tr className="bg-slate-50">
+                {['user_header', 'contact_header', 'role_status_header', 'security_header', 'joined_header', 'actions_header'].map((header) => (
+                  <th key={header} className="px-6 py-4 text-xs font-semibold tracking-wider text-gray-500 uppercase text-start">
+                    {t(header)}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {users.map((user) => (
-                <tr 
+                <tr
                   key={user.id}
                   onClick={() => handleUserClick(user.id)}
-                  style={{ 
-                    cursor: 'pointer',
-                    borderBottom: '1px solid #f7fafc',
-                    transition: 'background-color 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  className="transition-colors border-b cursor-pointer border-slate-50 hover:bg-slate-50"
                 >
-                  <td style={{ padding: '20px 24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '50%',
-                        background: '#1a202c',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
-                        fontSize: '16px',
-                        fontWeight: '600'
-                      }}>
+                  <td className="px-6 py-5">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center w-12 h-12 text-base font-bold text-white bg-gray-900 rounded-full">
                         {user.username.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <div style={{ fontWeight: '600', color: '#1a202c', fontSize: '16px' }}>
+                        <div className="text-base font-semibold text-gray-900">
                           {user.username}
                         </div>
-                        <div style={{ color: '#718096', fontSize: '14px' }}>
+                        <div className="text-sm text-gray-500">
                           {user.job_title || t('platform_user')}
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td style={{ padding: '20px 24px' }}>
+                  <td className="px-6 py-5">
                     <div>
-                      <div style={{ color: '#4a5568', fontSize: '14px', marginBottom: '4px' }}>
+                      <div className="mb-1 text-sm text-gray-700">
                         {user.email}
                       </div>
-                      <div style={{ color: '#718096', fontSize: '13px' }}>
+                      <div className="text-gray-500 text-[13px]">
                         {user.phone || t('no_phone')}
                       </div>
                     </div>
                   </td>
-                  <td style={{ padding: '20px 24px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <span style={{
-                        background: user.role === 'admin' ? '#fed7d7' : '#e6fffa',
-                        color: user.role === 'admin' ? '#e53e3e' : '#319795',
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        textTransform: 'capitalize',
-                        width: 'fit-content'
-                      }}>
+                  <td className="px-6 py-5">
+                    <div className="flex flex-col gap-2">
+                      <span className={`px-2 py-1 rounded-xl text-[12px] font-medium capitalize w-fit ${user.role === 'admin' ? 'bg-red-100 text-red-600' : 'bg-teal-50 text-teal-600'
+                        }`}>
                         {user.role}
                       </span>
-                      <span style={{
-                        background: user.status === 'active' ? '#c6f6d5' : '#fed7d7',
-                        color: user.status === 'active' ? '#22543d' : '#742a2a',
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        textTransform: 'capitalize',
-                        width: 'fit-content'
-                      }}>
+                      <span className={`px-2 py-1 rounded-xl text-[12px] font-medium capitalize w-fit ${user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
                         {t(user.status)}
                       </span>
                     </div>
                   </td>
-                  <td style={{ padding: '20px 24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{
-                        background: user.two_factor_enabled ? '#c6f6d5' : '#fed7d7',
-                        color: user.two_factor_enabled ? '#22543d' : '#742a2a',
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                        fontWeight: '500'
-                      }}>
-                        {user.two_factor_enabled ? '🔐 2FA' : '🔓 ' + t('no_2fa')}
-                      </span>
-                    </div>
+                  <td className="px-6 py-5">
+                    <span className={`px-2 py-1 rounded-xl text-[12px] font-medium w-fit ${user.two_factor_enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                      {user.two_factor_enabled ? '🔐 2FA' : '🔓 ' + t('no_2fa')}
+                    </span>
                   </td>
-                  <td style={{ padding: '20px 24px' }}>
-                    <div style={{ color: '#718096', fontSize: '14px' }}>
+                  <td className="px-6 py-5">
+                    <div className="text-sm text-gray-500">
                       {new Date(user.created_at).toLocaleDateString()}
                     </div>
                   </td>
-                  <td style={{ padding: '20px 24px' }}>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      {user.status === 'active' ? (
-                        <button
-                          onClick={(e) => updateUserStatus(user.id, 'suspended', e)}
-                          style={{
-                            background: '#fed7d7',
-                            color: '#e53e3e',
-                            border: 'none',
-                            padding: '6px 12px',
-                            borderRadius: '6px',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            fontWeight: '500'
-                          }}
-                        >
-                          {t('suspend')}
-                        </button>
-                      ) : (
-                        <button
-                          onClick={(e) => updateUserStatus(user.id, 'active', e)}
-                          style={{
-                            background: '#c6f6d5',
-                            color: '#22543d',
-                            border: 'none',
-                            padding: '6px 12px',
-                            borderRadius: '6px',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            fontWeight: '500'
-                          }}
-                        >
-                          {t('activate')}
-                        </button>
-                      )}
-                    </div>
+                  <td className="px-6 py-5">
+                    {user.status === 'active' ? (
+                      <button
+                        onClick={(e) => updateUserStatus(user.id, 'suspended', e)}
+                        className="bg-red-100 text-red-600 border-none px-3 py-1.5 rounded-md text-xs cursor-pointer font-medium hover:bg-red-200 transition-colors"
+                      >
+                        {t('suspend')}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={(e) => updateUserStatus(user.id, 'active', e)}
+                        className="bg-green-100 text-green-800 border-none px-3 py-1.5 rounded-md text-xs cursor-pointer font-medium hover:bg-green-200 transition-colors"
+                      >
+                        {t('activate')}
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -346,49 +257,27 @@ export default function AdminUsers() {
         </div>
 
         {/* Pagination */}
-        <div style={{ padding: '20px 24px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ color: '#718096', fontSize: '14px' }}>
+        <div className="flex items-center justify-between px-6 py-5 border-t border-gray-200">
+          <div className="text-sm text-gray-500">
             {t('showing')} {((currentPage - 1) * 15) + 1} {t('to')} {Math.min(currentPage * 15, pagination?.total || 0)} {t('of')} {pagination?.total || 0} {t('users')}
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button 
+          <div className="flex items-center gap-2">
+            <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              style={{ 
-                background: currentPage === 1 ? '#f7fafc' : '#319795', 
-                border: 'none', 
-                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                color: currentPage === 1 ? '#cbd5e0' : 'white',
-                fontSize: '14px',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                fontWeight: '500'
-              }}
+              className={`px-4 py-2 border-none rounded-md text-sm font-medium transition-colors ${currentPage === 1 ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-teal-600 text-white cursor-pointer hover:bg-teal-700'
+                }`}
             >
               {t('previous')}
             </button>
-            <span style={{ 
-              padding: '8px 16px', 
-              color: '#4a5568', 
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center'
-            }}>
+            <span className="flex items-center px-4 py-2 text-sm text-gray-700">
               {t('page_count')} {currentPage} {t('of')} {pagination?.pages || 1}
             </span>
-            <button 
+            <button
               onClick={() => setCurrentPage(Math.min(pagination?.pages || 1, currentPage + 1))}
               disabled={currentPage === (pagination?.pages || 1)}
-              style={{ 
-                background: currentPage === (pagination?.pages || 1) ? '#f7fafc' : '#319795', 
-                border: 'none', 
-                cursor: currentPage === (pagination?.pages || 1) ? 'not-allowed' : 'pointer',
-                color: currentPage === (pagination?.pages || 1) ? '#cbd5e0' : 'white',
-                fontSize: '14px',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                fontWeight: '500'
-              }}
+              className={`px-4 py-2 border-none rounded-md text-sm font-medium transition-colors ${currentPage === (pagination?.pages || 1) ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-teal-600 text-white cursor-pointer hover:bg-teal-700'
+                }`}
             >
               {t('next')}
             </button>

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import axios from 'axios'
 import StatGroup from '../components/StateCard';
 import { useLanguage } from '../../i18n/LanguageContext'
-
+import DataTable from '../components/GenericTable';
 
 //icons import
 import Image from 'next/image'
@@ -14,6 +14,9 @@ import crown from '../../assets/icons/crown.svg'
 import chart from '../../assets/icons/chart-2.svg'
 import wallet from '../../assets/icons/wallet-money.svg'
 
+
+//filter icon
+import filterIcon from '../../assets/icons/filter.svg'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
@@ -34,6 +37,87 @@ export default function AdminDashboard() {
     amount: 'all'
   })
   const router = useRouter()
+
+  const FILTER_CONFIG = [
+    {
+      name: 'status',
+      label: 'Status',
+      options: [
+        { value: 'all', label: 'All Status' },
+        { value: 'successful', label: 'Successful' },
+        { value: 'pending', label: 'Pending' },
+        { value: 'failed', label: 'Failed' },
+      ],
+    },
+    {
+      name: 'dateRange',
+      label: 'Date Range',
+      options: [
+        { value: 'all', label: 'All Time' },
+        { value: 'today', label: 'Today' },
+        { value: 'week', label: 'This Week' },
+        { value: 'month', label: 'This Month' },
+      ],
+    },
+    {
+      name: 'amount',
+      label: 'Amount',
+      options: [
+        { value: 'all', label: 'All Amounts' },
+        { value: 'low', label: 'Under $100' },
+        { value: 'medium', label: '$100 - $1000' },
+        { value: 'high', label: 'Over $1000' },
+      ],
+    },
+  ];
+
+  const sources = [
+    { label: 'DIRECT', key: 'direct', color: 'bg-[#58A19A]', defaultValue: 45 },
+    { label: 'REFERRAL', key: 'referral', color: 'bg-[#50AED4]', defaultValue: 32 },
+    { label: 'SOCIAL', key: 'social', color: 'bg-[#51D1B8]', defaultValue: 18 },
+    { label: 'OTHER', key: 'other', color: 'bg-[#BBBBBB]', defaultValue: 5 },
+  ];
+
+ const TRANSACTION_COLUMNS: Column[] = [
+  { 
+    key: 'id', 
+    label: t('transaction_id'), 
+    type: 'text', 
+    minWidthClass: 'min-w-[150px]' 
+  },
+
+  { 
+    key: 'username', // نستخدم اسم المستخدم مباشرة
+    label: t('client'), 
+    type: 'user', 
+    minWidthClass: 'min-w-[220px]' 
+    // الـ DataTable هيدور تلقائياً على row.image و row.email
+  },
+  { 
+    key: 'transaction_date', 
+    label: t('date'), 
+    type: 'date', 
+    minWidthClass: 'min-w-[160px]' 
+  },
+  { 
+    key: 'amount', 
+    label: t('amount'), 
+    type: 'amount', // غيرناها من currency لـ amount عشان تدعم العملة الديناميكية
+    minWidthClass: 'min-w-[120px]' 
+  },
+  { 
+    key: 'status', 
+    label: t('status'), 
+    type: 'progress', // غيرناها لـ status عشان تظهر الـ Dot الخضراء والحمراء
+    minWidthClass: 'min-w-[130px]' 
+  },
+  { 
+    key: 'actions', 
+    label: t('actions'), 
+    type: 'action', 
+    widthClass: 'w-[80px]' 
+  },
+];
 
   useEffect(() => {
     fetchDashboardData()
@@ -91,8 +175,41 @@ export default function AdminDashboard() {
           amount: 450.00,
           transaction_date: '2023-10-23',
           status: 'pending'
+        },
+          {
+          id: 'TXN-902341',
+          username: 'Jane Doe',
+          email: 'jane@example.com',
+          amount: 1200.00,
+          transaction_date: '2023-10-24',
+          status: 'successful'
+        },
+        {
+          id: 'TXN-902342',
+          username: 'Marcus Smith',
+          email: 'marcus@example.com',
+          amount: 450.00,
+          transaction_date: '2023-10-23',
+          status: 'pending'
+        },
+          {
+          id: 'TXN-9023451',
+          username: 'Jane Doe',
+          email: 'jane@example.com',
+          amount: 1200.00,
+          transaction_date: '2023-10-24',
+          status: 'successful'
+        },
+        {
+          id: 'TXN-902342',
+          username: 'Marcus Smith',
+          email: 'marcus@example.com',
+          amount: 450.00,
+          transaction_date: '2023-10-23',
+          status: 'pending'
         }
-      ])
+      ]);
+      
       setMonthlyRevenue([
         { month: '2023-05', revenue: 95000, transactions: 120 },
         { month: '2023-06', revenue: 110000, transactions: 145 },
@@ -228,8 +345,9 @@ export default function AdminDashboard() {
   }
 
   // Use filtered transactions if available, otherwise use recent transactions
-  const displayTransactions = filteredTransactions.length > 0 ? filteredTransactions : recentTransactions
-
+const displayTransactions = isFilteringTransactions || filteredTransactions.length > 0 
+  ? filteredTransactions 
+  : recentTransactions;
   if (loading) {
     return <div className="loading">{t('loading')}...</div>
   }
@@ -241,7 +359,6 @@ export default function AdminDashboard() {
         <p className="font-light leadidng-[100%] text-[#7d7d7d]">Real-time performance metrics and system health.</p>
       </div>
 
-      
       {/* Stats Grid */}
       <StatGroup
         items={[
@@ -273,16 +390,16 @@ export default function AdminDashboard() {
 
       <div className='grid gap-4 lg:grid-cols-12'>
         {/* Performance Trend Chart */}
-        <div className="content-card lg:col-span-8" style={{ marginBottom: '30px' }}>
-          <div className="card-header">
-            <div>
-              <h3 className="text-xl font-semibold leading-[100%]">{t('performance_trend')}</h3>
-              <p className="leading-[100%] text-[#00000099] text-base">{t('monthly_revenue_vs_growth')}</p>
+        <div className="content-card lg:col-span-8 mb-[30px]">
+          <div className="flex items-center justify-between p-6">
+            <div className='space-y-1.5'>
+              <h3 className="text-xl font-medium leading-[100%]">{t('performance_trend')}</h3>
+              <p className="leading-[100%] text-[#00000099] text-base font-light">{t('monthly_revenue_vs_growth')}</p>
             </div>
             <select
               value={chartPeriod}
               onChange={(e) => handleChartPeriodChange(e.target.value)}
-              className="px-[8px] py-[12px] rounded-full border border-[#e2e8f0] cursor-pointer bg-[#EEEEEE] text-sm "
+              className="px-2 py-2 rounded-full border border-[#e2e8f0] cursor-pointer bg-[#EEEEEE] text-sm"
             >
               <option>{isRTL ? 'أخر 6 شهور' : 'Last 6 Months'}</option>
               <option>{isRTL ? 'أخر 12 شهر' : 'Last 12 Months'}</option>
@@ -290,608 +407,251 @@ export default function AdminDashboard() {
               <option>{isRTL ? 'هذا العام' : 'This Year'}</option>
             </select>
           </div>
-          <div className="card-content">
-            <div style={{
-              height: '350px',
-              background: '#f8fafc',
-              borderRadius: '8px',
-              display: 'flex',
-              flexDirection: 'column',
-              position: 'relative',
-              padding: '20px 20px 10px 20px'
-            }}>
+          <div className="w-full p-6 rounded-xl">
+            <div className="w-full bg-[#f8fafc] rounded-xl relative flex flex-col ">
               {monthlyRevenue.length > 0 ? (
-                <>
-                  {/* Chart Area */}
-                  <div style={{
-                    flex: 1,
-                    position: 'relative',
-                    marginBottom: '15px'
-                  }}>
-                    <svg
-                      width="100%"
-                      height="100%"
-                      viewBox="0 0 800 250"
-                      style={{ overflow: 'visible' }}
-                      preserveAspectRatio="xMidYMid meet"
-                    >
-                      {/* Grid Lines */}
-                      {[0, 1, 2, 3, 4].map(i => (
-                        <line
-                          key={i}
-                          x1="50"
-                          y1={30 + i * 40}
-                          x2="750"
-                          y2={30 + i * 40}
-                          stroke="#e2e8f0"
-                          strokeWidth="1"
-                        />
-                      ))}
-
-                      {/* Revenue Line */}
-                      <path
-                        d={(() => {
-                          const maxRevenue = Math.max(...monthlyRevenue.map(m => m.revenue));
-                          const dataToShow = (() => {
-                            switch (chartPeriod) {
-                              case 'Last 3 Months': return monthlyRevenue.slice(-3);
-                              case 'Last 6 Months': return monthlyRevenue.slice(-6);
-                              case 'Last 12 Months': return monthlyRevenue.slice(-12);
-                              case 'This Year': return monthlyRevenue;
-                              default: return monthlyRevenue.slice(-6);
-                            }
-                          })();
-
-                          const points = dataToShow.map((item, index) => {
-                            const x = 50 + (index * (700 / Math.max(dataToShow.length - 1, 1)));
-                            const y = 190 - ((item.revenue / maxRevenue) * 140);
-                            return `${x},${y}`;
-                          });
-
-                          // Create smooth curve using quadratic bezier curves
-                          if (points.length < 2) return '';
-
-                          let path = `M ${points[0]}`;
-                          for (let i = 1; i < points.length; i++) {
-                            const [x1, y1] = points[i - 1].split(',').map(Number);
-                            const [x2, y2] = points[i].split(',').map(Number);
-                            const cpx = (x1 + x2) / 2;
-                            const cpy = (y1 + y2) / 2;
-                            path += ` Q ${cpx},${y1} ${x2},${y2}`;
-                          }
-                          return path;
-                        })()}
-                        fill="none"
-                        stroke="url(#gradient)"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        style={{
-                          strokeDasharray: '1000',
-                          strokeDashoffset: '1000',
-                          animation: 'drawLine 2s ease-in-out forwards'
-                        }}
-                      />
-
-                      {/* Gradient Definition */}
-                      <defs>
-                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                          <stop offset="0%" stopColor="#319795" />
-                          <stop offset="100%" stopColor="#4fd1c7" />
-                        </linearGradient>
-                        <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" stopColor="rgba(49, 151, 149, 0.3)" />
-                          <stop offset="100%" stopColor="rgba(49, 151, 149, 0.05)" />
-                        </linearGradient>
-                      </defs>
-
-                      {/* Area under curve */}
-                      <path
-                        d={(() => {
-                          const maxRevenue = Math.max(...monthlyRevenue.map(m => m.revenue));
-                          const dataToShow = (() => {
-                            switch (chartPeriod) {
-                              case 'Last 3 Months': return monthlyRevenue.slice(-3);
-                              case 'Last 6 Months': return monthlyRevenue.slice(-6);
-                              case 'Last 12 Months': return monthlyRevenue.slice(-12);
-                              case 'This Year': return monthlyRevenue;
-                              default: return monthlyRevenue.slice(-6);
-                            }
-                          })();
-
-                          const points = dataToShow.map((item, index) => {
-                            const x = 50 + (index * (700 / Math.max(dataToShow.length - 1, 1)));
-                            const y = 190 - ((item.revenue / maxRevenue) * 140);
-                            return `${x},${y}`;
-                          });
-
-                          if (points.length < 2) return '';
-
-                          let path = `M 50,190 L ${points[0]}`;
-                          for (let i = 1; i < points.length; i++) {
-                            const [x1, y1] = points[i - 1].split(',').map(Number);
-                            const [x2, y2] = points[i].split(',').map(Number);
-                            const cpx = (x1 + x2) / 2;
-                            const cpy = (y1 + y2) / 2;
-                            path += ` Q ${cpx},${y1} ${x2},${y2}`;
-                          }
-                          path += ` L ${points[points.length - 1].split(',')[0]},190 Z`;
-                          return path;
-                        })()}
-                        fill="url(#areaGradient)"
-                      />
-
-                      {/* Data Points */}
-                      {(() => {
-                        const maxRevenue = Math.max(...monthlyRevenue.map(m => m.revenue));
-                        const dataToShow = (() => {
-                          switch (chartPeriod) {
-                            case 'Last 3 Months': return monthlyRevenue.slice(-3);
-                            case 'Last 6 Months': return monthlyRevenue.slice(-6);
-                            case 'Last 12 Months': return monthlyRevenue.slice(-12);
-                            case 'This Year': return monthlyRevenue;
-                            default: return monthlyRevenue.slice(-6);
-                          }
-                        })();
-
-                        return dataToShow.map((item, index) => {
-                          const x = 50 + (index * (700 / Math.max(dataToShow.length - 1, 1)));
-                          const y = 190 - ((item.revenue / maxRevenue) * 140);
-
-                          return (
-                            <g key={index}>
-                              <circle
-                                cx={x}
-                                cy={y}
-                                r="6"
-                                fill="#319795"
-                                stroke="white"
-                                strokeWidth="3"
-                                style={{ cursor: 'pointer' }}
-                              />
-                              {/* Tooltip on hover */}
-                              <circle
-                                cx={x}
-                                cy={y}
-                                r="15"
-                                fill="transparent"
-                                style={{ cursor: 'pointer' }}
-                                onMouseEnter={(e) => {
-                                  const tooltip = document.getElementById(`tooltip-${index}`);
-                                  if (tooltip) tooltip.style.display = 'block';
-                                }}
-                                onMouseLeave={(e) => {
-                                  const tooltip = document.getElementById(`tooltip-${index}`);
-                                  if (tooltip) tooltip.style.display = 'none';
-                                }}
-                              />
-                              <g
-                                id={`tooltip-${index}`}
-                                style={{ display: 'none' }}
-                              >
-                                <rect
-                                  x={x - 40}
-                                  y={y - 35}
-                                  width="80"
-                                  height="25"
-                                  fill="#1a202c"
-                                  rx="4"
-                                />
-                                <text
-                                  x={x}
-                                  y={y - 18}
-                                  textAnchor="middle"
-                                  fill="white"
-                                  fontSize="12"
-                                  fontWeight="500"
-                                >
-                                  ${(item.revenue / 1000).toFixed(0)}K
-                                </text>
-                              </g>
-                            </g>
-                          );
-                        });
-                      })()}
-
-                      {/* Y-axis labels */}
-                      {[0, 1, 2, 3, 4].map(i => {
-                        const maxRevenue = Math.max(...monthlyRevenue.map(m => m.revenue));
-                        const value = (maxRevenue / 4) * (4 - i);
-                        return (
-                          <text
-                            key={i}
-                            x="40"
-                            y={35 + i * 40}
-                            textAnchor="end"
-                            fontSize="12"
-                            fill="#718096"
-                          >
-                            ${(value / 1000).toFixed(0)}K
-                          </text>
-                        );
-                      })}
-                    </svg>
-                  </div>
-
-                  {/* Month Labels */}
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    paddingLeft: '50px',
-                    paddingRight: '50px',
-                    marginTop: '5px',
-                    marginBottom: '5px'
-                  }}>
+                <div className="relative w-full aspect-video">
+                  <svg
+                    viewBox="0 0 800 450"
+                    className="w-full h-full overflow-visible"
+                    preserveAspectRatio="xMidYMid meet"
+                  >
                     {(() => {
+                      // إعدادات القياسات الديناميكية
+                      const padding = { top: 40, right: 50, bottom: 60, left: 60 };
+                      const chartWidth = 800 - padding.left - padding.right;
+                      const chartHeight = 350 - padding.top - padding.bottom;
+
+                      const maxRevenue = Math.max(...monthlyRevenue.map(m => m.revenue), 1000);
+
                       const dataToShow = (() => {
                         switch (chartPeriod) {
                           case 'Last 3 Months': return monthlyRevenue.slice(-3);
                           case 'Last 6 Months': return monthlyRevenue.slice(-6);
                           case 'Last 12 Months': return monthlyRevenue.slice(-12);
-                          case 'This Year': return monthlyRevenue;
                           default: return monthlyRevenue.slice(-6);
                         }
                       })();
 
-                      return dataToShow.map((item, index) => (
-                        <div
-                          key={index}
-                          style={{
-                            textAlign: 'center',
-                            fontSize: '12px',
-                            color: '#718096',
-                            fontWeight: '500'
-                          }}
-                        >
-                          {new Date(item.month + '-01').toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}
-                        </div>
-                      ));
-                    })()}
-                  </div>
+                      const points = dataToShow.map((item, index) => {
+                        const x = padding.left + (index * (chartWidth / Math.max(dataToShow.length - 1, 1)));
+                        const y = (padding.top + chartHeight) - ((item.revenue / maxRevenue) * chartHeight);
+                        return { x, y, revenue: item.revenue, label: item.month };
+                      });
 
-                  {/* Chart Legend */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '20px',
-                    right: '20px',
-                    background: 'rgba(255, 255, 255, 0.9)',
-                    padding: '8px 12px',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    color: '#319795',
-                    fontWeight: '500',
-                    border: '1px solid #e2e8f0'
-                  }}>
-                    {t('performance_trend')} - {chartPeriod}
-                  </div>
-                </>
-              ) : (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '100%',
-                  color: '#718096'
-                }}>
-                  {t('loading')}...
+                      // رسم الخط المنحني
+                      let linePath = "";
+                      if (points.length >= 2) {
+                        linePath = `M ${points[0].x},${points[0].y}`;
+                        for (let i = 1; i < points.length; i++) {
+                          const p1 = points[i - 1];
+                          const p2 = points[i];
+                          const cpx = (p1.x + p2.x) / 2;
+                          linePath += ` Q ${cpx},${p1.y} ${p2.x},${p2.y}`;
+                        }
+                      }
+
+                      const areaPath = linePath ? `${linePath} L ${points[points.length - 1].x},${padding.top + chartHeight} L ${points[0].x},${padding.top + chartHeight} Z` : "";
+
+                      return (
+                        <g>
+                          {/* 1. Grid Lines & Y-Axis Labels */}
+                          {/* {[0, 0.25, 0.5, 0.75, 1].map((pct, i) => {
+                            // const yPos = padding.top + (chartHeight * (1 - pct));
+                            // return (
+                            //   <g key={i}>
+                            //     <line
+                            //       x1={padding.left} y1={yPos}
+                            //       x2={800 - padding.right} y2={yPos}
+                            //       stroke="#e2e8f0" strokeWidth="1"
+                            //     />
+                            //     <text
+                            //       x={padding.left - 10} y={yPos + 4}
+                            //       textAnchor="end" fontSize="12" fill="#718096"
+                            //     >
+                            //       ${((maxRevenue * pct) / 1000).toFixed(0)}K
+                            //     </text>
+                            //   </g>
+                            // );
+                          })} */}
+
+                          {/* 2. X-Axis Labels (الشهور) */}
+                          {points.map((p, i) => (
+                            <text
+                              key={i}
+                              x={p.x}
+                              y={padding.top + chartHeight + 25}
+                              textAnchor="middle"
+                              fontSize="12"
+                              fill="#718096"
+                              fontWeight="500"
+                            >
+                              {new Date(p.label + '-01').toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}
+                            </text>
+                          ))}
+
+                          {/* 3. The Chart Drawing */}
+                          <path d={areaPath} fill="url(#areaGradient)" />
+                          <path d={linePath} fill="none" stroke="url(#gradient)" strokeWidth="2" strokeLinecap="round" />
+
+                          {/* 4. Interactive Points */}
+                          {points.map((p, index) => (
+                            <g key={index} className="group">
+                              {/* <circle cx={p.x} cy={p.y} r="5" fill="#488981" stroke="white" strokeWidth="2" /> */}
+                              {/* <circle
+                                cx={p.x} cy={p.y} r="20" fill="transparent" className="cursor-pointer"
+                                onMouseEnter={() => document.getElementById(`tooltip-${index}`).style.opacity = "1"}
+                                onMouseLeave={() => document.getElementById(`tooltip-${index}`).style.opacity = "0"}
+                              /> */}
+                              {/* Tooltip */}
+                              <g id={`tooltip-${index}`} style={{ opacity: 0, transition: 'opacity 0.2s' }} pointerEvents="none">
+                                <rect x={p.x - 30} y={p.y - 35} width="60" height="25" fill="#1a202c" rx="4" />
+                                <text x={p.x} y={p.y - 18} textAnchor="middle" fill="white" fontSize="11" fontWeight="bold">
+                                  ${(p.revenue / 1000).toFixed(1)}K
+                                </text>
+                              </g>
+                            </g>
+                          ))}
+                        </g>
+                      );
+                    })()}
+
+                    <defs>
+                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#319795" />
+                        <stop offset="100%" stopColor="#4fd1c7" />
+                      </linearGradient>
+                      <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="rgba(49, 151, 149, 0.2)" />
+                        <stop offset="100%" stopColor="transparent" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
                 </div>
+              ) : (
+                <div className="flex items-center justify-center h-48 text-gray-400">Loading Chart...</div>
               )}
             </div>
           </div>
         </div>
 
         {/* User Acquisition */}
-        <div className="content-card lg:col-span-4">
+        <div className="py-1 content-card lg:col-span-4">
           <div className="card-header">
-            <div>
-              <h3 className="card-title">{t('user_acquisition')}</h3>
-              <p className="card-subtitle">{t('source_distribution')}</p>
+            <div className="space-y-1.5">
+              <h3 className="text-xl font-medium leading-[100%]">{t('user_acquisition')}</h3>
+              <p className="font-light leading-[100%] text-[#00000099]">{t('source_distribution')}</p>
             </div>
           </div>
-          <div className="card-content">
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#4a5568' }}>DIRECT</span>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '14px', fontWeight: '600' }}>{userAcquisition?.direct || 45}%</span>
-                  <div style={{ fontSize: '12px', color: '#718096' }}>
-                    {userAcquisition?.directCount || 0} users
-                  </div>
-                </div>
-              </div>
-              <div style={{
-                height: '8px',
-                background: '#e2e8f0',
-                borderRadius: '4px',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  width: `${userAcquisition?.direct || 45}%`,
-                  height: '100%',
-                  background: '#319795',
-                  transition: 'width 0.5s ease'
-                }}></div>
-              </div>
-            </div>
 
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#4a5568' }}>REFERRAL</span>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '14px', fontWeight: '600' }}>{userAcquisition?.referral || 32}%</span>
-                  <div style={{ fontSize: '12px', color: '#718096' }}>
-                    {userAcquisition?.referralCount || 0} users
-                  </div>
-                </div>
-              </div>
-              <div style={{
-                height: '8px',
-                background: '#e2e8f0',
-                borderRadius: '4px',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  width: `${userAcquisition?.referral || 32}%`,
-                  height: '100%',
-                  background: '#3182ce',
-                  transition: 'width 0.5s ease'
-                }}></div>
-              </div>
-            </div>
+          <div className="p-6 lg:space-y-7 2xl:space-y-12">
+            {sources.map((source) => {
+              const percentage = userAcquisition?.[source.key] || source.defaultValue;
+              const count = userAcquisition?.[`${source.key}Count`] || 0;
 
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#4a5568' }}>SOCIAL</span>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '14px', fontWeight: '600' }}>{userAcquisition?.social || 18}%</span>
-                  <div style={{ fontSize: '12px', color: '#718096' }}>
-                    {userAcquisition?.socialCount || 0} users
+              return (
+                <div key={source.key} className="">
+                  <div className="flex justify-between my-3">
+                    <span className="text-sm text-[#4a5568]">{source.label}</span>
+                    <div className="text-right">
+                      <span className="text-sm font-semibold">{percentage}%</span>
+                      {/* <div className="text-[12px] text-[#718096]">
+                    {count} {t('users')}
+                  </div> */}
+                    </div>
+                  </div>
+                  <div className="h-[8px] bg-[#EEEEEE] rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${source.color} transition-[width] duration-500 ease-in-out rounded-full`}
+                      style={{ width: `${percentage}%` }}
+                    ></div>
                   </div>
                 </div>
-              </div>
-              <div style={{
-                height: '8px',
-                background: '#e2e8f0',
-                borderRadius: '4px',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  width: `${userAcquisition?.social || 18}%`,
-                  height: '100%',
-                  background: '#38a169',
-                  transition: 'width 0.5s ease'
-                }}></div>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#4a5568' }}>OTHER</span>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '14px', fontWeight: '600' }}>{userAcquisition?.other || 5}%</span>
-                  <div style={{ fontSize: '12px', color: '#718096' }}>
-                    {userAcquisition?.otherCount || 0} users
-                  </div>
-                </div>
-              </div>
-              <div style={{
-                height: '8px',
-                background: '#e2e8f0',
-                borderRadius: '4px',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  width: `${userAcquisition?.other || 5}%`,
-                  height: '100%',
-                  background: '#d69e2e',
-                  transition: 'width 0.5s ease'
-                }}></div>
-              </div>
-            </div>
+              );
+            })}
 
             <button
-              className="btn btn-primary"
-              style={{ width: '100%', marginTop: '16px' }}
+              className="w-full py-3 mt-4 rounded-full bg-primary text-white text-sm font-medium hover:bg-[#319795cc] transition-colors uppercase"
               onClick={handleViewFullReport}
             >
-              View Full Report
+              {t('view_full_report')}
             </button>
           </div>
         </div>
       </div>
+
+
       {/* Recent Transactions */}
-      <div className="content-card lg:col-span-8">
-        <div className="card-header">
-          <div>
-            <h3 className="card-title">{t('recent_transactions')}</h3>
-            <p className="card-subtitle">{t('reviewing_latest_10')}</p>
-          </div>
-          <div style={{ position: 'relative' }}>
+      <DataTable
+        title={t('recent_transactions')}
+        description={t('reviewing_latest_10')}
+        columns={TRANSACTION_COLUMNS}
+        data={displayTransactions}
+        isRTL={isRTL}
+        // --- قسم الفلتر بنفس الشكل القديم ---
+        filterSection={
+          <div className='relative'>
             <button
-              className="btn btn-secondary"
+              className="bg-[#eeeeee] flex items-center gap-1 px-3 py-1.5 text-sm rounded-full border border-[#e2e8f0] text-[#21665F]"
               onClick={() => setShowTransactionFilter(!showTransactionFilter)}
               style={{
                 background: filteredTransactions.length > 0 ? '#319795' : undefined,
                 color: filteredTransactions.length > 0 ? 'white' : undefined
               }}
             >
+              <Image src={filterIcon} alt="Filter Icon" width={14} height={14} />
               {t('filter')} {filteredTransactions.length > 0 && `(${filteredTransactions.length})`}
             </button>
 
-            {/* Filter Dropdown */}
             {showTransactionFilter && (
-              <div style={{
-                position: 'absolute',
-                top: '100%',
-                right: 0,
-                background: 'white',
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
-                padding: '16px',
-                minWidth: '250px',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                zIndex: 1000
-              }}>
-                <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '600' }}>{t('filter_transactions')}</h4>
+              <div className='absolute z-[1000] min-w-[280px]  right-0 bg-white border border-[#e2e8f0] rounded-xl px-4 py-2'>
+                {/* <h4 className='pb-2 text-base font-medium border-b'>{t('filter_transactions')}</h4> */}
 
-                <div style={{ marginBottom: '12px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', marginBottom: '4px' }}>Status</label>
-                  <select
-                    value={transactionFilter.status}
-                    onChange={(e) => setTransactionFilter(prev => ({ ...prev, status: e.target.value }))}
-                    style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #e2e8f0' }}
-                  >
-                    <option value="all">All Status</option>
-                    <option value="successful">Successful</option>
-                    <option value="pending">Pending</option>
-                    <option value="failed">Failed</option>
-                  </select>
-                </div>
+                {/* عمل Map لخيارات الفلتر */}
+                {FILTER_CONFIG.map((filter) => (
+                  <div key={filter.name} className="my-3">
+                    <label className='block mb-1 text-xs font-semibold text-gray-600'>{filter.label}</label>
+                    <select
+                      value={transactionFilter[filter.name as keyof typeof transactionFilter]}
+                      onChange={(e) => setTransactionFilter(prev => ({ ...prev, [filter.name]: e.target.value }))}
+                      className='w-full px-2 py-2 text-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#319795] focus:border-transparent'
+                    >
+                      {filter.options.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
 
-                <div style={{ marginBottom: '12px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', marginBottom: '4px' }}>Date Range</label>
-                  <select
-                    value={transactionFilter.dateRange}
-                    onChange={(e) => setTransactionFilter(prev => ({ ...prev, dateRange: e.target.value }))}
-                    style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #e2e8f0' }}
-                  >
-                    <option value="all">All Time</option>
-                    <option value="today">Today</option>
-                    <option value="week">This Week</option>
-                    <option value="month">This Month</option>
-                  </select>
-                </div>
-
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', marginBottom: '4px' }}>Amount</label>
-                  <select
-                    value={transactionFilter.amount}
-                    onChange={(e) => setTransactionFilter(prev => ({ ...prev, amount: e.target.value }))}
-                    style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #e2e8f0' }}
-                  >
-                    <option value="all">All Amounts</option>
-                    <option value="low">Under $100</option>
-                    <option value="medium">$100 - $1000</option>
-                    <option value="high">Over $1000</option>
-                  </select>
-                </div>
-
-                <div style={{ display: 'flex', gap: '8px' }}>
+                {/* أزرار التحكم (Reset & Apply) بنفس التصميم */}
+                <div className='flex gap-2 mt-4'>
                   <button
-                    className="btn btn-secondary"
+                    className="flex-1 py-2 text-xs font-medium transition-colors border rounded-full hover:bg-gray-50"
                     onClick={resetTransactionFilter}
-                    style={{ flex: 1, fontSize: '12px', padding: '6px' }}
                   >
                     Reset
                   </button>
                   <button
-                    className="btn btn-primary"
+                    className="flex-1 py-2 text-xs font-medium text-white bg-[#319795] rounded-full disabled:opacity-50"
                     onClick={applyTransactionFilter}
                     disabled={isFilteringTransactions}
-                    style={{ flex: 1, fontSize: '12px', padding: '6px' }}
                   >
                     {isFilteringTransactions ? 'Filtering...' : 'Apply'}
                   </button>
                 </div>
-
-                {filteredTransactions.length > 0 && (
-                  <div style={{
-                    marginTop: '12px',
-                    padding: '8px',
-                    background: '#e6fffa',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    color: '#319795',
-                    textAlign: 'center'
-                  }}>
-                    Showing {filteredTransactions.length} filtered results
-                    <button
-                      onClick={() => setFilteredTransactions([])}
-                      style={{
-                        marginLeft: '8px',
-                        background: 'none',
-                        border: 'none',
-                        color: '#319795',
-                        cursor: 'pointer',
-                        textDecoration: 'underline'
-                      }}
-                    >
-                      {t('clear')}
-                    </button>
-                  </div>
-                )}
               </div>
             )}
           </div>
-        </div>
-        <div className="card-content" style={{ padding: 0 }}>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>{t('transaction_id')}</th>
-                <th>{t('client')}</th>
-                <th>{t('date')}</th>
-                <th>{t('amount')}</th>
-                <th>{t('status')}</th>
-                <th>{t('actions')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {displayTransactions.length > 0 ? displayTransactions.map((transaction, index) => (
-                <tr key={transaction.id || index}>
-                  <td>#{transaction.id || `TXN-${902341 + index}`}</td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '50%',
-                        background: '#319795',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
-                        fontSize: '12px',
-                        fontWeight: '600'
-                      }}>
-                        {transaction.username?.charAt(0) || 'U'}
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: '500' }}>{transaction.username || 'Unknown User'}</div>
-                        <div style={{ fontSize: '12px', color: '#718096' }}>{transaction.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>{new Date(transaction.transaction_date || transaction.date).toLocaleDateString()}</td>
-                  <td>${parseFloat(transaction.amount || 0).toFixed(2)}</td>
-                  <td><span className={`status-badge ${transaction.status}`}>{transaction.status?.toUpperCase()}</span></td>
-                  <td>
-                    <button
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}
-                      onClick={() => alert(`Transaction Details:\nID: ${transaction.id}\nAmount: $${transaction.amount}\nStatus: ${transaction.status}`)}
-                    >
-                      ⋯
-                    </button>
-                  </td>
-                </tr>
-              )) : (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: '#718096' }}>
-                    {t('no_transactions_found')}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-          <div style={{ padding: '16px 24px', borderTop: '1px solid #f7fafc', textAlign: 'center' }}>
-            <button
-              className="btn btn-secondary"
-              onClick={handleShowAllActivity}
-            >
-              {t('view_all')}
+        }
+        // --- قسم الفوتر (زر View All) ---
+        footerSection={
+          <div className="text-center">
+            <button className="btn btn-secondary" onClick={handleShowAllActivity}>
+              {t('view_all_Activity')}
             </button>
           </div>
-        </div>
-      </div>
+        }
+      />
     </div>
   )
 }

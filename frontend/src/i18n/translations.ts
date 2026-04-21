@@ -410,6 +410,8 @@ export const translations = {
     add_extra_security: 'أضف طبقة أمان إضافية لحسابك',
     enable_2fa: 'تفعيل المصادقة الثنائية',
     current: 'الحالي',
+    view_full_report: 'عرض التقرير الكامل',
+    view_all_Activity: 'عرض جميع النشاطات'
   },
   en: {
     // Sidebar
@@ -793,6 +795,8 @@ export const translations = {
     enable_2fa: 'Enable 2FA',
     recent_activity: 'Recent Activity',
     current: 'Current',
+   view_full_report: 'View Full Report',
+   view_all_Activity: 'View All Activity'
   }
 };
 
