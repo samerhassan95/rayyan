@@ -4,13 +4,19 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
 import { useLanguage } from '../../../i18n/LanguageContext'
+import Image from 'next/image'
+
 
 import userOctagon from '../../../assets/icons/user-octagon.svg'
 import crown from '../../../assets/icons/crown.svg'
 import chart from '../../../assets/icons/chart-2.svg'
 import wallet from '../../../assets/icons/wallet-money.svg'
+import plus from '../../../assets/icons/plus.svg'
+import insights from '../../../assets/icons/system-insight.svg'
+import networking from '../../../assets/icons/network.svg';
 
 
+//components
 import StatGroup from '../../components/StateCard'
 import DataTable, { Column } from '../../components/GenericTable'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
@@ -26,15 +32,15 @@ export default function AdminUsers() {
   const router = useRouter()
 
   const columns: Column[] = [
-    { key: 'customer', label: 'Customer', type: 'user' },
-    { key: 'contact', label: 'Contact Details', type: 'userEmail' }, // استخدمنا userEmail عشان فيها سطرين
-    { key: 'plan', label: 'Plan', type: 'plan' },
-    { key: 'status', label: 'Status', type: 'statusِActive' },
+    { key: 'customer', label: 'Customer', type: 'user', getHref: (row) => `/admin/users/${row.id}` },
+    { key: 'contact', label: 'Contact Details', type: 'contact' },
+    { key: 'plan', label: 'Plan', type: 'badge' },
+    { key: 'status', label: 'Status', type: 'statusActive' },
     { key: 'lastActive', label: 'Last Active', type: 'lastActive' },
     { key: 'actions', label: 'Actions', type: 'action' },
   ];
 
-const data = [
+  const data = [
     {
       id: 1,
       customer: 'Jane Doe',
@@ -44,7 +50,6 @@ const data = [
       status: 'Active',
       lastActive: '2 hours ago',
     },
-    // كرري البيانات حسب الحاجة...
   ];
 
 
@@ -102,7 +107,7 @@ const data = [
   return (
     <div className={`mx-auto ${isRTL ? 'rtl' : 'ltr'}`}>
       {/* Header */}
-      <div className="mb-8">
+      <div className="">
         <div className="flex items-center justify-between mb-4">
           <div className='space-y-1'>
             <h1 className="m-0 mb-2 text-2xl font-medium text-gray-900 leading-[100%]">
@@ -112,8 +117,8 @@ const data = [
               Manage, analyze, and support your global customer base from a single ledger.            </p>
           </div>
           <div >
-            <button className="flex items-center gap-2 px-5 py-2.5 text-base font-medium rounded-full bg-gradient-to-r from-[#488981] to-[#51D1B8] text-white">
-              add user
+            <button className="flex items-center gap-1 px-6 py-3 text-base font-medium rounded-full bg-gradient-to-r from-[#488981] to-[#51D1B8] text-white">
+              <Image src={plus} alt="plus" width={12} height={12} /> add user
             </button>
           </div>
         </div>
@@ -136,33 +141,35 @@ const data = [
         </div> */}
 
         {/* Stats Grid */}
-        <StatGroup
-          items={[
-            {
-              icon: userOctagon,
-              label: t('total_customers'),
-              // ندمج الرقم مع النسبة في الـ value مباشرة
-              value: `12,842`
-            },
-            {
-              icon: crown,
-              label: t('active_subs'),
-              value: "12,842"
-            },
-            {
-              icon: wallet,
-              label: t('new_this_month'),
-              value: "12,842"
-            },
-            {
-              icon: chart,
-              label: t('churn_rate'),
-              value: `2.4%`
-            },
-          ]}
-        />
 
       </div>
+
+      <StatGroup
+        items={[
+          {
+            icon: userOctagon,
+            label: t('total_customers'),
+            // ندمج الرقم مع النسبة في الـ value مباشرة
+            value: `12,842`
+          },
+          {
+            icon: crown,
+            label: t('active_subs'),
+            value: "12,842"
+          },
+          {
+            icon: wallet,
+            label: t('new_this_month'),
+            value: "12,842"
+          },
+          {
+            icon: chart,
+            label: t('churn_rate'),
+            value: `2.4%`
+          },
+        ]}
+      />
+
 
       {/* Statistics Cards */}
       {/* <div className="grid grid-cols-1 gap-5 mb-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -184,7 +191,7 @@ const data = [
       </div> */}
 
       {/* Users Table */}
-<DataTable
+      <DataTable
         title="All Customers"
         description="Reviewing the latest 10 activities"
         columns={columns}
@@ -198,17 +205,30 @@ const data = [
           <div className="flex items-center justify-between text-sm text-gray-500">
             <span>Showing 1 to 4 of 240 results</span>
             <div className="flex gap-2">
-               <button className="px-3 py-1 border rounded hover:bg-gray-50">{'<'}</button>
-               <button className="px-3 py-1 text-white bg-[#488981] rounded">1</button>
-               <button className="px-3 py-1 border rounded hover:bg-gray-50">2</button>
-               <button className="px-3 py-1 border rounded hover:bg-gray-50">3</button>
-               <button className="px-3 py-1 border rounded hover:bg-gray-50">{'>'}</button>
+              <button className="px-3 py-1 border rounded hover:bg-gray-50"> {'<'}</button>
+              <button className="px-3 py-1 text-white bg-[#488981] rounded">1</button>
+              <button className="px-3 py-1 border rounded hover:bg-gray-50">2</button>
+              <button className="px-3 py-1 border rounded hover:bg-gray-50">3</button>
+              <button className="px-3 py-1 border rounded hover:bg-gray-50">{'>'}</button>
             </div>
           </div>
         }
       />
-      
-     
+
+
+      {/* last two cards */}
+      <div className="grid gap-4 mt-6 md:grid-cols-2">
+        <div className="p-5 bg-white rounded-xl">
+          <div className="flex gap-2 ">
+            <div>
+              <Image/>
+            </div>
+          </div>
+        </div>
+        <div className="p-5 bg-white rounded-xl">fsd</div>
+
+      </div>
+
     </div>
   )
 }
