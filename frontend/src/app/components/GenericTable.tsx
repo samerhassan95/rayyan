@@ -1,5 +1,5 @@
 'use client'
-import React from 'react'
+import React, { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -14,7 +14,6 @@ export interface Column {
   type: ColumnType;
   widthClass?: string;
   minWidthClass?: string;
-  // إضافة خاصية اختيارية لتوليد رابط للخلية بناءً على بيانات الصف
   getHref?: (row: any) => string;
   render?: (value: any, row: any) => React.ReactNode;
 }
@@ -27,23 +26,36 @@ interface DataTableProps {
   isRTL?: boolean;
   emptyMessage?: string;
   filterSection?: React.ReactNode;
-  footerSection?: React.ReactNode;
   onRowClick?: (row: any) => void;
+  rowsPerPage?: number; // عدد الصفوف في كل صفحة
 }
 
 const DataTable = ({
   title,
   description,
   columns,
-  data,
+  data = [],
   isRTL,
   emptyMessage = 'No data found',
   filterSection,
-  footerSection,
-  onRowClick
+  onRowClick,
+  rowsPerPage = 5
 }: DataTableProps) => {
 
-  // هذه الدالة مسؤولة عن شكل المحتوى الداخلي للخلية
+  // --- منطق الباجينيشن (Pagination Logic) ---
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.ceil(data.length / rowsPerPage);
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const currentData = data.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    const pageNumber = Math.min(Math.max(1, page), totalPages);
+    setCurrentPage(pageNumber);
+  };
+
+  // دالة المحتوى الداخلي للخلية
   const renderCellContent = (row: any, col: Column) => {
     const value = row[col.key];
     if (col.render) return col.render(value, row);
@@ -99,7 +111,6 @@ const DataTable = ({
             })}
           </span>
         );
-
       case 'amount':
         return (
           <div className="flex flex-col">
@@ -108,8 +119,7 @@ const DataTable = ({
             </span>
           </div>
         );
-
-      case 'statusActive': // Active status with dot
+      case 'statusActive':
         const isActive = value?.toLowerCase() === 'active';
         return (
           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${isActive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
@@ -117,14 +127,12 @@ const DataTable = ({
             {value}
           </span>
         );
-
       case 'status':
         return (
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium `}>
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-700`}>
             {value}
           </span>
         );
-
       case 'progress':
         const statusColors: any = {
           complete: 'bg-blue-50 text-blue-700',
@@ -138,20 +146,14 @@ const DataTable = ({
             {value}
           </span>
         );
-
       case 'description':
         return <p className="max-w-full text-sm text-gray-500 truncate" title={value}>{value}</p>;
-
-      case 'badge': // Custom Badge
+      case 'badge':
         return (
-          <span
-            className="px-2.5 py-1 rounded-full text-xs font-medium"
-            style={{ color: row.badgeColor, backgroundColor: row.badgeBg }}
-          >
+          <span className="px-2.5 py-1 rounded-full text-xs font-medium" style={{ color: row.badgeColor, backgroundColor: row.badgeBg }}>
             {value}
           </span>
         );
-
       case 'plan':
         return (
           <div className="flex flex-col">
@@ -159,23 +161,18 @@ const DataTable = ({
             <span className="text-xs text-gray-500">{row.planPrice}</span>
           </div>
         );
-
       case 'lastActive':
         return <span className="text-sm text-gray-500">{value}</span>;
-
       case 'action':
         return <button className="p-1 text-xl text-gray-400 transition-colors hover:text-gray-600">⋯</button>;
-
       default:
         return <span className="text-sm text-gray-700">{value}</span>;
     }
   };
 
-  // دالة لتغليف المحتوى برابط إذا وُجد href
   const renderCell = (row: any, col: Column) => {
     const content = renderCellContent(row, col);
     const href = col.getHref ? col.getHref(row) : null;
-
     if (href) {
       return (
         <Link href={href} className="block cursor-pointer group">
@@ -219,24 +216,24 @@ const DataTable = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {data.length > 0 ? (
+            {currentData.length > 0 ? (
               <>
-                {data.map((row, rowIndex) => (
-                  <tr 
-                    key={row.id || rowIndex} 
-                    className={`transition-colors ${row.isEmpty ? '' : 'hover:bg-gray-50/50'} ${onRowClick ? 'cursor-pointer' : ''}`}
-                    onClick={() => onRowClick && !row.isEmpty && onRowClick(row)}
+                {currentData.map((row, rowIndex) => (
+                  <tr
+                    key={row.id || rowIndex}
+                    className={`transition-colors hover:bg-gray-50/50 ${onRowClick ? 'cursor-pointer' : ''}`}
+                    onClick={() => onRowClick && onRowClick(row)}
                   >
                     {columns.map((col) => (
                       <td key={col.key} className="p-4 align-middle px-6 min-h-[60px]">
-                        {row.isEmpty ? <div className="h-6"></div> : renderCell(row, col)}
+                        {renderCell(row, col)}
                       </td>
                     ))}
                   </tr>
                 ))}
 
-                {/* الحفاظ على مظهر الجدول بملء الصفوف الفارغة (أقل من 5) */}
-                {data.length < 5 && Array.from({ length: 5 - data.length }).map((_, i) => (
+                {/* الحفاظ على مظهر الجدول بملء الصفوف الفارغة بناءً على rowsPerPage */}
+                {currentData.length < rowsPerPage && Array.from({ length: rowsPerPage - currentData.length }).map((_, i) => (
                   <tr key={`empty-row-${i}`} className="border-none">
                     {columns.map((col) => (
                       <td key={`empty-cell-${i}-${col.key}`} className="p-4 px-6">
@@ -257,12 +254,52 @@ const DataTable = ({
         </table>
       </div>
 
-      {/* Footer */}
-      {footerSection && (
-        <div className="p-4 border-t border-gray-50">
-          {footerSection}
+      {/* Footer مع التحكم في الصفحات */}
+      <div className="flex items-center justify-between p-4 bg-white border-t border-gray-50">
+        <div className="text-sm text-gray-700">
+          {isRTL ? (
+            <>عرض <span className="font-medium">{startIndex + 1}</span> إلى <span className="font-medium">{Math.min(endIndex, data.length)}</span> من <span className="font-medium">{data.length}</span> نتائج</>
+          ) : (
+            <>Showing <span className="font-medium">{startIndex + 1}</span> to <span className="font-medium">{Math.min(endIndex, data.length)}</span> of <span className="font-medium">{data.length}</span> results</>
+          )}
         </div>
-      )}
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-3 py-1 text-sm font-medium text-gray-700 transition-all bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isRTL ? '>' : '<'}
+          </button>
+
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalPages }).map((_, i) => {
+              // إظهار أول صفحة، آخر صفحة، والصفحة الحالية وما حولها (يمكن تطويرها لاحقاً لجدول ضخم)
+              return (
+                <button
+                  key={i}
+                  onClick={() => goToPage(i + 1)}
+                  className={`w-8 h-8 text-sm font-medium rounded-md transition-colors ${currentPage === i + 1
+                    ? 'bg-[#488981] text-white shadow-sm'
+                    : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                >
+                  {i + 1}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage === totalPages || totalPages === 0}
+            className="px-3 py-1 text-sm font-medium text-gray-700 transition-all bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isRTL ? '<' : '>'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

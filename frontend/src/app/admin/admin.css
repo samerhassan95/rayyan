@@ -923,3 +923,7 @@ body.dark-mode .admin-layout svg text {
 }
 
 /* toggle button */
+.bg-linear{
+  background-image: linear-gradient(to right, #58A19a
+, #51d1b8);
+}

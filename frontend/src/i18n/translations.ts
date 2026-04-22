@@ -414,18 +414,22 @@ export const translations = {
     view_all_Activity: 'عرض جميع النشاطات',
     
     // Additional translations for users page
-    total_customers: 'إجمالي العملاء',
-    all_users_title: 'جميع المستخدمين',
-    user_header: 'المستخدم',
-    contact_header: 'تفاصيل الاتصال',
-    actions_header: 'الإجراءات',
-    results: 'نتائج',
+    // total_customers: 'إجمالي العملاء',
+    // all_users_title: 'جميع المستخدمين',
+    // user_header: 'المستخدم',
+    // contact_header: 'تفاصيل الاتصال',
+    // actions_header: 'الإجراءات',
+    // results: 'نتائج',
     no_activity: 'لا يوجد نشاط',
     activity_will_appear_here: 'سيظهر النشاط هنا عند توفره',
     no_sessions: 'لا توجد جلسات',
     sessions_will_appear_here: 'ستظهر الجلسات هنا عند توفرها',
     create_user: 'إنشاء مستخدم',
-    creating: 'جاري الإنشاء...'
+    // creating: 'جاري الإنشاء...',
+    add_customers: 'اضافة عملاء',
+    add_customer: 'اضافة عميل',
+    add_new_customer: 'اضافة عميل جديد',
+    add_customer_description: 'يرجى ملء جميع الحقول المطلوبة'
   },
   en: {
     // Sidebar
@@ -811,20 +815,25 @@ export const translations = {
     current: 'Current',
     view_full_report: 'View Full Report',
     view_all_Activity: 'View All Activity',
+    add_new_customer: 'Add New Customer',
+    add_customer: 'Add Customer',
+    add_customer_description: 'Enter the details below to add a new customer to your platform.'
+
+
     
     // Additional translations for users page
-    total_customers: 'Total Customers',
-    all_users_title: 'All Users',
-    user_header: 'User',
-    contact_header: 'Contact Details',
-    actions_header: 'Actions',
-    results: 'results',
-    no_activity: 'No Activity',
-    activity_will_appear_here: 'Activity will appear here when available',
-    no_sessions: 'No Sessions',
-    sessions_will_appear_here: 'Sessions will appear here when available',
-    create_user: 'Create User',
-    creating: 'Creating...'
+    // total_customers: 'Total Customers',
+    // all_users_title: 'All Users',
+    // user_header: 'User',
+    // contact_header: 'Contact Details',
+    // actions_header: 'Actions',
+    // results: 'results',
+    // no_activity: 'No Activity',
+    // activity_will_appear_here: 'Activity will appear here when available',
+    // no_sessions: 'No Sessions',
+    // sessions_will_appear_here: 'Sessions will appear here when available',
+    // create_user: 'Create User',
+    // creating: 'Creating...'
   }
 };
 
