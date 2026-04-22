@@ -65,38 +65,61 @@ const Modal = ({ isOpen, onClose, title, children, type = 'info' }: {
 }
 
 // Confirmation Modal
-const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, confirmText = 'Confirm' }: {
-  isOpen: boolean, onClose: () => void, onConfirm: () => void
-  title: string, message: string, confirmText?: string
+const ConfirmationModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmText = 'Confirm'
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+  confirmText?: string;
 }) => {
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex',
-      alignItems: 'center', justifyContent: 'center', zIndex: 1000
-    }}>
-      <div style={{
-        background: 'white', borderRadius: '12px', padding: '24px',
-        maxWidth: '400px', width: '90%', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
-      }}>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>{title}</h3>
-        <p style={{ margin: '0 0 24px 0', color: '#4a5568' }}>{message}</p>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-          <button onClick={onClose} style={{
-            background: '#e2e8f0', color: '#4a5568', border: 'none',
-            padding: '10px 20px', borderRadius: '8px', cursor: 'pointer'
-          }}>Cancel</button>
-          <button onClick={onConfirm} style={{
-            background: '#ef4444', color: 'white', border: 'none',
-            padding: '10px 20px', borderRadius: '8px', cursor: 'pointer'
-          }}>{confirmText}</button>
+    // Overlay
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000]">
+
+      {/* Modal Container */}
+      <div className="bg-white rounded-[12px] p-6 max-w-[400px] w-[90%] shadow-xl">
+
+        {/* Title */}
+        <h3 className="m-0 mb-4 text-[18px] font-semibold text-gray-900">
+          {title}
+        </h3>
+
+        {/* Message */}
+        <p className="m-0 mb-6 text-gray-600">
+          {message}
+        </p>
+
+        {/* Actions */}
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="bg-slate-200 text-gray-600 border-none px-5 py-2.5 rounded-lg cursor-pointer hover:bg-slate-300 transition-colors"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={onConfirm}
+            className="bg-red-500 text-white border-none px-5 py-2.5 rounded-lg cursor-pointer hover:bg-red-600 transition-colors"
+          >
+            {confirmText}
+          </button>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
+
 // Usage Activity Chart Component
 const UsageActivityChart = ({ period, userId }: { period: string, userId: string | string[] }) => {
   const [chartData, setChartData] = useState<any[]>([])
@@ -122,24 +145,26 @@ const UsageActivityChart = ({ period, userId }: { period: string, userId: string
     }
   }
 
+  // حالة التحميل
   if (loading) {
     return (
-      <div style={{ height: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#718096' }}>
+      <div className="h-[250px] flex items-center justify-center text-slate-500">
         Loading chart data...
       </div>
     )
   }
 
+  // حالة عدم وجود بيانات
   if (!chartData || chartData.length === 0) {
     return (
-      <div style={{ height: '250px', background: '#f8fafc', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#718096', flexDirection: 'column', gap: '8px' }}>
-        <div style={{ fontSize: '24px' }}>📊</div>
+      <div className="h-[250px] bg-slate-50 rounded-lg flex flex-col items-center justify-center text-slate-500 gap-2">
+        <div className="text-2xl">📊</div>
         <div>No usage data available</div>
       </div>
     )
   }
 
-  // Chart calculations
+  // الحسابات (بقيت كما هي لأنها منطق برمجـي وليست ستايل)
   const chartWidth = 800, chartHeight = 200
   const padding = { top: 20, right: 40, bottom: 40, left: 60 }
   const innerWidth = chartWidth - padding.left - padding.right
@@ -157,7 +182,6 @@ const UsageActivityChart = ({ period, userId }: { period: string, userId: string
     date: item.date
   }))
 
-  // Create smooth curve path
   let pathData = `M ${points[0].x} ${points[0].y}`
   for (let i = 1; i < points.length; i++) {
     const prev = points[i - 1]
@@ -168,7 +192,6 @@ const UsageActivityChart = ({ period, userId }: { period: string, userId: string
 
   const areaPath = pathData + ` L ${points[points.length - 1].x} ${chartHeight - padding.bottom} L ${padding.left} ${chartHeight - padding.bottom} Z`
 
-  // Generate X-axis labels (show 5 evenly spaced dates)
   const xLabels = []
   const labelCount = 5
   for (let i = 0; i < labelCount; i++) {
@@ -176,20 +199,12 @@ const UsageActivityChart = ({ period, userId }: { period: string, userId: string
     const item = chartData[dataIndex]
     const x = padding.left + (dataIndex / (chartData.length - 1)) * innerWidth
     const date = new Date(item.date)
-    
-    let label
-    if (period === 'Year') {
-      label = date.toLocaleDateString('en-US', { month: 'short' })
-    } else if (period === 'Month') {
-      label = `${date.getDate().toString().padStart(2, '0')} ${date.toLocaleDateString('en-US', { month: 'short' })}`
-    } else {
-      label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    }
-    
+    let label = period === 'Year' ? date.toLocaleDateString('en-US', { month: 'short' }) :
+      period === 'Month' ? `${date.getDate().toString().padStart(2, '0')} ${date.toLocaleDateString('en-US', { month: 'short' })}` :
+        date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     xLabels.push({ label, x })
   }
 
-  // Generate Y-axis labels
   const yLabels = []
   for (let i = 0; i <= 4; i++) {
     const value = minValue + (valueRange * i / 4)
@@ -198,8 +213,8 @@ const UsageActivityChart = ({ period, userId }: { period: string, userId: string
   }
 
   return (
-    <div style={{ width: '100%', overflowX: 'auto' }}>
-      <svg width={chartWidth} height={chartHeight + 40} style={{ display: 'block', margin: '0 auto' }}>
+    <div className="w-full overflow-x-auto">
+      <svg width={chartWidth} height={chartHeight + 40} className="block mx-auto">
         <defs>
           <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="#319795" stopOpacity="0.4" />
@@ -207,7 +222,7 @@ const UsageActivityChart = ({ period, userId }: { period: string, userId: string
           </linearGradient>
         </defs>
 
-        {/* Grid lines */}
+        {/* خطوط الشبكة */}
         {yLabels.map((label, index) => (
           <line
             key={`grid-${index}`}
@@ -215,78 +230,68 @@ const UsageActivityChart = ({ period, userId }: { period: string, userId: string
             y1={label.y}
             x2={chartWidth - padding.right}
             y2={label.y}
-            stroke="#f1f5f9"
+            className="stroke-slate-100"
             strokeWidth="1"
           />
         ))}
 
-        {/* Area under curve */}
         <path d={areaPath} fill="url(#chartGradient)" />
 
-        {/* Main curve line */}
-        <path d={pathData} fill="none" stroke="#319795" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          d={pathData}
+          fill="none"
+          className="stroke-teal-600"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
 
-        {/* Data points */}
         {points.map((point, index) => (
           <circle
             key={`point-${index}`}
             cx={point.x}
             cy={point.y}
             r="4"
-            fill="#319795"
-            stroke="white"
+            className="fill-teal-600 stroke-white"
             strokeWidth="2"
           >
             <title>{`${point.date}: ${point.value} units`}</title>
           </circle>
         ))}
 
-        {/* Y-axis labels */}
+        {/* نصوص المحاور */}
         {yLabels.map((label, index) => (
           <text
             key={`y-label-${index}`}
             x={padding.left - 10}
             y={label.y + 4}
             textAnchor="end"
-            fontSize="12"
-            fill="#718096"
+            className="text-[12px] fill-slate-500"
           >
             {label.value}
           </text>
         ))}
 
-        {/* X-axis labels */}
         {xLabels.map((label, index) => (
           <text
             key={`x-label-${index}`}
             x={label.x}
             y={chartHeight - padding.bottom + 20}
             textAnchor="middle"
-            fontSize="12"
-            fill="#718096"
+            className="text-[12px] fill-slate-500"
           >
             {label.label}
           </text>
         ))}
       </svg>
 
-      {/* Chart summary */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginTop: '16px',
-        padding: '12px 16px',
-        background: '#f8fafc',
-        borderRadius: '8px',
-        fontSize: '12px',
-        color: '#4a5568'
-      }}>
+      {/* ملخص الرسم البياني */}
+      <div className="flex justify-between items-center mt-4 px-4 py-3 bg-slate-50 rounded-lg text-[12px] text-slate-600">
         <div>
-          <strong>Period:</strong> {period} | <strong>Points:</strong> {chartData.length}
+          <span className="font-bold">Period:</span> {period} | <span className="font-bold">Points:</span> {chartData.length}
         </div>
         <div>
-          <strong>Range:</strong> {minValue} - {maxValue} | <strong>Avg:</strong> {Math.round(values.reduce((a, b) => a + b, 0) / values.length)}
+          <span className="font-bold">Range:</span> {minValue} - {maxValue} | <span className="font-bold">Avg:</span> {Math.round(values.reduce((a, b) => a + b, 0) / values.length)}
         </div>
       </div>
     </div>
@@ -300,16 +305,16 @@ export default function UserDetail() {
   const [editForm, setEditForm] = useState<any>({})
   const [chartPeriod, setChartPeriod] = useState('Month')
   const [supportTicketsFilter, setSupportTicketsFilter] = useState('all')
-  
+
   // Modal states
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [showErrorModal, setShowErrorModal] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [modalMessage, setModalMessage] = useState('')
-  const [confirmAction, setConfirmAction] = useState<() => void>(() => {})
+  const [confirmAction, setConfirmAction] = useState<() => void>(() => { })
   const [confirmTitle, setConfirmTitle] = useState('')
   const [confirmMessage, setConfirmMessage] = useState('')
-  
+
   const router = useRouter()
   const params = useParams()
   const userId = params.id
@@ -325,9 +330,9 @@ export default function UserDetail() {
       const token = localStorage.getItem('token')
       const headers = { Authorization: `Bearer ${token}` }
       const response = await axios.get(`${API_URL}/api/admin/users/${id}`, { headers })
-      
+
       console.log('✅ User detail response:', response.data)
-      
+
       setUserDetail(response.data)
       setEditForm({
         username: response.data.user.username,
@@ -363,7 +368,7 @@ export default function UserDetail() {
   const suspendUser = async () => {
     const newStatus = userDetail.user.status === 'active' ? 'suspended' : 'active'
     const actionText = newStatus === 'suspended' ? 'suspend' : 'activate'
-    
+
     setConfirmTitle(`${actionText.charAt(0).toUpperCase() + actionText.slice(1)} User`)
     setConfirmMessage(`Are you sure you want to ${actionText} ${userDetail.user.username}?`)
     setConfirmAction(() => async () => {
@@ -388,7 +393,7 @@ export default function UserDetail() {
   const toggleTwoFactor = async () => {
     const newStatus = !userDetail?.user?.two_factor_enabled
     const actionText = newStatus ? 'enable' : 'disable'
-    
+
     setConfirmTitle(`${actionText.charAt(0).toUpperCase() + actionText.slice(1)} 2FA`)
     setConfirmMessage(`Are you sure you want to ${actionText} two-factor authentication?`)
     setConfirmAction(() => async () => {
@@ -417,236 +422,252 @@ export default function UserDetail() {
     )
   }
 
-  if (!userDetail) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '400px', color: '#718096', textAlign: 'center' }}>
-        <div style={{ fontSize: '64px', marginBottom: '24px' }}>❌</div>
-        <h3 style={{ fontSize: '24px', fontWeight: '600', color: '#1a202c', marginBottom: '12px' }}>{t('user_not_found')}</h3>
-        <button onClick={() => router.push('/admin/users')} style={{ background: '#319795', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer' }}>
-          ← {t('back_to_users')}
-        </button>
-      </div>
-    )
-  }
+  // if (!userDetail) {
+  //   return (
+  //     <div  className= "flex flex-col items-center justify-center h-[400px ] text-[#718096] text-center" 
+  //     >
+  //       <div className='text-[64px] mb-[24px]'>❌</div>
+  //       <h3 style={{ fontSize: '24px', fontWeight: '600', color: '#1a202c', marginBottom: '12px' }}>{t('user_not_found')}</h3>
+  //       <button onClick={() => router.push('/admin/users')} style={{ background: '#319795', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer' }}>
+  //         ← {t('back_to_users')}
+  //       </button>
+  //     </div>
+  //   )
+  // }
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', direction: isRTL ? 'rtl' : 'ltr' }}>
+    <div className="" style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       {/* Header */}
-      <div style={{ marginBottom: '32px' }}>
+      {/* <div style={{ marginBottom: '32px' }}>
         <button onClick={() => router.push('/admin/users')} style={{ background: 'none', border: '1px solid #e2e8f0', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', marginBottom: '16px' }}>
           {isRTL ? 'Back to Users ←' : '← Back to Users'}
         </button>
-      </div>
+      </div> */}
 
-      {/* User Profile */}
-      <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '32px', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '32px' }}>
-          <div style={{ width: '120px', height: '120px', borderRadius: '12px', background: '#1a202c', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '48px', fontWeight: '600' }}>
+      {/* User Profile Container */}
+      <div className="flex justify-between p-8 mb-6 bg-white border rounded-xl border-slate-200">
+        <div className="flex items-center gap-6 mb-8">
+
+          {/* Avatar / Initial */}
+          <div className="w-[128px] h-[128px] rounded-full bg-slate-900 flex items-center justify-center text-white text-[48px] font-semibold shrink-0">
             {userDetail.user.username?.charAt(0)?.toUpperCase()}
           </div>
-          
-          <div style={{ flex: 1 }}>
+
+          <div className="flex-1">
             {isEditingProfile ? (
-              <div>
-                <input
-                  type="text"
-                  value={editForm.username}
-                  onChange={(e) => setEditForm({...editForm, username: e.target.value})}
-                  style={{
-                    fontSize: '28px', fontWeight: '600', color: '#1a202c',
-                    border: '2px solid #e2e8f0', borderRadius: '8px',
-                    padding: '4px 8px', background: 'white', marginBottom: '8px', width: '300px'
-                  }}
-                />
-                <input
-                  type="text"
-                  value={editForm.job_title}
-                  onChange={(e) => setEditForm({...editForm, job_title: e.target.value})}
-                  placeholder="Job Title"
-                  style={{
-                    color: '#718096', fontSize: '16px', marginBottom: '16px',
-                    border: '1px solid #e2e8f0', borderRadius: '4px',
-                    padding: '8px', width: '300px', display: 'block'
-                  }}
-                />
-                <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="space-y-4">
+                <div>
+                  <input
+                    type="text"
+                    value={editForm.username}
+                    onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+                    className="text-[28px] font-semibold text-slate-900 border-2 border-slate-200 rounded-lg px-2 py-1 bg-white mb-2 w-[300px] focus:border-teal-500 outline-none"
+                  />
+                  <input
+                    type="text"
+                    value={editForm.job_title}
+                    onChange={(e) => setEditForm({ ...editForm, job_title: e.target.value })}
+                    placeholder="Job Title"
+                    className="text-slate-500 text-base border border-slate-200 rounded px-3 py-2 w-[300px] block focus:border-teal-500 outline-none"
+                  />
+                </div>
+
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2">
                     <span>📧</span>
                     <input
                       type="email"
                       value={editForm.email}
-                      onChange={(e) => setEditForm({...editForm, email: e.target.value})}
-                      style={{
-                        color: '#4a5568', border: '1px solid #e2e8f0',
-                        borderRadius: '4px', padding: '4px 8px', width: '200px'
-                      }}
+                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                      className="text-slate-600 border border-slate-200 rounded px-2 py-1 w-[200px] focus:border-teal-500 outline-none"
                     />
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div className="flex items-center gap-2">
                     <span>📍</span>
                     <input
                       type="text"
                       value={editForm.address}
-                      onChange={(e) => setEditForm({...editForm, address: e.target.value})}
+                      onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
                       placeholder="Address"
-                      style={{
-                        color: '#4a5568', border: '1px solid #e2e8f0',
-                        borderRadius: '4px', padding: '4px 8px', width: '200px'
-                      }}
+                      className="text-slate-600 border border-slate-200 rounded px-2 py-1 w-[200px] focus:border-teal-500 outline-none"
                     />
                   </div>
                 </div>
-                <div style={{ marginBottom: '16px' }}>
+
+                <div>
                   <input
                     type="text"
                     value={editForm.phone}
-                    onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                     placeholder="Phone Number"
-                    style={{
-                      color: '#4a5568', border: '1px solid #e2e8f0',
-                      borderRadius: '4px', padding: '8px', width: '300px', marginRight: '16px'
-                    }}
+                    className="text-slate-600 border border-slate-200 rounded p-2 w-[300px] focus:border-teal-500 outline-none"
                   />
                 </div>
+
                 <div>
                   <textarea
                     value={editForm.bio}
-                    onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
+                    onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
                     placeholder="Bio"
                     rows={3}
-                    style={{
-                      color: '#4a5568', border: '1px solid #e2e8f0',
-                      borderRadius: '4px', padding: '8px', width: '400px', resize: 'vertical'
-                    }}
+                    className="text-slate-600 border border-slate-200 rounded p-2 w-[400px] resize-y block focus:border-teal-500 outline-none"
                   />
                 </div>
               </div>
             ) : (
+              /* View Mode */
               <div>
-                <h1 style={{ fontSize: '28px', fontWeight: '600', color: '#1a202c', margin: 0 }}>
+                <h1 className="text-[28px] font-semibold text-slate-900 m-0">
                   {userDetail.user.username}
                 </h1>
-                <p style={{ color: '#718096', fontSize: '16px', marginBottom: '16px' }}>
+                <p className="mb-4 text-base text-slate-500">
                   {userDetail.user.job_title || t('platform_user')}
                 </p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginBottom: '16px' }}>
+
+                <div className="flex items-center gap-6 mb-4 text-slate-600">
                   <span>📧 {userDetail.user.email}</span>
                   <span>📍 {userDetail.user.address || t('location_not_set')}</span>
                 </div>
+
                 {userDetail.user.phone && (
-                  <div style={{ marginBottom: '8px' }}>
+                  <div className="mb-2 text-slate-600">
                     <span>📞 {userDetail.user.phone}</span>
                   </div>
                 )}
+
                 {userDetail.user.bio && (
-                  <div style={{ marginBottom: '16px', color: '#4a5568', fontStyle: 'italic' }}>
+                  <div className="mb-4 italic text-slate-600">
                     "{userDetail.user.bio}"
                   </div>
                 )}
-                <div style={{ display: 'flex', gap: '12px' }}>
+
+                {/* Badges */}
+                <div className="flex gap-3">
                   {userDetail.user.acquisition_source && (
-                    <span style={{
-                      background: '#e6fffa', color: '#319795', padding: '4px 12px',
-                      borderRadius: '16px', fontSize: '12px', fontWeight: '500'
-                    }}>
+                    <span className="bg-teal-50 text-teal-600 px-3 py-1 rounded-full text-[12px] font-medium">
                       {userDetail.user.acquisition_source}
                     </span>
                   )}
-                  <span style={{
-                    background: '#e6fffa', color: '#319795', padding: '4px 12px',
-                    borderRadius: '16px', fontSize: '12px', fontWeight: '500'
-                  }}>
+                  <span className="bg-teal-50 text-teal-600 px-3 py-1 rounded-full text-[12px] font-medium">
                     {userDetail.user.role}
                   </span>
-                  <span style={{
-                    background: userDetail.user.status === 'active' ? '#e6fffa' : '#fed7d7',
-                    color: userDetail.user.status === 'active' ? '#319795' : '#e53e3e',
-                    padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: '500'
-                  }}>
+                  <span className={`px-3 py-1 rounded-full text-[12px] font-medium ${userDetail.user.status === 'active'
+                    ? 'bg-teal-50 text-teal-600'
+                    : 'bg-red-100 text-red-600'
+                    }`}>
                     {userDetail.user.status}
                   </span>
                 </div>
               </div>
             )}
           </div>
+
+
+        </div>
+        <div>
           
-          <div style={{ display: 'flex', gap: '12px' }}>
+          {/* Action Buttons */}
+          <div className="flex self-start gap-3">
             {!isEditingProfile ? (
               <>
-                <button onClick={() => setIsEditingProfile(true)} style={{ background: '#e2e8f0', color: '#4a5568', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer' }}>
+                <button
+                  onClick={() => setIsEditingProfile(true)}
+                  className="bg-linear text-white px-4 py-2.5 rounded-full font-medium hover:bg-slate-300 transition-colors cursor-pointer"
+                >
                   ✏️ {t('edit_profile')}
                 </button>
-                <button onClick={suspendUser} style={{ background: '#e53e3e', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer' }}>
+                <button
+                  onClick={suspendUser}
+                  className="bg-red-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-red-700 transition-colors cursor-pointer"
+                >
                   {userDetail.user.status === 'active' ? `🚫 ${t('suspend')}` : `✅ ${t('activate')}`}
                 </button>
               </>
             ) : (
               <>
-                <button onClick={handleSaveProfile} style={{ background: '#319795', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer' }}>
+                <button
+                  onClick={handleSaveProfile}
+                  className="bg-teal-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-teal-700 transition-colors cursor-pointer"
+                >
                   💾 {t('save')}
                 </button>
-                <button onClick={() => setIsEditingProfile(false)} style={{ background: '#e2e8f0', color: '#4a5568', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer' }}>
+                <button
+                  onClick={() => setIsEditingProfile(false)}
+                  className="bg-slate-200 text-slate-600 px-4 py-2.5 rounded-lg font-medium hover:bg-slate-300 transition-colors cursor-pointer"
+                >
                   ❌ {t('cancel')}
                 </button>
               </>
             )}
-          </div>
-        </div>
-      </div>
-      {/* Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }}>
-        <div style={{ textAlign: 'center', padding: '20px', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-          <div style={{ fontSize: '24px', fontWeight: '700', color: '#1a202c', marginBottom: '4px' }}>
-            ${userDetail?.statistics?.totalPayments || '0.00'}
-          </div>
-          <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            {t('total_payments_label')}
-          </div>
-        </div>
-        <div style={{ textAlign: 'center', padding: '20px', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-          <div style={{ fontSize: '24px', fontWeight: '700', color: '#1a202c', marginBottom: '4px' }}>
-            {userDetail?.statistics?.activeSubscriptions || '0'}
-          </div>
-          <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            {t('active_subscriptions_label')}
-          </div>
-        </div>
-        <div style={{ textAlign: 'center', padding: '20px', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-          <div style={{ fontSize: '24px', fontWeight: '700', color: '#1a202c', marginBottom: '4px' }}>
-            ${userDetail?.statistics?.totalSpend || '0.00'}
-          </div>
-          <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            {t('total_spend_label')}
-          </div>
-        </div>
-        <div style={{ textAlign: 'center', padding: '20px', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-          <div style={{ fontSize: '24px', fontWeight: '700', color: '#1a202c', marginBottom: '4px' }}>
-            {userDetail?.statistics?.openTickets || '0'} Open
-          </div>
-          <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            {t('support_tickets')}
-          </div>
+          </div> 
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '32px' }}>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 gap-5 mb-8 sm:grid-cols-2 lg:grid-cols-4">
+
+        {/* Total Payments */}
+        <div className="p-5 text-center bg-white border shadow-sm rounded-xl border-slate-200">
+          <div className="mb-1 text-2xl font-bold text-slate-900">
+            ${userDetail?.statistics?.totalPayments || '0.00'}
+          </div>
+          <div className="text-[12px] color-slate-500 uppercase tracking-wider font-medium">
+            {t('total_payments_label')}
+          </div>
+        </div>
+
+        {/* Active Subscriptions */}
+        <div className="p-5 text-center bg-white border shadow-sm rounded-xl border-slate-200">
+          <div className="mb-1 text-2xl font-bold text-slate-900">
+            {userDetail?.statistics?.activeSubscriptions || '0'}
+          </div>
+          <div className="text-[12px] color-slate-500 uppercase tracking-wider font-medium">
+            {t('active_subscriptions_label')}
+          </div>
+        </div>
+
+        {/* Total Spend */}
+        <div className="p-5 text-center bg-white border shadow-sm rounded-xl border-slate-200">
+          <div className="mb-1 text-2xl font-bold text-slate-900">
+            ${userDetail?.statistics?.totalSpend || '0.00'}
+          </div>
+          <div className="text-[12px] color-slate-500 uppercase tracking-wider font-medium">
+            {t('total_spend_label')}
+          </div>
+        </div>
+
+        {/* Support Tickets */}
+        <div className="p-5 text-center bg-white border shadow-sm rounded-xl border-slate-200">
+          <div className="mb-1 text-2xl font-bold text-slate-900">
+            {userDetail?.statistics?.openTickets || '0'} Open
+          </div>
+          <div className="text-[12px] color-slate-500 uppercase tracking-wider font-medium">
+            {t('support_tickets')}
+          </div>
+        </div>
+
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8">
         {/* Left Column */}
-        <div>
-          {/* Usage Activity Chart */}
-          <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '24px', marginBottom: '32px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div className="space-y-8">
+          {/* Usage Activity Chart Container */}
+          <div className="p-6 bg-white border shadow-sm rounded-xl border-slate-200">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1a202c', marginBottom: '4px' }}>{t('usage_activity')}</h3>
-                <p style={{ color: '#718096', fontSize: '14px' }}>{t('usage_activity_desc')}</p>
+                <h3 className="text-[18px] font-semibold text-slate-900 mb-1">{t('usage_activity')}</h3>
+                <p className="text-sm text-slate-500">{t('usage_activity_desc')}</p>
               </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div className="flex gap-2">
                 {['Week', 'Month', 'Year'].map(period => (
-                  <button key={period} style={{
-                    background: chartPeriod === period ? '#319795' : '#e2e8f0',
-                    color: chartPeriod === period ? 'white' : '#4a5568',
-                    border: 'none', fontSize: '12px', padding: '6px 12px',
-                    borderRadius: '6px', cursor: 'pointer', fontWeight: '500'
-                  }} onClick={() => setChartPeriod(period)}>
+                  <button
+                    key={period}
+                    className={`text-[12px] px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer border-none ${chartPeriod === period
+                        ? 'bg-teal-600 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    onClick={() => setChartPeriod(period)}
+                  >
                     {t(period.toLowerCase())}
                   </button>
                 ))}
@@ -655,12 +676,16 @@ export default function UserDetail() {
             <UsageActivityChart period={chartPeriod} userId={userId} />
           </div>
 
-          {/* Support Tickets */}
-          <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1a202c' }}>{t('support_tickets')}</h3>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <select value={supportTicketsFilter} onChange={(e) => setSupportTicketsFilter(e.target.value)} style={{ padding: '4px 8px', border: '1px solid #e2e8f0', borderRadius: '4px', fontSize: '12px' }}>
+          {/* Support Tickets Table Container */}
+          <div className="p-6 bg-white border shadow-sm rounded-xl border-slate-200">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[18px] font-semibold text-slate-900">{t('support_tickets')}</h3>
+              <div className="flex items-center gap-2">
+                <select
+                  value={supportTicketsFilter}
+                  onChange={(e) => setSupportTicketsFilter(e.target.value)}
+                  className="p-1 px-2 border border-slate-200 rounded text-[12px] bg-white outline-none focus:border-teal-500"
+                >
                   <option value="all">{t('all_tickets')}</option>
                   <option value="open">{t('open')}</option>
                   <option value="pending">{t('pending')}</option>
@@ -668,96 +693,97 @@ export default function UserDetail() {
                 </select>
               </div>
             </div>
-            
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
                 <thead>
-                  <tr style={{ background: '#f8fafc' }}>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096' }}>{t('ticket_id')}</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096' }}>{t('subject')}</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#718096' }}>{t('status')}</th>
+                  <tr className="bg-slate-50">
+                    <th className="px-4 py-3 text-left text-[12px] font-semibold text-slate-500 uppercase tracking-wider">{t('ticket_id')}</th>
+                    <th className="px-4 py-3 text-left text-[12px] font-semibold text-slate-500 uppercase tracking-wider">{t('subject')}</th>
+                    <th className="px-4 py-3 text-left text-[12px] font-semibold text-slate-500 uppercase tracking-wider">{t('status')}</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-50">
                   {userDetail?.supportTickets?.length > 0 ? (
                     userDetail.supportTickets
                       .filter((ticket: any) => supportTicketsFilter === 'all' || ticket.status === supportTicketsFilter)
                       .slice(0, 5)
                       .map((ticket: any) => (
-                      <tr key={ticket.id} style={{ borderBottom: '1px solid #f7fafc' }}>
-                        <td style={{ padding: '16px' }}>#{ticket.ticket_number}</td>
-                        <td style={{ padding: '16px' }}>{ticket.subject}</td>
-                        <td style={{ padding: '16px' }}>
-                          <span style={{
-                            background: ticket.status === 'open' ? '#fed7d7' : ticket.status === 'pending' ? '#feebc8' : '#c6f6d5',
-                            color: ticket.status === 'open' ? '#742a2a' : ticket.status === 'pending' ? '#7b341e' : '#22543d',
-                            padding: '4px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: '500'
-                          }}>
-                            {ticket.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
+                        <tr key={ticket.id} className="transition-colors hover:bg-slate-50/50">
+                          <td className="p-4 font-medium text-slate-700">#{ticket.ticket_number}</td>
+                          <td className="p-4 text-slate-600">{ticket.subject}</td>
+                          <td className="p-4">
+                            <span className={`px-2 py-1 rounded-full text-[12px] font-medium ${ticket.status === 'open'
+                                ? 'bg-red-100 text-red-800'
+                                : ticket.status === 'pending'
+                                  ? 'bg-orange-100 text-orange-800'
+                                  : 'bg-green-100 text-green-800'
+                              }`}>
+                              {ticket.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
                   ) : (
-                    <tr><td colSpan={3} style={{ textAlign: 'center', padding: '40px', color: '#718096' }}>{t('no_support_tickets')}</td></tr>
+                    <tr>
+                      <td colSpan={3} className="py-10 italic text-center text-slate-500">
+                        {t('no_support_tickets')}
+                      </td>
+                    </tr>
                   )}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
+
         {/* Right Column - Security Context */}
-        <div>
-          <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '24px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1a202c', marginBottom: '20px' }}>{t('security_context')}</h3>
-            
-            <div style={{ marginBottom: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#4a5568' }}>🔐 {t('two_factor_status')}</span>
-                <button onClick={toggleTwoFactor} style={{
-                  background: userDetail?.user?.two_factor_enabled ? '#e6fffa' : '#fed7d7',
-                  color: userDetail?.user?.two_factor_enabled ? '#319795' : '#e53e3e',
-                  padding: '2px 8px', borderRadius: '4px', fontSize: '12px',
-                  fontWeight: '600', border: 'none', cursor: 'pointer'
-                }}>
+        <div className="space-y-8">
+          <div className="p-6 bg-white border shadow-sm rounded-xl border-slate-200">
+            <h3 className="text-[16px] font-semibold text-slate-900 mb-5">{t('security_context')}</h3>
+
+            {/* 2FA Status */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2 text-sm text-slate-600">🔐 {t('two_factor_status')}</span>
+                <button
+                  onClick={toggleTwoFactor}
+                  className={`px-2 py-0.5 rounded text-[12px] font-bold border-none cursor-pointer transition-opacity hover:opacity-80 ${userDetail?.user?.two_factor_enabled
+                      ? 'bg-teal-50 text-teal-600'
+                      : 'bg-red-50 text-red-600'
+                    }`}
+                >
                   {userDetail?.user?.two_factor_enabled ? t('enabled') : t('disabled')}
                 </button>
               </div>
             </div>
 
-            <div style={{ marginBottom: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#4a5568' }}>🔒 {t('data_encryption')}</span>
-                <span style={{ background: '#e6fffa', color: '#319795', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: '600' }}>
+            {/* Encryption */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2 text-sm text-slate-600">🔒 {t('data_encryption')}</span>
+                <span className="bg-teal-50 text-teal-600 px-2 py-0.5 rounded text-[12px] font-bold">
                   AES-256
                 </span>
               </div>
             </div>
 
-            <div style={{ marginBottom: '24px' }}>
-              <div style={{ marginBottom: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#4a5568' }}>{t('access_tier')}</span>
+            {/* Access Tier */}
+            <div className="mb-6">
+              <div className="mb-2">
+                <span className="text-sm text-slate-600">{t('access_tier')}</span>
               </div>
-              <div style={{ marginBottom: '8px' }}>
-                <span style={{ fontSize: '16px', fontWeight: '600', color: '#1a202c' }}>Level 4</span>
+              <div className="mb-2">
+                <span className="text-[16px] font-semibold text-slate-900">Level 4</span>
               </div>
-              <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ width: '80%', height: '100%', background: '#319795' }}></div>
+              <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                <div className="w-[80%] h-full bg-teal-600"></div>
               </div>
             </div>
 
-            <button 
-              style={{
-                background: '#319795',
-                color: 'white',
-                border: 'none',
-                padding: '10px 16px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                width: '100%'
-              }}
+            {/* Action Button */}
+            <button
+              className="bg-teal-600 text-white border-none py-2.5 px-4 rounded-lg cursor-pointer text-sm font-medium w-full hover:bg-teal-700 transition-colors"
               onClick={() => {
                 setModalMessage('Permission management feature coming soon!')
                 setShowSuccessModal(true)
@@ -767,16 +793,17 @@ export default function UserDetail() {
             </button>
           </div>
         </div>
-      </div>
-      
-      {/* Modals */}
-      <Modal isOpen={showSuccessModal} onClose={() => setShowSuccessModal(false)} title="Success" type="success">
-        <p style={{ margin: 0, color: '#4a5568' }}>{modalMessage}</p>
-      </Modal>
 
-      <Modal isOpen={showErrorModal} onClose={() => setShowErrorModal(false)} title="Error" type="error">
-        <p style={{ margin: 0, color: '#4a5568' }}>{modalMessage}</p>
-      </Modal>
+        {/* Modals Section */}
+        <Modal isOpen={showSuccessModal} onClose={() => setShowSuccessModal(false)} title="Success" type="success">
+          <p className="m-0 text-slate-600">{modalMessage}</p>
+        </Modal>
+
+        <Modal isOpen={showErrorModal} onClose={() => setShowErrorModal(false)} title="Error" type="error">
+          <p className="m-0 text-slate-600">{modalMessage}</p>
+        </Modal>
+      </div>
+
 
       <ConfirmationModal
         isOpen={showConfirmModal}
