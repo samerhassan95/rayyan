@@ -1,10 +1,12 @@
 'use client'
 import React from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 
+// تعريف الأنواع المدعومة للأعمدة
 export type ColumnType =
-  | 'text' | 'description' | 'date' | 'badge' | 'user' | 'statusِActive' | 'userEmail'
-  | 'amount' | 'status' | 'progress' | 'plan' | 'lastActive' | 'action';
+  | 'text' | 'description' | 'date' | 'badge' | 'user' | 'statusActive' | 'userEmail'
+  | 'amount' | 'status' | 'progress' | 'plan' | 'lastActive' | 'action' | 'contact';
 
 export interface Column {
   key: string;
@@ -12,6 +14,8 @@ export interface Column {
   type: ColumnType;
   widthClass?: string;
   minWidthClass?: string;
+  // إضافة خاصية اختيارية لتوليد رابط للخلية بناءً على بيانات الصف
+  getHref?: (row: any) => string;
   render?: (value: any, row: any) => React.ReactNode;
 }
 
@@ -39,7 +43,8 @@ const DataTable = ({
   onRowClick
 }: DataTableProps) => {
 
-  const renderCell = (row: any, col: Column) => {
+  // هذه الدالة مسؤولة عن شكل المحتوى الداخلي للخلية
+  const renderCellContent = (row: any, col: Column) => {
     const value = row[col.key];
     if (col.render) return col.render(value, row);
 
@@ -50,12 +55,12 @@ const DataTable = ({
             {row.image ? (
               <img src={row.image} alt={value} className="object-cover w-10 h-10 rounded-full shrink-0" />
             ) : (
-              <div className="flex items-center justify-center w-10 h-10 font-bold rounded-full bg-primary/10 text-primary shrink-0">
+              <div className="flex items-center justify-center w-10 h-10 font-bold transition-colors rounded-full bg-primary/10 text-primary shrink-0 group-hover:bg-primary/20">
                 {value?.charAt(0) || 'U'}
               </div>
             )}
             <div className="flex flex-col truncate">
-              <span className="text-sm font-medium text-gray-900 truncate">{value || 'Unknown'}</span>
+              <span className="text-sm font-medium text-gray-900 truncate transition-colors group-hover:text-primary">{value || 'Unknown'}</span>
               <span className="text-xs text-gray-500 truncate">{row.email}</span>
             </div>
           </div>
@@ -66,17 +71,24 @@ const DataTable = ({
             {row.image ? (
               <img src={row.image} alt={value} className="object-cover w-10 h-10 rounded-full shrink-0" />
             ) : (
-              <div className="flex items-center justify-center w-8 h-8  text-white rounded-full bg-gradient-to-br from-[#488981] to-[#51D1B8] shrink-0">
+              <div className="flex items-center justify-center w-8 h-8 text-white rounded-full bg-gradient-to-br from-[#488981] to-[#51D1B8] shrink-0">
                 {value?.charAt(0) || 'U'}
               </div>
             )}
             <div className="flex flex-col truncate">
-              <span className="text-sm font-medium text-gray-900 truncate">{value || 'Unknown'}</span>
-              {/* <span className="text-xs text-gray-500 truncate">{row.email}</span> */}
+              <span className="text-sm font-medium text-gray-900 truncate transition-colors group-hover:text-primary">{value || 'Unknown'}</span>
             </div>
           </div>
         );
-
+      case 'contact':
+        return (
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col truncate">
+              <span className="text-sm font-medium text-gray-900 truncate transition-colors group-hover:text-primary">{value || 'Unknown'}</span>
+              <span className="text-xs text-gray-500 truncate">{row.email}</span>
+            </div>
+          </div>
+        )
       case 'date':
         return (
           <span className="text-sm text-gray-600 whitespace-nowrap">
@@ -97,7 +109,7 @@ const DataTable = ({
           </div>
         );
 
-      case 'statusِActive': // Active status with dot
+      case 'statusActive': // Active status with dot
         const isActive = value?.toLowerCase() === 'active';
         return (
           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${isActive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
@@ -106,7 +118,7 @@ const DataTable = ({
           </span>
         );
 
-      case 'status': // Active status with dot
+      case 'status':
         return (
           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium `}>
             {value}
@@ -130,7 +142,7 @@ const DataTable = ({
       case 'description':
         return <p className="max-w-full text-sm text-gray-500 truncate" title={value}>{value}</p>;
 
-      case 'badge': // Custom Badge (expects row.badgeColor and row.badgeBg)
+      case 'badge': // Custom Badge
         return (
           <span
             className="px-2.5 py-1 rounded-full text-xs font-medium"
@@ -159,6 +171,21 @@ const DataTable = ({
     }
   };
 
+  // دالة لتغليف المحتوى برابط إذا وُجد href
+  const renderCell = (row: any, col: Column) => {
+    const content = renderCellContent(row, col);
+    const href = col.getHref ? col.getHref(row) : null;
+
+    if (href) {
+      return (
+        <Link href={href} className="block cursor-pointer group">
+          {content}
+        </Link>
+      );
+    }
+    return content;
+  };
+
   return (
     <div className="w-full overflow-hidden bg-white border border-gray-100 shadow-sm rounded-xl" style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
 
@@ -171,7 +198,7 @@ const DataTable = ({
         <div className="shrink-0">{filterSection}</div>
       </div>
 
-      {/* Overflow Container */}
+      {/* Table Container */}
       <div className="relative overflow-x-auto">
         <table className="w-full border-collapse table-auto">
           <thead className="bg-[#F9FAFB]">
@@ -202,26 +229,24 @@ const DataTable = ({
                   >
                     {columns.map((col) => (
                       <td key={col.key} className="p-4 align-middle px-6 min-h-[60px]">
-                        {/* لو الصف فاضي اعرض مساحة فاضية، لو فيه داتا اعرض الـ Cell */}
                         {row.isEmpty ? <div className="h-6"></div> : renderCell(row, col)}
                       </td>
                     ))}
                   </tr>
                 ))}
 
-                {/* لو لسه مكملناش 5 صفوف والداتا أصلاً موجودة (مثلاً داتا فيها عنصرين بس) */}
+                {/* الحفاظ على مظهر الجدول بملء الصفوف الفارغة (أقل من 5) */}
                 {data.length < 5 && Array.from({ length: 5 - data.length }).map((_, i) => (
                   <tr key={`empty-row-${i}`} className="border-none">
                     {columns.map((col) => (
                       <td key={`empty-cell-${i}-${col.key}`} className="p-4 px-6">
-                        <div className="h-6"></div> {/* صف شفاف للحفاظ على الارتفاع */}
+                        <div className="h-6"></div>
                       </td>
                     ))}
                   </tr>
                 ))}
               </>
             ) : (
-              /* حالة الـ No Data Found */
               <tr>
                 <td colSpan={columns.length} className="p-10 text-center text-gray-400">
                   {emptyMessage}

@@ -4,13 +4,19 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
 import { useLanguage } from '../../../i18n/LanguageContext'
+import Image from 'next/image'
+
 
 import userOctagon from '../../../assets/icons/user-octagon.svg'
 import crown from '../../../assets/icons/crown.svg'
 import chart from '../../../assets/icons/chart-2.svg'
 import wallet from '../../../assets/icons/wallet-money.svg'
+import plus from '../../../assets/icons/plus.svg'
+import insights from '../../../assets/icons/system-insight.svg'
+import networking from '../../../assets/icons/network.svg';
 
 
+//components
 import StatGroup from '../../components/StateCard'
 import DataTable, { Column } from '../../components/GenericTable'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
@@ -152,7 +158,7 @@ export default function AdminUsers() {
   return (
     <div className={`mx-auto ${isRTL ? 'rtl' : 'ltr'}`}>
       {/* Header */}
-      <div className="mb-8">
+      <div className="">
         <div className="flex items-center justify-between mb-4">
           <div className='space-y-1'>
             <h1 className="m-0 mb-2 text-2xl font-medium text-gray-900 leading-[100%]">
@@ -215,7 +221,6 @@ export default function AdminUsers() {
           ]}
         />
 
-      </div>
 
       {/* Statistics Cards */}
       {/* <div className="grid grid-cols-1 gap-5 mb-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -265,8 +270,8 @@ export default function AdminUsers() {
 
       {/* Add User Modal */}
       {showAddUserModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-full max-w-md p-6 mx-4 bg-white rounded-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold">{t('add_new')} {t('users').toLowerCase()}</h3>
               <button 
@@ -279,7 +284,7 @@ export default function AdminUsers() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
                   {t('username_label')} *
                 </label>
                 <input
@@ -292,7 +297,7 @@ export default function AdminUsers() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
                   {t('email_label')} *
                 </label>
                 <input
@@ -305,7 +310,7 @@ export default function AdminUsers() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
                   {t('password_label')} *
                 </label>
                 <input
@@ -318,7 +323,7 @@ export default function AdminUsers() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
                   {t('phone_label')}
                 </label>
                 <input
@@ -331,7 +336,7 @@ export default function AdminUsers() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
                   {t('job_title_label')}
                 </label>
                 <input
@@ -344,7 +349,7 @@ export default function AdminUsers() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
                   {t('address')}
                 </label>
                 <input
@@ -378,7 +383,7 @@ export default function AdminUsers() {
 
       {/* Message Display */}
       {message && (
-        <div className="fixed top-4 right-4 z-50">
+        <div className="fixed z-50 top-4 right-4">
           <div className={`px-4 py-2 rounded-lg text-white ${
             message.includes('✅') ? 'bg-green-500' : 'bg-red-500'
           }`}>
