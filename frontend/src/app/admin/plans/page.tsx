@@ -60,19 +60,8 @@ export default function AdminPlans() {
       setDiscountCodes(codesResponse.data)
     } catch (error) {
       console.error('Error fetching data:', error)
-      // Fallback to mock data if API fails
-      setPlans([
-        {
-          id: 1,
-          name: 'Basic',
-          tier: 'ENTRY TIER',
-          monthlyPrice: 29,
-          yearlyPrice: 290,
-          description: 'Perfect for individuals and small experimental projects.',
-          features: ['Up to 3 active projects', 'Basic analytics dashboard'],
-          recommended: false
-        }
-      ])
+      // Show empty state instead of fallback data
+      setPlans([])
       setAnalytics({
         totalMonthlyRevenue: 0,
         activeSubscriptions: 0,

@@ -174,21 +174,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         const data = await response.json()
         setNotifications(data)
       } else {
-        // Fallback to mock data
-        setNotifications([
-          { id: 1, message: 'New user registration: john@example.com', created_at: new Date(), type: 'info', is_read: false },
-          { id: 2, message: 'Payment failed for subscription #1234', created_at: new Date(Date.now() - 300000), type: 'error', is_read: false },
-          { id: 3, message: 'Monthly report is ready', created_at: new Date(Date.now() - 3600000), type: 'success', is_read: true }
-        ])
+        // Show empty state instead of fallback data
+        setNotifications([])
       }
     } catch (error) {
       console.error('Failed to fetch notifications:', error)
-      // Fallback to mock data
-      setNotifications([
-        { id: 1, message: 'New user registration: john@example.com', created_at: new Date(), type: 'info', is_read: false },
-        { id: 2, message: 'Payment failed for subscription #1234', created_at: new Date(Date.now() - 300000), type: 'error', is_read: false },
-        { id: 3, message: 'Monthly report is ready', created_at: new Date(Date.now() - 3600000), type: 'success', is_read: true }
-      ])
+      // Show empty state instead of fallback data
+      setNotifications([])
     } finally {
       setLoadingNotifications(false)
     }

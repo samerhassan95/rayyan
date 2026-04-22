@@ -28,6 +28,7 @@ interface DataTableProps {
   emptyMessage?: string;
   filterSection?: React.ReactNode;
   footerSection?: React.ReactNode;
+  onRowClick?: (row: any) => void;
 }
 
 const DataTable = ({
@@ -38,7 +39,8 @@ const DataTable = ({
   isRTL,
   emptyMessage = 'No data found',
   filterSection,
-  footerSection
+  footerSection,
+  onRowClick
 }: DataTableProps) => {
 
   // هذه الدالة مسؤولة عن شكل المحتوى الداخلي للخلية
@@ -220,7 +222,11 @@ const DataTable = ({
             {data.length > 0 ? (
               <>
                 {data.map((row, rowIndex) => (
-                  <tr key={row.id || rowIndex} className={`transition-colors ${row.isEmpty ? '' : 'hover:bg-gray-50/50'}`}>
+                  <tr 
+                    key={row.id || rowIndex} 
+                    className={`transition-colors ${row.isEmpty ? '' : 'hover:bg-gray-50/50'} ${onRowClick ? 'cursor-pointer' : ''}`}
+                    onClick={() => onRowClick && !row.isEmpty && onRowClick(row)}
+                  >
                     {columns.map((col) => (
                       <td key={col.key} className="p-4 align-middle px-6 min-h-[60px]">
                         {row.isEmpty ? <div className="h-6"></div> : renderCell(row, col)}

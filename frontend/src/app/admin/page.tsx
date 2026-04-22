@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import axios from 'axios'
 import StatGroup from '../components/StateCard';
 import { useLanguage } from '../../i18n/LanguageContext'
-import DataTable from '../components/GenericTable';
+// Import Column type from GenericTable
+import DataTable, { Column } from '../components/GenericTable';
 
 //icons import
 import Image from 'next/image'
@@ -13,7 +14,6 @@ import userOctagon from '../../assets/icons/user-octagon.svg'
 import crown from '../../assets/icons/crown.svg'
 import chart from '../../assets/icons/chart-2.svg'
 import wallet from '../../assets/icons/wallet-money.svg'
-
 
 //filter icon
 import filterIcon from '../../assets/icons/filter.svg'
@@ -145,84 +145,27 @@ export default function AdminDashboard() {
       console.error('Failed to fetch dashboard data:', error)
       console.error('Error details:', error.response?.data)
 
-      // Only use fallback data if there's a real error
+      // Handle errors appropriately
       if (error.response?.status === 401) {
         // Redirect to login if unauthorized
         router.push('/login')
         return
       }
 
-      // Set fallback data if API fails
+      // Show error state instead of fallback data
       setStats({
-        totalUsers: 42892,
-        totalRevenue: 1200000,
-        activeSubscriptions: 18203,
-        growthRate: 24.5
+        totalUsers: 0,
+        totalRevenue: 0,
+        activeSubscriptions: 0,
+        growthRate: 0
       })
-      setRecentTransactions([
-        {
-          id: 'TXN-902341',
-          username: 'Jane Doe',
-          email: 'jane@example.com',
-          amount: 1200.00,
-          transaction_date: '2023-10-24',
-          status: 'successful'
-        },
-        {
-          id: 'TXN-902342',
-          username: 'Marcus Smith',
-          email: 'marcus@example.com',
-          amount: 450.00,
-          transaction_date: '2023-10-23',
-          status: 'pending'
-        },
-          {
-          id: 'TXN-902341',
-          username: 'Jane Doe',
-          email: 'jane@example.com',
-          amount: 1200.00,
-          transaction_date: '2023-10-24',
-          status: 'successful'
-        },
-        {
-          id: 'TXN-902342',
-          username: 'Marcus Smith',
-          email: 'marcus@example.com',
-          amount: 450.00,
-          transaction_date: '2023-10-23',
-          status: 'pending'
-        },
-          {
-          id: 'TXN-9023451',
-          username: 'Jane Doe',
-          email: 'jane@example.com',
-          amount: 1200.00,
-          transaction_date: '2023-10-24',
-          status: 'successful'
-        },
-        {
-          id: 'TXN-902342',
-          username: 'Marcus Smith',
-          email: 'marcus@example.com',
-          amount: 450.00,
-          transaction_date: '2023-10-23',
-          status: 'pending'
-        }
-      ]);
-      
-      setMonthlyRevenue([
-        { month: '2023-05', revenue: 95000, transactions: 120 },
-        { month: '2023-06', revenue: 110000, transactions: 145 },
-        { month: '2023-07', revenue: 125000, transactions: 160 },
-        { month: '2023-08', revenue: 140000, transactions: 180 },
-        { month: '2023-09', revenue: 155000, transactions: 200 },
-        { month: '2023-10', revenue: 170000, transactions: 220 }
-      ])
+      setRecentTransactions([])
+      setMonthlyRevenue([])
       setUserAcquisition({
-        direct: 45,
-        referral: 32,
-        social: 18,
-        other: 5
+        direct: 0,
+        referral: 0,
+        social: 0,
+        other: 0
       })
     } finally {
       setLoading(false)

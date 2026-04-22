@@ -348,10 +348,13 @@ router.get('/users', async (req, res) => {
     const connection = await pool.getConnection();
     
     let query = `
-      SELECT id, username, email, role, status, phone, job_title, address, 
-             two_factor_enabled, created_at, last_login, acquisition_source
-      FROM users 
-      WHERE role = 'user'
+      SELECT u.id, u.username, u.email, u.role, u.status, u.phone, u.job_title, u.address, 
+             u.two_factor_enabled, u.created_at, u.last_login, u.acquisition_source,
+             s.status as subscription_status, p.name as plan_name
+      FROM users u
+      LEFT JOIN subscriptions s ON u.id = s.user_id AND s.status = 'active'
+      LEFT JOIN plans p ON s.plan_id = p.id
+      WHERE u.role = 'user'
     `;
     let params = [];
 
@@ -382,11 +385,14 @@ router.get('/users', async (req, res) => {
     const [stats] = await connection.query(`
       SELECT 
         COUNT(*) as totalUsers,
-        COUNT(CASE WHEN status = 'active' THEN 1 END) as activeUsers,
-        COUNT(CASE WHEN two_factor_enabled = 1 THEN 1 END) as twoFactorUsers,
-        COUNT(CASE WHEN last_login >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as recentlyActive,
-        COUNT(CASE WHEN MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW()) THEN 1 END) as newThisMonth
-      FROM users WHERE role = 'user'
+        COUNT(CASE WHEN u.status = 'active' THEN 1 END) as activeUsers,
+        COUNT(CASE WHEN u.two_factor_enabled = 1 THEN 1 END) as twoFactorUsers,
+        COUNT(CASE WHEN u.last_login >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as recentlyActive,
+        COUNT(CASE WHEN MONTH(u.created_at) = MONTH(NOW()) AND YEAR(u.created_at) = YEAR(NOW()) THEN 1 END) as newThisMonth,
+        COUNT(CASE WHEN s.status = 'active' THEN 1 END) as activeSubscriptions
+      FROM users u
+      LEFT JOIN subscriptions s ON u.id = s.user_id AND s.status = 'active'
+      WHERE u.role = 'user'
     `);
 
     connection.release();
@@ -402,6 +408,9 @@ router.get('/users', async (req, res) => {
         pages: Math.ceil(totalCount[0].total / limit)
       },
       statistics: {
+        totalUsers: stats[0].totalUsers || 0,
+        activeSubscriptions: stats[0].activeSubscriptions || 0,
+        newThisMonth: stats[0].newThisMonth || 0,
         seatUtilization: Math.round((stats[0].activeUsers / totalUsersCount) * 100) || 0,
         avgActivation: Math.round((stats[0].recentlyActive / totalUsersCount) * 100) || 0,
         recentInvites: stats[0].newThisMonth || 0,
@@ -510,22 +519,51 @@ router.get('/users/:id', async (req, res) => {
 // Create new user
 router.post('/users', async (req, res) => {
   try {
-    const { username, email, password, role, phone, address, job_title } = req.body;
+    const { username, email, password, role, phone, address, job_title, acquisition_source } = req.body;
+    
+    // Validation
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: 'Username, email, and password are required' });
+    }
+
+    // Check if email already exists
+    const [existingUser] = await pool.execute(
+      'SELECT id FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (existingUser.length > 0) {
+      return res.status(400).json({ error: 'Email already exists' });
+    }
     
     // Hash password
     const bcrypt = require('bcryptjs');
     const hashedPassword = await bcrypt.hash(password, 10);
     
     const [result] = await pool.execute(`
-      INSERT INTO users (username, email, password, role, phone, address, job_title, status) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'active')
-    `, [username, email, hashedPassword, role || 'user', phone, address, job_title]);
+      INSERT INTO users (username, email, password, role, phone, address, job_title, status, acquisition_source, created_at) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'active', 'other', NOW())
+    `, [username, email, hashedPassword, role || 'user', phone || null, address || null, job_title || null]);
+
+    // Log the activity
+    await pool.execute(
+      'INSERT INTO activity_log (user_id, action, description, ip_address) VALUES (?, ?, ?, ?)',
+      [req.user.id, 'user_create', `Created new user: ${username} (${email})`, req.ip]
+    );
 
     res.status(201).json({ 
       message: 'User created successfully',
-      userId: result.insertId 
+      userId: result.insertId,
+      user: {
+        id: result.insertId,
+        username,
+        email,
+        role: role || 'user',
+        status: 'active'
+      }
     });
   } catch (error) {
+    console.error('Create user error:', error);
     res.status(500).json({ error: error.message });
   }
 });
