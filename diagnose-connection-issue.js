@@ -1,9 +1,23 @@
 // Comprehensive diagnostic script
-const mysql = require('mysql2/promise');
 const path = require('path');
 const fs = require('fs');
 
 console.log('=== RAYYAN DATABASE DIAGNOSTIC ===\n');
+
+// Check if mysql2 is installed
+try {
+  require.resolve('mysql2/promise');
+} catch (e) {
+  console.log('mysql2 is not installed in this directory.');
+  console.log('Please run this script from the backend folder:');
+  console.log('  cd backend');
+  console.log('  node ../diagnose-connection-issue.js');
+  console.log('\nOr install dependencies here:');
+  console.log('  npm install mysql2 dotenv');
+  process.exit(1);
+}
+
+const mysql = require('mysql2/promise');
 
 // Check 1: .env file location and content
 console.log('1. Checking .env file...');
