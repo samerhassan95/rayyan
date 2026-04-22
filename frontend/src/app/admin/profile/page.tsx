@@ -531,39 +531,20 @@ export default function AdminProfile() {
                       </div>
                     </div>
                   )) : (
-                    // Mock activity data
-                    [
-                      { action: 'login', description: 'Logged in to admin dashboard', created_at: new Date(), ip_address: '192.168.1.1' },
-                      { action: 'update', description: 'Updated user profile settings', created_at: new Date(Date.now() - 3600000), ip_address: '192.168.1.1' },
-                      { action: 'delete', description: 'Deleted inactive user account', created_at: new Date(Date.now() - 7200000), ip_address: '192.168.1.1' }
-                    ].map((activity, index) => (
-                      <div key={index} style={{ 
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '16px',
-                        padding: '16px',
-                        background: '#f8fafc',
-                        borderRadius: '8px',
-                        marginBottom: '12px'
-                      }}>
-                        <div style={{ fontSize: '24px' }}>
-                          {activity.action === 'login' ? '🔐' : 
-                           activity.action === 'update' ? '✏️' : 
-                           activity.action === 'delete' ? '🗑️' : '📝'}
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: '500', color: '#1a202c' }}>
-                            {activity.description}
-                          </div>
-                          <div style={{ fontSize: '14px', color: '#718096' }}>
-                            {activity.created_at.toLocaleString()}
-                          </div>
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#718096' }}>
-                          {activity.ip_address}
-                        </div>
+                    // Show empty state instead of mock data
+                    <div style={{ 
+                      textAlign: 'center',
+                      padding: '40px',
+                      color: '#718096'
+                    }}>
+                      <div style={{ fontSize: '48px', marginBottom: '16px' }}>📝</div>
+                      <div style={{ fontSize: '16px', fontWeight: '500', marginBottom: '8px' }}>
+                        {t('no_activity')}
                       </div>
-                    ))
+                      <div style={{ fontSize: '14px' }}>
+                        {t('activity_will_appear_here')}
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
@@ -625,59 +606,20 @@ export default function AdminProfile() {
                       )}
                     </div>
                   )) : (
-                    // Mock session data
-                    [
-                      { id: 1, device_info: 'MacBook Pro', browser: 'Chrome 118', location: 'New York, US', ip_address: '192.168.1.1', is_current: true, last_activity: new Date() },
-                      { id: 2, device_info: 'iPhone 14', browser: 'Safari', location: 'New York, US', ip_address: '192.168.1.2', is_current: false, last_activity: new Date(Date.now() - 3600000) }
-                    ].map((session, index) => (
-                      <div key={session.id || index} style={{ 
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '16px',
-                        padding: '16px',
-                        background: 'white',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '8px',
-                        marginBottom: '12px'
-                      }}>
-                        <div style={{ fontSize: '24px' }}>
-                          {session.device_info?.includes('MacBook') ? '💻' : 
-                           session.device_info?.includes('iPhone') ? '📱' : 
-                           session.device_info?.includes('iPad') ? '📱' : '💻'}
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: '500', color: '#1a202c' }}>
-                            {session.device_info} • {session.browser}
-                          </div>
-                          <div style={{ fontSize: '14px', color: '#718096' }}>
-                            {session.location} • {session.ip_address}
-                          </div>
-                          <div style={{ fontSize: '12px', color: '#718096' }}>
-                            {t('last_active')}: {session.last_activity.toLocaleString()}
-                          </div>
-                        </div>
-                        {session.is_current ? (
-                          <div style={{ 
-                            background: '#38a169',
-                            color: 'white',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                            fontWeight: '500'
-                          }}>
-                            {t('current')}
-                          </div>
-                        ) : (
-                          <button 
-                            className="btn btn-danger"
-                            style={{ fontSize: '12px', padding: '4px 8px' }}
-                            onClick={() => terminateSession(session.id)}
-                          >
-                            {t('terminate')}
-                          </button>
-                        )}
+                    // Show empty state instead of mock data
+                    <div style={{ 
+                      textAlign: 'center',
+                      padding: '40px',
+                      color: '#718096'
+                    }}>
+                      <div style={{ fontSize: '48px', marginBottom: '16px' }}>💻</div>
+                      <div style={{ fontSize: '16px', fontWeight: '500', marginBottom: '8px' }}>
+                        {t('no_sessions')}
                       </div>
-                    ))
+                      <div style={{ fontSize: '14px' }}>
+                        {t('sessions_will_appear_here')}
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>

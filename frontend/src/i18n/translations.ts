@@ -411,7 +411,21 @@ export const translations = {
     enable_2fa: 'تفعيل المصادقة الثنائية',
     current: 'الحالي',
     view_full_report: 'عرض التقرير الكامل',
-    view_all_Activity: 'عرض جميع النشاطات'
+    view_all_Activity: 'عرض جميع النشاطات',
+    
+    // Additional translations for users page
+    total_customers: 'إجمالي العملاء',
+    all_users_title: 'جميع المستخدمين',
+    user_header: 'المستخدم',
+    contact_header: 'تفاصيل الاتصال',
+    actions_header: 'الإجراءات',
+    results: 'نتائج',
+    no_activity: 'لا يوجد نشاط',
+    activity_will_appear_here: 'سيظهر النشاط هنا عند توفره',
+    no_sessions: 'لا توجد جلسات',
+    sessions_will_appear_here: 'ستظهر الجلسات هنا عند توفرها',
+    create_user: 'إنشاء مستخدم',
+    creating: 'جاري الإنشاء...'
   },
   en: {
     // Sidebar
@@ -795,8 +809,22 @@ export const translations = {
     enable_2fa: 'Enable 2FA',
     recent_activity: 'Recent Activity',
     current: 'Current',
-   view_full_report: 'View Full Report',
-   view_all_Activity: 'View All Activity'
+    view_full_report: 'View Full Report',
+    view_all_Activity: 'View All Activity',
+    
+    // Additional translations for users page
+    total_customers: 'Total Customers',
+    all_users_title: 'All Users',
+    user_header: 'User',
+    contact_header: 'Contact Details',
+    actions_header: 'Actions',
+    results: 'results',
+    no_activity: 'No Activity',
+    activity_will_appear_here: 'Activity will appear here when available',
+    no_sessions: 'No Sessions',
+    sessions_will_appear_here: 'Sessions will appear here when available',
+    create_user: 'Create User',
+    creating: 'Creating...'
   }
 };
 
