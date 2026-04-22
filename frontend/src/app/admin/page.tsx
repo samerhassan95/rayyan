@@ -27,7 +27,7 @@ export default function AdminDashboard() {
   const [monthlyRevenue, setMonthlyRevenue] = useState<any[]>([])
   const [userAcquisition, setUserAcquisition] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [chartPeriod, setChartPeriod] = useState(language === 'ar' ? 'أخر 6 شهور' : 'Last 6 Months')
+  const [chartPeriod, setChartPeriod] = useState('Last 6 Months')
   const [showTransactionFilter, setShowTransactionFilter] = useState(false)
   const [filteredTransactions, setFilteredTransactions] = useState<any[]>([])
   const [isFilteringTransactions, setIsFilteringTransactions] = useState(false)
@@ -72,10 +72,10 @@ export default function AdminDashboard() {
   ];
 
   const sources = [
-    { label: 'DIRECT', key: 'direct', color: 'bg-[#58A19A]', defaultValue: 45 },
-    { label: 'REFERRAL', key: 'referral', color: 'bg-[#50AED4]', defaultValue: 32 },
-    { label: 'SOCIAL', key: 'social', color: 'bg-[#51D1B8]', defaultValue: 18 },
-    { label: 'OTHER', key: 'other', color: 'bg-[#BBBBBB]', defaultValue: 5 },
+    { labelKey: 'direct_source', key: 'direct', color: 'bg-[#58A19A]' },
+    { labelKey: 'referral_source', key: 'referral', color: 'bg-[#50AED4]' },
+    { labelKey: 'social_source', key: 'social', color: 'bg-[#51D1B8]' },
+    { labelKey: 'other_source', key: 'other', color: 'bg-[#BBBBBB]' },
   ];
 
  const TRANSACTION_COLUMNS: Column[] = [
@@ -152,12 +152,14 @@ export default function AdminDashboard() {
         return
       }
 
-      // Show error state instead of fallback data
+      // Show error state with zeros instead of fallback data
       setStats({
         totalUsers: 0,
         totalRevenue: 0,
         activeSubscriptions: 0,
-        growthRate: 0
+        growthRate: 0,
+        userGrowth: 0,
+        subsGrowth: 0
       })
       setRecentTransactions([])
       setMonthlyRevenue([])
@@ -165,7 +167,12 @@ export default function AdminDashboard() {
         direct: 0,
         referral: 0,
         social: 0,
-        other: 0
+        other: 0,
+        directCount: 0,
+        referralCount: 0,
+        socialCount: 0,
+        otherCount: 0,
+        total: 0
       })
     } finally {
       setLoading(false)
@@ -299,7 +306,7 @@ const displayTransactions = isFilteringTransactions || filteredTransactions.leng
     <div className="space-y-4" style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       <div className='space-y-1.5'>
         <p className="text-2xl font-medium leading-[100%]">{t('overview')}</p>
-        <p className="font-light leadidng-[100%] text-[#7d7d7d]">Real-time performance metrics and system health.</p>
+        <p className="font-light leadidng-[100%] text-[#7d7d7d]">{t('real_time_metrics')}</p>
       </div>
 
       {/* Stats Grid */}
@@ -314,9 +321,9 @@ const displayTransactions = isFilteringTransactions || filteredTransactions.leng
           {
             icon: wallet,
             label: t('revenue'),
-            value: stats?.totalRevenue >= 1000000
-              ? `$${(stats.totalRevenue / 1000000).toFixed(1)}M`
-              : `$${(stats.totalRevenue / 1000).toFixed(0)}K`
+            value: (stats?.totalRevenue || 0) >= 1000000
+              ? `$${((stats?.totalRevenue || 0) / 1000000).toFixed(1)}M`
+              : `$${((stats?.totalRevenue || 0) / 1000).toFixed(0)}K`
           },
           {
             icon: crown,
@@ -344,10 +351,10 @@ const displayTransactions = isFilteringTransactions || filteredTransactions.leng
               onChange={(e) => handleChartPeriodChange(e.target.value)}
               className="px-2 py-2 rounded-full border border-[#e2e8f0] cursor-pointer bg-[#EEEEEE] text-sm"
             >
-              <option>{isRTL ? 'أخر 6 شهور' : 'Last 6 Months'}</option>
-              <option>{isRTL ? 'أخر 12 شهر' : 'Last 12 Months'}</option>
-              <option>{isRTL ? 'أخر 3 شهور' : 'Last 3 Months'}</option>
-              <option>{isRTL ? 'هذا العام' : 'This Year'}</option>
+              <option value="Last 6 Months">{t('last_6_months')}</option>
+              <option value="Last 12 Months">{t('last_12_months')}</option>
+              <option value="Last 3 Months">{t('last_3_months')}</option>
+              <option value="This Year">{t('this_year')}</option>
             </select>
           </div>
           <div className="w-full p-6 rounded-xl">
@@ -489,18 +496,18 @@ const displayTransactions = isFilteringTransactions || filteredTransactions.leng
 
           <div className="p-6 lg:space-y-7 2xl:space-y-12">
             {sources.map((source) => {
-              const percentage = userAcquisition?.[source.key] || source.defaultValue;
+              const percentage = userAcquisition?.[source.key] || 0;
               const count = userAcquisition?.[`${source.key}Count`] || 0;
 
               return (
                 <div key={source.key} className="">
                   <div className="flex justify-between my-3">
-                    <span className="text-sm text-[#4a5568]">{source.label}</span>
+                    <span className="text-sm text-[#4a5568]">{t(source.labelKey).toUpperCase()}</span>
                     <div className="text-right">
                       <span className="text-sm font-semibold">{percentage}%</span>
-                      {/* <div className="text-[12px] text-[#718096]">
-                    {count} {t('users')}
-                  </div> */}
+                      <div className="text-[12px] text-[#718096]">
+                        {count} {t('users')}
+                      </div>
                     </div>
                   </div>
                   <div className="h-[8px] bg-[#EEEEEE] rounded-full overflow-hidden">
@@ -531,6 +538,7 @@ const displayTransactions = isFilteringTransactions || filteredTransactions.leng
         columns={TRANSACTION_COLUMNS}
         data={displayTransactions}
         isRTL={isRTL}
+        rowsPerPage={10}
         // --- قسم الفلتر بنفس الشكل القديم ---
         filterSection={
           <div className='relative'>
@@ -547,7 +555,14 @@ const displayTransactions = isFilteringTransactions || filteredTransactions.leng
             </button>
 
             {showTransactionFilter && (
-              <div className='absolute z-[1000] min-w-[280px]  right-0 bg-white border border-[#e2e8f0] rounded-xl px-4 py-2'>
+              <div 
+                className='absolute z-[1000] min-w-[280px] bg-white border border-[#e2e8f0] rounded-xl px-4 py-2 shadow-lg'
+                style={{
+                  [isRTL ? 'left' : 'right']: 0,
+                  top: '100%',
+                  marginTop: '8px'
+                }}
+              >
                 {/* <h4 className='pb-2 text-base font-medium border-b'>{t('filter_transactions')}</h4> */}
 
                 {/* عمل Map لخيارات الفلتر */}
@@ -586,15 +601,14 @@ const displayTransactions = isFilteringTransactions || filteredTransactions.leng
             )}
           </div>
         }
-        // --- قسم الفوتر (زر View All) ---
-        footerSection={
-          <div className="text-center">
-            <button className="btn btn-secondary" onClick={handleShowAllActivity}>
-              {t('view_all_Activity')}
-            </button>
-          </div>
-        }
       />
+      
+      {/* View All Activity Button */}
+      <div className="text-center mt-4">
+        <button className="btn btn-secondary" onClick={handleShowAllActivity}>
+          {t('view_all_Activity')}
+        </button>
+      </div>
     </div>
   )
 }

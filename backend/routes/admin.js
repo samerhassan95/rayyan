@@ -344,6 +344,9 @@ router.get('/users', async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
     const search = req.query.search || '';
+    const statusFilter = req.query.status || '';
+    const planFilter = req.query.plan || '';
+    const twoFactorFilter = req.query.twoFactor || '';
 
     const connection = await pool.getConnection();
     
@@ -363,20 +366,59 @@ router.get('/users', async (req, res) => {
       const searchParam = `%${search.trim()}%`;
       params.push(searchParam, searchParam, searchParam);
     }
+    
+    // Add status filter
+    if (statusFilter && statusFilter !== 'all') {
+      query += ' AND u.status = ?';
+      params.push(statusFilter);
+    }
+    
+    // Add plan filter
+    if (planFilter && planFilter !== 'all') {
+      query += ' AND p.name = ?';
+      params.push(planFilter);
+    }
+    
+    // Add 2FA filter
+    if (twoFactorFilter && twoFactorFilter !== 'all') {
+      if (twoFactorFilter === 'enabled') {
+        query += ' AND u.two_factor_enabled = 1';
+      } else if (twoFactorFilter === 'disabled') {
+        query += ' AND u.two_factor_enabled = 0';
+      }
+    }
 
     query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
     params.push(limit, offset);
 
     const [users] = await connection.query(query, params);
 
-    // Get total count
-    let countQuery = 'SELECT COUNT(*) as total FROM users WHERE role = "user"';
+    // Get total count with same filters
+    let countQuery = 'SELECT COUNT(*) as total FROM users u LEFT JOIN subscriptions s ON u.id = s.user_id AND s.status = "active" LEFT JOIN plans p ON s.plan_id = p.id WHERE u.role = "user"';
     let countParams = [];
     
     if (search.trim()) {
-      countQuery += ' AND (username LIKE ? OR email LIKE ? OR job_title LIKE ?)';
+      countQuery += ' AND (u.username LIKE ? OR u.email LIKE ? OR u.job_title LIKE ?)';
       const searchParam = `%${search.trim()}%`;
       countParams.push(searchParam, searchParam, searchParam);
+    }
+    
+    if (statusFilter && statusFilter !== 'all') {
+      countQuery += ' AND u.status = ?';
+      countParams.push(statusFilter);
+    }
+    
+    if (planFilter && planFilter !== 'all') {
+      countQuery += ' AND p.name = ?';
+      countParams.push(planFilter);
+    }
+    
+    if (twoFactorFilter && twoFactorFilter !== 'all') {
+      if (twoFactorFilter === 'enabled') {
+        countQuery += ' AND u.two_factor_enabled = 1';
+      } else if (twoFactorFilter === 'disabled') {
+        countQuery += ' AND u.two_factor_enabled = 0';
+      }
     }
 
     const [totalCount] = await connection.query(countQuery, countParams);
@@ -398,6 +440,35 @@ router.get('/users', async (req, res) => {
     connection.release();
 
     const totalUsersCount = stats[0].totalUsers || 1; // Prevent division by zero
+    
+    // Calculate network health (uptime percentage based on active users and system status)
+    // This is a simplified calculation - in production, you'd track actual system uptime
+    const activeUsersRatio = (stats[0].activeUsers / totalUsersCount) * 100;
+    const recentActivityRatio = (stats[0].recentlyActive / totalUsersCount) * 100;
+    const networkHealth = Math.min(99.99, (activeUsersRatio * 0.5 + recentActivityRatio * 0.5)).toFixed(2);
+    
+    // Calculate system insights
+    const inactiveEnterpriseCount = await connection.query(`
+      SELECT COUNT(*) as count
+      FROM users u
+      LEFT JOIN subscriptions s ON u.id = s.user_id
+      LEFT JOIN plans p ON s.plan_id = p.id
+      WHERE p.tier = 'enterprise' 
+      AND u.status = 'active'
+      AND (u.last_login IS NULL OR u.last_login < DATE_SUB(NOW(), INTERVAL 5 DAY))
+    `);
+    
+    const activityGrowth = await connection.query(`
+      SELECT 
+        COUNT(CASE WHEN last_login >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 END) as this_week,
+        COUNT(CASE WHEN last_login >= DATE_SUB(NOW(), INTERVAL 14 DAY) AND last_login < DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 END) as last_week
+      FROM users
+      WHERE role = 'user'
+    `);
+    
+    const thisWeekActivity = activityGrowth[0][0].this_week || 0;
+    const lastWeekActivity = activityGrowth[0][0].last_week || 1;
+    const activityIncrease = Math.round(((thisWeekActivity - lastWeekActivity) / lastWeekActivity) * 100);
 
     res.json({
       users,
@@ -414,7 +485,12 @@ router.get('/users', async (req, res) => {
         seatUtilization: Math.round((stats[0].activeUsers / totalUsersCount) * 100) || 0,
         avgActivation: Math.round((stats[0].recentlyActive / totalUsersCount) * 100) || 0,
         recentInvites: stats[0].newThisMonth || 0,
-        twoFactorEnabled: stats[0].twoFactorUsers || 0
+        twoFactorEnabled: stats[0].twoFactorUsers || 0,
+        networkHealth: parseFloat(networkHealth),
+        systemInsights: {
+          activityIncrease: activityIncrease,
+          inactiveEnterpriseAccounts: inactiveEnterpriseCount[0][0].count || 0
+        }
       }
     });
   } catch (error) {
@@ -486,14 +562,77 @@ router.get('/users/:id', async (req, res) => {
 
     const openTickets = supportTickets.filter(t => t.status === 'open').length;
 
-    // Generate usage activity data for chart
+    // Generate usage activity data from real user activity
     const usageActivity = [];
+    
+    // Get real activity data from transactions, tickets, and sessions
+    const [transactionActivity] = await pool.execute(`
+      SELECT DATE(transaction_date) as activity_date, 
+             COUNT(*) as transaction_count,
+             SUM(amount) as total_amount
+      FROM transactions 
+      WHERE user_id = ? AND transaction_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+      GROUP BY DATE(transaction_date)
+      ORDER BY activity_date ASC
+    `, [userId]);
+
+    const [ticketActivity] = await pool.execute(`
+      SELECT DATE(created_at) as activity_date, 
+             COUNT(*) as ticket_count
+      FROM support_tickets 
+      WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+      GROUP BY DATE(created_at)
+      ORDER BY activity_date ASC
+    `, [userId]);
+
+    const [sessionActivity] = await pool.execute(`
+      SELECT DATE(last_activity) as activity_date, 
+             COUNT(*) as session_count
+      FROM user_sessions 
+      WHERE user_id = ? AND last_activity >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+      GROUP BY DATE(last_activity)
+      ORDER BY activity_date ASC
+    `, [userId]);
+
+    // Create activity map from real data
+    const activityMap = {};
+    
+    // Add transaction activity (weight: high)
+    transactionActivity.forEach(t => {
+      const date = t.activity_date instanceof Date ? 
+        t.activity_date.toISOString().split('T')[0] : 
+        t.activity_date;
+      activityMap[date] = (activityMap[date] || 0) + (t.transaction_count * 15) + (parseFloat(t.total_amount) / 20);
+    });
+
+    // Add support ticket activity (weight: medium)
+    ticketActivity.forEach(t => {
+      const date = t.activity_date instanceof Date ? 
+        t.activity_date.toISOString().split('T')[0] : 
+        t.activity_date;
+      activityMap[date] = (activityMap[date] || 0) + (t.ticket_count * 10);
+    });
+
+    // Add session activity (weight: low)
+    sessionActivity.forEach(s => {
+      const date = s.activity_date instanceof Date ? 
+        s.activity_date.toISOString().split('T')[0] : 
+        s.activity_date;
+      activityMap[date] = (activityMap[date] || 0) + (s.session_count * 5);
+    });
+
+    // Generate complete 30-day range with real data
     for (let i = 30; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
+      const dateKey = date.toISOString().split('T')[0];
+      
+      // Use real activity or 0 if no activity
+      const realActivity = activityMap[dateKey] || 0;
+      
       usageActivity.push({
-        date: date.toISOString().split('T')[0],
-        value: Math.floor(Math.random() * 100) + 50 + (i % 7 === 0 ? 20 : 0) // Add some weekly patterns
+        date: dateKey,
+        value: Math.round(realActivity)
       });
     }
 
@@ -1190,8 +1329,8 @@ router.get('/users/:id/usage-activity', async (req, res) => {
           }
         });
         
-        // Use real activity or minimum baseline
-        const finalActivity = Math.max(20, Math.round(monthlyActivity || (50 + Math.random() * 30)));
+        // Use real activity or 0 if no activity
+        const finalActivity = Math.round(monthlyActivity);
         
         usageActivity.push({
           date: monthKey,
@@ -1208,8 +1347,8 @@ router.get('/users/:id/usage-activity', async (req, res) => {
         // Get real activity for this date
         const realActivity = activityMap[dateKey] || 0;
         
-        // Use real activity or minimum baseline
-        const finalValue = Math.max(5, Math.round(realActivity || (20 + Math.random() * 20)));
+        // Use real activity or 0 if no activity
+        const finalValue = Math.round(realActivity);
         
         usageActivity.push({
           date: dateKey,

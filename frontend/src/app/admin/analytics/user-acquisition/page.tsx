@@ -14,6 +14,17 @@ export default function UserAcquisitionAnalytics() {
   const [selectedPeriod, setSelectedPeriod] = useState('6months')
   const router = useRouter()
 
+  // Helper function to translate source names
+  const translateSource = (source: string): string => {
+    const sourceMap: { [key: string]: string } = {
+      'direct': t('direct_source'),
+      'social': t('social_source'),
+      'referral': t('referral_source'),
+      'other': t('other_source')
+    }
+    return sourceMap[source.toLowerCase()] || source
+  }
+
   useEffect(() => {
     fetchAnalyticsData()
   }, [])
@@ -40,10 +51,330 @@ export default function UserAcquisitionAnalytics() {
   const monthlyTrends = analyticsData?.monthlyTrends || []
   const totalUsers = totalBySource.reduce((sum: number, item: any) => sum + item.total_count, 0)
 
+  // Export to CSV
+  const exportToCSV = () => {
+    try {
+      // Prepare CSV data
+      const csvRows = []
+      
+      // Header
+      csvRows.push(['User Acquisition Analytics Report'])
+      csvRows.push(['Generated on:', new Date().toLocaleString()])
+      csvRows.push([]) // Empty row
+      
+      // Summary section
+      csvRows.push(['Summary'])
+      csvRows.push(['Total Users', totalUsers])
+      csvRows.push(['Direct Traffic', totalBySource.find((s: any) => s.source === 'direct')?.total_count || 0])
+      csvRows.push(['Referrals', totalBySource.find((s: any) => s.source === 'referral')?.total_count || 0])
+      csvRows.push(['Social Media', totalBySource.find((s: any) => s.source === 'social')?.total_count || 0])
+      csvRows.push([]) // Empty row
+      
+      // Source breakdown
+      csvRows.push(['Source Breakdown'])
+      csvRows.push(['Source', 'Total Users', 'Percentage', 'Avg Monthly'])
+      totalBySource.forEach((source: any) => {
+        const percentage = totalUsers > 0 ? Math.round((source.total_count / totalUsers) * 100) : 0
+        const avgMonthly = Math.round(source.total_count / 12)
+        csvRows.push([
+          translateSource(source.source),
+          source.total_count,
+          `${percentage}%`,
+          avgMonthly
+        ])
+      })
+      csvRows.push([]) // Empty row
+      
+      // Monthly trends
+      csvRows.push(['Monthly Trends'])
+      csvRows.push(['Month', 'Total Users', 'Direct', 'Social', 'Referral', 'Other'])
+      monthlyTrends.forEach((month: any) => {
+        csvRows.push([
+          month.month,
+          month.total_users,
+          month.direct,
+          month.social,
+          month.referral,
+          month.other
+        ])
+      })
+      
+      // Convert to CSV string
+      const csvContent = csvRows.map(row => row.join(',')).join('\n')
+      
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      const url = URL.createObjectURL(blob)
+      link.setAttribute('href', url)
+      link.setAttribute('download', `user-acquisition-report-${new Date().toISOString().split('T')[0]}.csv`)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      console.log('✅ CSV exported successfully')
+    } catch (error) {
+      console.error('Failed to export CSV:', error)
+      alert('Failed to export CSV. Please try again.')
+    }
+  }
+
+  // Export to PDF
+  const exportToPDF = () => {
+    try {
+      // Create a printable version
+      const printWindow = window.open('', '_blank')
+      if (!printWindow) {
+        alert('Please allow pop-ups to export PDF')
+        return
+      }
+      
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>User Acquisition Report</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 40px;
+              color: #1a202c;
+            }
+            h1 {
+              color: #319795;
+              border-bottom: 3px solid #319795;
+              padding-bottom: 10px;
+            }
+            h2 {
+              color: #2d3748;
+              margin-top: 30px;
+              margin-bottom: 15px;
+            }
+            .summary-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 20px;
+              margin: 20px 0;
+            }
+            .summary-card {
+              border: 1px solid #e2e8f0;
+              padding: 20px;
+              border-radius: 8px;
+              text-align: center;
+            }
+            .summary-card .value {
+              font-size: 32px;
+              font-weight: bold;
+              color: #319795;
+            }
+            .summary-card .label {
+              font-size: 12px;
+              color: #718096;
+              text-transform: uppercase;
+              margin-top: 8px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 20px 0;
+            }
+            th, td {
+              border: 1px solid #e2e8f0;
+              padding: 12px;
+              text-align: left;
+            }
+            th {
+              background-color: #f7fafc;
+              font-weight: 600;
+              color: #2d3748;
+            }
+            .progress-bar {
+              height: 8px;
+              background: #e2e8f0;
+              border-radius: 4px;
+              overflow: hidden;
+              margin-top: 5px;
+            }
+            .progress-fill {
+              height: 100%;
+              background: #319795;
+            }
+            .footer {
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 1px solid #e2e8f0;
+              text-align: center;
+              color: #718096;
+              font-size: 12px;
+            }
+            @media print {
+              body { padding: 20px; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>User Acquisition Analytics Report</h1>
+          <p style="color: #718096;">Generated on: ${new Date().toLocaleString()}</p>
+          
+          <h2>Summary</h2>
+          <div class="summary-grid">
+            <div class="summary-card">
+              <div class="value">${totalUsers.toLocaleString()}</div>
+              <div class="label">Total Users</div>
+            </div>
+            <div class="summary-card">
+              <div class="value">${totalBySource.find((s: any) => s.source === 'direct')?.total_count || 0}</div>
+              <div class="label">Direct Traffic</div>
+            </div>
+            <div class="summary-card">
+              <div class="value">${totalBySource.find((s: any) => s.source === 'referral')?.total_count || 0}</div>
+              <div class="label">Referrals</div>
+            </div>
+            <div class="summary-card">
+              <div class="value">${totalBySource.find((s: any) => s.source === 'social')?.total_count || 0}</div>
+              <div class="label">Social Media</div>
+            </div>
+          </div>
+          
+          <h2>Source Breakdown</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th>Total Users</th>
+                <th>Percentage</th>
+                <th>Avg Monthly</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${totalBySource.map((source: any) => {
+                const percentage = totalUsers > 0 ? Math.round((source.total_count / totalUsers) * 100) : 0
+                const avgMonthly = Math.round(source.total_count / 12)
+                return `
+                  <tr>
+                    <td style="text-transform: capitalize; font-weight: 500;">${translateSource(source.source)}</td>
+                    <td>${source.total_count.toLocaleString()}</td>
+                    <td>
+                      ${percentage}%
+                      <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${percentage}%"></div>
+                      </div>
+                    </td>
+                    <td>${avgMonthly}</td>
+                  </tr>
+                `
+              }).join('')}
+            </tbody>
+          </table>
+          
+          <h2>Monthly Trends</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>Total Users</th>
+                <th>Direct</th>
+                <th>Social</th>
+                <th>Referral</th>
+                <th>Other</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${monthlyTrends.map((month: any) => `
+                <tr>
+                  <td>${month.month}</td>
+                  <td><strong>${month.total_users}</strong></td>
+                  <td>${month.direct}</td>
+                  <td>${month.social}</td>
+                  <td>${month.referral}</td>
+                  <td>${month.other}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div class="footer">
+            <p>User Acquisition Analytics Report - Generated by RAYYAN Admin Dashboard</p>
+          </div>
+          
+          <div class="no-print" style="text-align: center; margin-top: 30px;">
+            <button onclick="window.print()" style="padding: 12px 24px; background: #319795; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">
+              Print / Save as PDF
+            </button>
+            <button onclick="window.close()" style="padding: 12px 24px; background: #e2e8f0; color: #2d3748; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; margin-left: 10px;">
+              Close
+            </button>
+          </div>
+        </body>
+        </html>
+      `
+      
+      printWindow.document.write(htmlContent)
+      printWindow.document.close()
+      
+      console.log('✅ PDF export window opened')
+    } catch (error) {
+      console.error('Failed to export PDF:', error)
+      alert('Failed to export PDF. Please try again.')
+    }
+  }
+
+  // Print report
+  const printReport = () => {
+    try {
+      window.print()
+      console.log('✅ Print dialog opened')
+    } catch (error) {
+      console.error('Failed to print:', error)
+      alert('Failed to print. Please try again.')
+    }
+  }
+
   return (
     <div style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
+      {/* Print-specific styles */}
+      <style jsx global>{`
+        @media print {
+          .no-print {
+            display: none !important;
+          }
+          .print-only {
+            display: block !important;
+          }
+          body {
+            background: white !important;
+          }
+          .content-card {
+            page-break-inside: avoid;
+            box-shadow: none !important;
+            border: 1px solid #e2e8f0 !important;
+          }
+          button {
+            display: none !important;
+          }
+          select {
+            display: none !important;
+          }
+        }
+        .print-only {
+          display: none;
+        }
+      `}</style>
+      
+      {/* Print-only header */}
+      <div className="print-only" style={{ marginBottom: '30px', borderBottom: '3px solid #319795', paddingBottom: '15px' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#319795', marginBottom: '8px' }}>
+          User Acquisition Analytics Report
+        </h1>
+        <p style={{ color: '#718096', fontSize: '14px' }}>
+          Generated on: {new Date().toLocaleString()}
+        </p>
+      </div>
+      
       {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
+      <div style={{ marginBottom: '24px' }} className="no-print">
         <button 
           onClick={() => router.back()}
           style={{ 
@@ -120,7 +451,7 @@ export default function UserAcquisitionAnalytics() {
                 <div key={source.source} style={{ marginBottom: '20px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <span style={{ fontSize: '14px', color: '#4a5568', textTransform: 'uppercase' }}>
-                      {source.source}
+                      {translateSource(source.source)}
                     </span>
                     <div style={{ textAlign: 'right' }}>
                       <span style={{ fontSize: '14px', fontWeight: '600' }}>{percentage}%</span>
@@ -233,7 +564,7 @@ export default function UserAcquisitionAnalytics() {
                            source.source === 'social' ? '📱' : '🔍'}
                         </span>
                         <span style={{ textTransform: 'capitalize', fontWeight: '500' }}>
-                          {source.source}
+                          {translateSource(source.source)}
                         </span>
                       </div>
                     </td>
@@ -260,7 +591,8 @@ export default function UserAcquisitionAnalytics() {
                     </td>
                     <td>{avgMonthly}</td>
                     <td>
-                      <span style={{ color: '#38a169' }}>📈 +{Math.floor(Math.random() * 20) + 5}%</span>
+                      {/* Trend calculation would require historical data comparison */}
+                      <span style={{ color: '#718096' }}>—</span>
                     </td>
                   </tr>
                 )
@@ -275,21 +607,45 @@ export default function UserAcquisitionAnalytics() {
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
           <button 
             className="btn btn-secondary"
-            onClick={() => alert(t('coming_soon') || 'Functionality coming soon')}
+            onClick={exportToCSV}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '12px 24px',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}
           >
-            📊 {t('export_csv')}
+            📊 {t('export_csv') || 'Export CSV'}
           </button>
           <button 
             className="btn btn-secondary"
-            onClick={() => alert(t('coming_soon') || 'Functionality coming soon')}
+            onClick={exportToPDF}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '12px 24px',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}
           >
-            📄 {t('export_pdf')}
+            📄 {t('export_pdf') || 'Export PDF'}
           </button>
           <button 
             className="btn btn-primary"
-            onClick={() => window.print()}
+            onClick={printReport}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '12px 24px',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}
           >
-            🖨️ {t('print_report')}
+            🖨️ {t('print_report') || 'Print Report'}
           </button>
         </div>
       </div>

@@ -363,7 +363,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </button>
             )}
             <div>
-              <p className='font-light text-[#7d7d7d]'>{pathname === '/admin' ? t('overview') : pathname.split('/').pop()?.toUpperCase()}</p>
+              <p className='font-light text-[#7d7d7d]'>
+                {pathname === '/admin' ? t('overview') : 
+                 pathname === '/admin/users' ? t('users') :
+                 pathname === '/admin/subscriptions' ? t('subscriptions') :
+                 pathname === '/admin/transactions' ? t('transactions') :
+                 pathname === '/admin/plans' ? t('plans') :
+                 pathname === '/admin/settings' ? t('settings') :
+                 pathname === '/admin/profile' ? t('profile') :
+                 pathname.includes('/admin/analytics/user-acquisition') ? t('user_acquisition_analytics') :
+                 pathname.split('/').pop()?.toUpperCase()}
+              </p>
               <p className="text-lg md:text-2xl font-semibold leading-[100%]">{t('welcome_back')}, {user?.username || 'Admin'}</p>
             </div>
           </div>
@@ -473,12 +483,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <button
                 className="relative header-btn"
                 onClick={() => setShowNotifications(!showNotifications)}
-                title="Notifications"
+                title={t('notifications')}
               >
                 <Image src={notification} alt="Notifications" width={24} height={24} />
-                {notifications.length > 0 && (
+                {notifications.filter(n => !n.is_read).length > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center">
-                    {notifications.length}
+                    {notifications.filter(n => !n.is_read).length}
                   </span>
                 )}
               </button>
@@ -493,34 +503,52 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   </div>
                   <div className="max-h-[400px] overflow-y-auto">
                     {loadingNotifications ? (
-                      <div className="p-5 text-center text-slate-500">Loading notifications...</div>
+                      <div className="p-5 text-center text-slate-500">{t('loading')}...</div>
                     ) : notifications.length > 0 ? (
-                      notifications.map((notification) => (
+                      notifications.slice(0, 5).map((notification) => (
                         <div
                           key={notification.id}
                           className={`p-3 px-4 border-b border-slate-50 cursor-pointer transition-colors duration-200 ${notification.is_read ? 'bg-transparent hover:bg-slate-50' : 'bg-emerald-50 hover:bg-emerald-100'}`}
                           onClick={() => markNotificationAsRead(notification.id)}
                         >
                           <div className="flex items-start gap-3">
-                            <span className={`text-lg ${notification.type === 'error' ? 'text-red-600' : notification.type === 'success' ? 'text-green-600' : 'text-blue-600'}`}>
-                              {notification.type === 'error' ? '⚠️' : notification.type === 'success' ? '✅' : 'ℹ️'}
+                            <span className={`text-lg ${notification.type === 'error' ? 'text-red-600' : notification.type === 'success' ? 'text-green-600' : notification.type === 'warning' ? 'text-yellow-600' : 'text-blue-600'}`}>
+                              {notification.type === 'error' ? '⚠️' : notification.type === 'success' ? '✅' : notification.type === 'warning' ? '⚡' : 'ℹ️'}
                             </span>
                             <div className="flex-1">
-                              <div className={`text-sm mb-1 ${notification.is_read ? 'font-normal' : 'font-semibold text-slate-800'}`}>
+                              {notification.title && (
+                                <div className={`text-sm mb-1 ${notification.is_read ? 'font-normal' : 'font-semibold text-slate-800'}`}>
+                                  {notification.title}
+                                </div>
+                              )}
+                              <div className={`text-xs mb-1 ${notification.is_read ? 'text-slate-600' : 'text-slate-700'}`}>
                                 {notification.message}
                               </div>
-                              <div className="text-xs text-slate-500">{new Date(notification.created_at).toLocaleString()}</div>
+                              <div className="text-xs text-slate-500">
+                                {new Date(notification.created_at).toLocaleString(isRTL ? 'ar-EG' : 'en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </div>
                             </div>
                             {!notification.is_read && <div className="w-2 h-2 rounded-full bg-teal-600 mt-1.5" />}
                           </div>
                         </div>
                       ))
                     ) : (
-                      <div className="p-5 text-center text-slate-500">No notifications</div>
+                      <div className="p-5 text-center text-slate-500">{t('no_notifications')}</div>
                     )}
                   </div>
                   <div className="p-3 px-4 text-center border-t border-slate-50">
-                    <button className="text-sm font-medium text-teal-600 bg-transparent border-none cursor-pointer hover:underline" onClick={() => setShowNotifications(false)}>
+                    <button 
+                      className="text-sm font-medium text-teal-600 bg-transparent border-none cursor-pointer hover:underline" 
+                      onClick={() => {
+                        setShowNotifications(false)
+                        router.push('/admin/notifications')
+                      }}
+                    >
                       {t('view_all_notifications')}
                     </button>
                   </div>
