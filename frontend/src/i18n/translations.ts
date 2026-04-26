@@ -429,7 +429,8 @@ export const translations = {
     add_customers: 'اضافة عملاء',
     add_customer: 'اضافة عميل',
     add_new_customer: 'اضافة عميل جديد',
-    add_customer_description: 'يرجى ملء جميع الحقول المطلوبة'
+    add_customer_description: 'يرجى ملء جميع الحقول المطلوبة',
+    suspend_user: 'حظر',
   },
   en: {
     // Sidebar
@@ -817,8 +818,8 @@ export const translations = {
     view_all_Activity: 'View All Activity',
     add_new_customer: 'Add New Customer',
     add_customer: 'Add Customer',
-    add_customer_description: 'Enter the details below to add a new customer to your platform.'
-
+    add_customer_description: 'Enter the details below to add a new customer to your platform.',
+suspend_user: 'Suspend User',
 
     
     // Additional translations for users page

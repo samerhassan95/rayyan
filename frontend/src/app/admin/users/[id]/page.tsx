@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import axios from 'axios'
 import { useLanguage } from '../../../../i18n/LanguageContext'
+import Image from 'next/image'
+import edit from '../../../../assets/icons/edit.svg'
+import suspend from '../../../../assets/icons/suspand.svg'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
@@ -561,26 +564,34 @@ export default function UserDetail() {
               </div>
             )}
           </div>
-
-
         </div>
         <div>
-          
           {/* Action Buttons */}
           <div className="flex self-start gap-3">
             {!isEditingProfile ? (
               <>
                 <button
                   onClick={() => setIsEditingProfile(true)}
-                  className="bg-linear text-white px-4 py-2.5 rounded-full font-medium hover:bg-slate-300 transition-colors cursor-pointer"
+                  className="bg-linear flex items-center gap-2 text-white px-4 py-2.5 rounded-full font-medium hover:bg-slate-300 transition-colors cursor-pointer"
                 >
-                  ✏️ {t('edit_profile')}
+                  <Image src={edit} alt="edit" width={14} height={14} />
+                  {t('edit_profile')}
                 </button>
                 <button
                   onClick={suspendUser}
-                  className="bg-red-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-red-700 transition-colors cursor-pointer"
+                  className="bg-[#f8f8f8] flex items-center gap-2 px-4 py-2.5 rounded-full font-medium hover:bg-slate-200 transition-colors cursor-pointer border border-gray-200"
                 >
-                  {userDetail.user.status === 'active' ? `🚫 ${t('suspend')}` : `✅ ${t('activate')}`}
+                  {userDetail.user.status === 'active' ? (
+                    <>
+                      <Image src={suspend} alt="suspend" width={16} height={16} />
+                      <span className="">{t('suspend_user')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Image src={edit} alt="activate" width={16} height={16} />
+                      <span className="text-green-600">{t('activate')}</span>
+                    </>
+                  )}
                 </button>
               </>
             ) : (
@@ -599,7 +610,7 @@ export default function UserDetail() {
                 </button>
               </>
             )}
-          </div> 
+          </div>
         </div>
       </div>
 
@@ -663,8 +674,8 @@ export default function UserDetail() {
                   <button
                     key={period}
                     className={`text-[12px] px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer border-none ${chartPeriod === period
-                        ? 'bg-teal-600 text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      ? 'bg-teal-600 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     onClick={() => setChartPeriod(period)}
                   >
@@ -714,10 +725,10 @@ export default function UserDetail() {
                           <td className="p-4 text-slate-600">{ticket.subject}</td>
                           <td className="p-4">
                             <span className={`px-2 py-1 rounded-full text-[12px] font-medium ${ticket.status === 'open'
-                                ? 'bg-red-100 text-red-800'
-                                : ticket.status === 'pending'
-                                  ? 'bg-orange-100 text-orange-800'
-                                  : 'bg-green-100 text-green-800'
+                              ? 'bg-red-100 text-red-800'
+                              : ticket.status === 'pending'
+                                ? 'bg-orange-100 text-orange-800'
+                                : 'bg-green-100 text-green-800'
                               }`}>
                               {ticket.status}
                             </span>
@@ -749,8 +760,8 @@ export default function UserDetail() {
                 <button
                   onClick={toggleTwoFactor}
                   className={`px-2 py-0.5 rounded text-[12px] font-bold border-none cursor-pointer transition-opacity hover:opacity-80 ${userDetail?.user?.two_factor_enabled
-                      ? 'bg-teal-50 text-teal-600'
-                      : 'bg-red-50 text-red-600'
+                    ? 'bg-teal-50 text-teal-600'
+                    : 'bg-red-50 text-red-600'
                     }`}
                 >
                   {userDetail?.user?.two_factor_enabled ? t('enabled') : t('disabled')}

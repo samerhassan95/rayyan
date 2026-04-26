@@ -1,10 +1,5 @@
 /* Admin Dashboard Styles */
-.admin-layout {
-  display: flex;
-  background: #fff;
-  justify-content: start;
-  margin: 10px;
-}
+
 
 .admin-sidebar.closed .nav-item,
 .admin-sidebar.closed .logout-btn {
@@ -124,17 +119,16 @@
 .admin-main {
   flex: 1;
   transition: all 0.3s ease;
-  margin-left: 20px;
 }
 
-.admin-main[dir="rtl"] {
+/* .admin-main[dir="rtl"] {
   margin-right: 20px;
   margin-left: 0;
-}
+} */
 
-.admin-main.sidebar-closed {
+/* .admin-main.sidebar-closed {
   margin-left: 20px;
-}
+} */
 
 .admin-header {
   background: #fff;
@@ -551,9 +545,9 @@
     transform: translateX(0);
   }
 
-  .admin-main {
+  /* .admin-main {
     margin-left: 0;
-  }
+  } */
 
   .stats-grid {
     grid-template-columns: 1fr;
@@ -817,9 +811,9 @@ body.dark-mode .admin-layout svg text {
         z-index: 1000;
     }
     
-    .admin-main {
-        margin-left: 0 !important; /* المحتوى يأخذ الشاشة كاملة في الموبايل */
-    }
+    /* .admin-main {
+        margin-left: 0 !important; /* المحتوى يأخذ الشاشة كاملة في الموبايل
+    } */
 }
 
 @media (max-width: 480px) {

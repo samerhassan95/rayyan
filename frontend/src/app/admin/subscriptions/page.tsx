@@ -5,6 +5,11 @@ import axios from 'axios'
 import StatGroup from '../../components/StateCard';
 import { useLanguage } from '../../../i18n/LanguageContext'
 
+import percent1 from "../../../assets/icons/percent-1.svg"
+import percent2 from "../../../assets/icons/percent-2.svg"
+import percent3 from "../../../assets/icons/percent-3.svg"
+import percent4 from "../../../assets/icons/percent-4.svg"
+
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
@@ -37,18 +42,18 @@ export default function AdminSubscriptions() {
     try {
       setFilterLoading(true)
       const token = localStorage.getItem('token')
-      
+
       console.log('🔍 Debug Info:');
       console.log('- Token exists:', !!token);
       console.log('- API URL:', API_URL);
-      
+
       if (!token) {
         console.error('No token found - user needs to login');
         setLoading(false)
         setFilterLoading(false)
         return
       }
-      
+
       const headers = { Authorization: `Bearer ${token}` }
 
       console.log('Making API calls with params:', {
@@ -83,12 +88,12 @@ export default function AdminSubscriptions() {
       } else {
         console.log('❌ No subscriptions data in response');
       }
-      
+
       if (analyticsResponse.data) {
         console.log('✅ Setting analytics data');
         setAnalytics(analyticsResponse.data)
       }
-      
+
     } catch (error) {
       console.error('❌ Error fetching data:', error)
       if (error.response) {
@@ -103,7 +108,7 @@ export default function AdminSubscriptions() {
 
   const createNewSubscription = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!newSubscriptionData.userEmail || !newSubscriptionData.planId) {
       // Show error message
       const errorDiv = document.createElement('div')
@@ -115,22 +120,22 @@ export default function AdminSubscriptions() {
       `
       errorDiv.textContent = t('fill_required_fields')
       document.body.appendChild(errorDiv)
-      
+
       setTimeout(() => {
         document.body.removeChild(errorDiv)
       }, 3000)
       return
     }
-    
+
     try {
       setCreateLoading(true)
       const token = localStorage.getItem('token')
-      
+
       if (!token) {
         alert('Please login first')
         return
       }
-      
+
       const response = await axios.post(`${API_URL}/api/subscriptions`, {
         userEmail: newSubscriptionData.userEmail,
         planId: parseInt(newSubscriptionData.planId),
@@ -138,25 +143,25 @@ export default function AdminSubscriptions() {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      
+
       console.log('✅ Subscription created:', response.data)
-      
+
       // Reset form
       setNewSubscriptionData({
         userEmail: '',
         planId: '',
         billingCycle: 'monthly'
       })
-      
+
       // Close modal
       setShowNewSubscriptionModal(false)
-      
+
       // Refresh data to show new subscription
       await fetchData()
-      
+
       // Show success message
       const successMessage = `Subscription created successfully for ${response.data.subscription.user.email}!`
-      
+
       // You can replace this with a proper toast notification
       const successDiv = document.createElement('div')
       successDiv.style.cssText = `
@@ -168,14 +173,14 @@ export default function AdminSubscriptions() {
       `
       successDiv.textContent = successMessage
       document.body.appendChild(successDiv)
-      
+
       setTimeout(() => {
         document.body.removeChild(successDiv)
       }, 4000)
-      
+
     } catch (error) {
       console.error('❌ Error creating subscription:', error)
-      
+
       // Show error message
       const errorMessage = error.response?.data?.error || error.message || 'Unknown error occurred'
       const errorDiv = document.createElement('div')
@@ -187,7 +192,7 @@ export default function AdminSubscriptions() {
       `
       errorDiv.textContent = `Error: ${errorMessage}`
       document.body.appendChild(errorDiv)
-      
+
       setTimeout(() => {
         if (document.body.contains(errorDiv)) {
           document.body.removeChild(errorDiv)
@@ -211,14 +216,7 @@ export default function AdminSubscriptions() {
 
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '400px',
-        fontSize: '16px',
-        color: '#718096'
-      }}>
+      <div className='flex items-center justify-center h-[400px] text-base text-[#718096]'>
         {t('loading')}...
       </div>
     )
@@ -227,845 +225,406 @@ export default function AdminSubscriptions() {
   return (
     <div style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       {/* Header */}
-      <div style={{ marginBottom: '32px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+      <div className="mb-8">
+        <div className="flex items-start justify-between mb-2">
           <div>
-            <h1 style={{ 
-              fontSize: '28px', 
-              fontWeight: '700', 
-              color: '#1a202c', 
-              marginBottom: '8px',
-              letterSpacing: '-0.5px'
-            }}>
+            <h1 className="text-[28px] font-bold text-[#1a202c] mb-2 tracking-[-0.5px]">
               {t('subscription_management')}
             </h1>
-            <p style={{ color: '#718096', fontSize: '16px' }}>
+            <p className="text-[#718096] text-base">
               {t('subscription_management_desc')}
             </p>
           </div>
-          <button 
+
+          <button
             onClick={() => setShowNewSubscriptionModal(true)}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '8px',
-              border: 'none',
-              background: 'linear-gradient(135deg, #319795 0%, #2d7d7d 100%)',
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              boxShadow: '0 4px 12px rgba(49, 151, 149, 0.3)',
-              transition: 'all 0.2s'
-            }}
+            className="px-4 py-2 rounded-lg border-none bg-gradient-to-br from-[#319795] to-[#2d7d7d] text-white text-sm font-medium cursor-pointer flex items-center gap-2 shadow-[0_4px_12px_rgba(49,151,149,0.3)] transition-all duration-200 active:scale-95"
           >
             + {t('new_subscription')}
           </button>
         </div>
       </div>
 
-   {/* Stats Cards */}
-<StatGroup 
-  items={[
-    { 
-      icon: '📊', 
-      label: t('total_subscriptions'), 
-      value: analytics.totalSubscriptions 
-    },
-    { 
-      icon: '⚡', 
-      label: t('active_plans'), 
-      value: analytics.activePlans 
-    },
-    { 
-      icon: '📉', 
-      label: t('canceled_mtd'), 
-      value: analytics.canceledMTD 
-    },
-    { 
-      icon: '📈', 
-      label: t('churn_rate'), 
-      value: analytics.churnRate, 
-      suffix: '%' 
-    },
-  ]} 
-/>
+      {/* Stats Cards */}
+      <StatGroup
+        items={[
+          {
+            icon: percent1,
+            label: t('total_subscriptions'),
+            value: analytics.totalSubscriptions
+          },
+          {
+            icon: percent2,
+            label: t('active_plans'),
+            value: analytics.activePlans
+          },
+          {
+            icon: percent3,
+            label: t('canceled_mtd'),
+            value: analytics.canceledMTD
+          },
+          {
+            icon: percent4,
+            label: t('churn_rate'),
+            value: analytics.churnRate,
+            suffix: '%'
+          },
+        ]}
+      />
 
-      {/* Controls */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: '24px',
-        flexWrap: 'wrap',
-        gap: '16px'
-      }}>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <button style={{
-            padding: '8px 16px',
-            borderRadius: '8px',
-            border: 'none',
-            background: filter === 'Monthly' ? 'linear-gradient(135deg, #319795 0%, #2d7d7d 100%)' : '#f7fafc',
-            color: filter === 'Monthly' ? 'white' : '#4a5568',
-            fontSize: '14px',
-            fontWeight: '500',
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-            boxShadow: filter === 'Monthly' ? '0 2px 8px rgba(49, 151, 149, 0.3)' : 'none'
-          }}
-            onClick={() => setFilter('Monthly')}
-          >
-            {t('monthly')}
-          </button>
-          <button 
-            style={{
-              padding: '8px 16px',
-              borderRadius: '8px',
-              border: 'none',
-              background: filter === 'Yearly' ? 'linear-gradient(135deg, #319795 0%, #2d7d7d 100%)' : '#f7fafc',
-              color: filter === 'Yearly' ? 'white' : '#4a5568',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              boxShadow: filter === 'Yearly' ? '0 2px 8px rgba(49, 151, 149, 0.3)' : 'none'
-            }}
-            onClick={() => setFilter('Yearly')}
-          >
-            {t('yearly')}
-          </button>
-
-          <select 
-            style={{ 
-              padding: '8px 12px', 
-              borderRadius: '8px', 
-              border: statusFilter ? '2px solid #319795' : '1px solid #e2e8f0',
-              marginLeft: '16px',
-              fontSize: '14px',
-              background: statusFilter ? '#f0fdfa' : 'white',
-              cursor: 'pointer',
-              color: statusFilter ? '#319795' : '#4a5568',
-              fontWeight: statusFilter ? '500' : 'normal'
-            }}
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">{t('all_statuses')}</option>
-            <option value="active">{t('active')}</option>
-            <option value="past_due">{t('past_due')}</option>
-            <option value="cancelled">{t('cancelled')}</option>
-          </select>
-
-          {(statusFilter || dateRange.start !== '2025-01-01' || dateRange.end !== '2026-12-31') && (
-            <button 
-              style={{
-                padding: '6px 12px',
-                borderRadius: '6px',
-                border: '1px solid #e2e8f0',
-                background: 'white',
-                color: '#718096',
-                fontSize: '12px',
-                cursor: 'pointer',
-                marginLeft: '8px'
-              }}
-              onClick={() => {
-                setStatusFilter('')
-                setDateRange({ start: '2025-01-01', end: '2026-12-31' })
-              }}
+      <div>
+        {/* Controls */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              className={`px-4 py-2 rounded-lg border-none text-sm font-medium cursor-pointer transition-all duration-200 ${filter === 'Monthly'
+                  ? 'bg-gradient-to-br from-[#319795] to-[#2d7d7d] text-white shadow-[0_2px_8px_rgba(49,151,149,0.3)]'
+                  : 'bg-[#f7fafc] text-[#4a5568]'
+                }`}
+              onClick={() => setFilter('Monthly')}
             >
-              {t('clear_filters')}
+              {t('monthly')}
             </button>
-          )}
-        </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <input
-            type="date"
-            value={dateRange.start}
-            onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-            style={{ 
-              padding: '8px 12px', 
-              borderRadius: '8px', 
-              border: (dateRange.start !== '2025-01-01') ? '2px solid #319795' : '1px solid #e2e8f0',
-              fontSize: '14px',
-              background: (dateRange.start !== '2025-01-01') ? '#f0fdfa' : 'white',
-              cursor: 'pointer',
-              color: (dateRange.start !== '2025-01-01') ? '#319795' : '#4a5568'
-            }}
-          />
-          <span style={{ color: '#718096', fontSize: '14px' }}>{t('to')}</span>
-          <input
-            type="date"
-            value={dateRange.end}
-            onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-            style={{ 
-              padding: '8px 12px', 
-              borderRadius: '8px', 
-              border: (dateRange.end !== '2026-12-31') ? '2px solid #319795' : '1px solid #e2e8f0',
-              fontSize: '14px',
-              background: (dateRange.end !== '2026-12-31') ? '#f0fdfa' : 'white',
-              cursor: 'pointer',
-              color: (dateRange.end !== '2026-12-31') ? '#319795' : '#4a5568'
-            }}
-          />
-        </div>
-      </div>
+            <button
+              className={`px-4 py-2 rounded-lg border-none text-sm font-medium cursor-pointer transition-all duration-200 ${filter === 'Yearly'
+                  ? 'bg-gradient-to-br from-[#319795] to-[#2d7d7d] text-white shadow-[0_2px_8px_rgba(49,151,149,0.3)]'
+                  : 'bg-[#f7fafc] text-[#4a5568]'
+                }`}
+              onClick={() => setFilter('Yearly')}
+            >
+              {t('yearly')}
+            </button>
 
-      <div style={{ color: '#718096', fontSize: '14px', marginBottom: '16px' }}>
-        {subscriptions.length > 0 ? (
-          `${t('showing')} ${((currentPage - 1) * 10) + 1} ${t('to')} ${Math.min(currentPage * 10, analytics.totalSubscriptions || 0)} ${t('of')} ${analytics.totalSubscriptions || 0} ${t('subscriptions')}`
-        ) : (
-          t('no_subscriptions_found')
-        )}
-      </div>
-      {/* Subscriptions Table */}
-      <div style={{
-        background: 'white',
-        borderRadius: '12px',
-        border: '1px solid #e2e8f0',
-        overflow: 'hidden',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-        position: 'relative'
-      }}>
-        {filterLoading && (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(255, 255, 255, 0.8)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 10,
-            fontSize: '14px',
-            color: '#718096'
-          }}>
-            {t('applying_filters')}
-          </div>
-        )}
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: '#f8fafc' }}>
-              <th style={{ 
-                padding: '16px 20px', 
-                textAlign: 'left', 
-                fontSize: '12px', 
-                fontWeight: '600', 
-                color: '#718096',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}>
-                {t('user_header')}
-              </th>
-              <th style={{ 
-                padding: '16px 20px', 
-                textAlign: 'left', 
-                fontSize: '12px', 
-                fontWeight: '600', 
-                color: '#718096',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}>
-                {t('plan_header')}
-              </th>
-              <th style={{ 
-                padding: '16px 20px', 
-                textAlign: 'left', 
-                fontSize: '12px', 
-                fontWeight: '600', 
-                color: '#718096',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}>
-                {t('status')}
-              </th>
-              <th style={{ 
-                padding: '16px 20px', 
-                textAlign: 'left', 
-                fontSize: '12px', 
-                fontWeight: '600', 
-                color: '#718096',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}>
-                {t('billing_cycle')}
-              </th>
-              <th style={{ 
-                padding: '16px 20px', 
-                textAlign: 'left', 
-                fontSize: '12px', 
-                fontWeight: '600', 
-                color: '#718096',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}>
-                {t('next_payment')}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {subscriptions && subscriptions.length > 0 ? (
-              subscriptions.map((sub, index) => (
-                <tr key={sub.id} style={{ 
-                  borderBottom: index < subscriptions.length - 1 ? '1px solid #f1f5f9' : 'none',
-                  transition: 'background-color 0.2s',
-                  cursor: 'pointer'
+            <select
+              className={`px-3 py-2 rounded-lg ml-4 text-sm cursor-pointer outline-none ${statusFilter
+                  ? 'border-2 border-[#319795] bg-[#f0fdfa] text-[#319795] font-medium'
+                  : 'border border-[#e2e8f0] bg-white text-[#4a5568] font-normal'
+                }`}
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="">{t('all_statuses')}</option>
+              <option value="active">{t('active')}</option>
+              <option value="past_due">{t('past_due')}</option>
+              <option value="cancelled">{t('cancelled')}</option>
+            </select>
+
+            {(statusFilter || dateRange.start !== '2025-01-01' || dateRange.end !== '2026-12-31') && (
+              <button
+                className="px-3 py-1.5 rounded-md border border-[#e2e8f0] bg-white text-[#718096] text-xs cursor-pointer ml-2 hover:bg-gray-50"
+                onClick={() => {
+                  setStatusFilter('')
+                  setDateRange({ start: '2025-01-01', end: '2026-12-31' })
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                  <td style={{ padding: '16px 20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        background: getAvatarColor(sub.user.initials),
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
-                        fontSize: '14px',
-                        fontWeight: '600'
-                      }}>
-                        {sub.user.initials}
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: '500', color: '#1a202c', fontSize: '14px' }}>
-                          {sub.user.name}
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#718096' }}>
-                          {sub.user.email}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '16px 20px' }}>
-                    <div>
-                      <div style={{ fontWeight: '500', color: '#1a202c', fontSize: '14px' }}>
-                        {sub.plan.name}
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#718096' }}>
-                        {sub.plan.price}
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '16px 20px' }}>
-                    <span style={{
-                      padding: '4px 12px',
-                      borderRadius: '20px',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      background: sub.status === 'active' ? '#d4edda' : 
-                                 sub.status === 'past_due' ? '#fff3cd' : '#f8d7da',
-                      color: sub.status === 'active' ? '#155724' : 
-                             sub.status === 'past_due' ? '#856404' : '#721c24'
-                    }}>
-                      {sub.status === 'past_due' ? t('past_due').toUpperCase() : t(sub.status).toUpperCase()}
-                    </span>
-                  </td>
-                  <td style={{ padding: '16px 20px', fontSize: '14px', color: '#4a5568' }}>
-                    {sub.billingCycle}
-                  </td>
-                  <td style={{ padding: '16px 20px', fontSize: '14px', color: '#4a5568' }}>
-                    {sub.nextPayment}
-                  </td>
-                  <td style={{ padding: '16px 20px' }}>
-                    <button style={{ 
-                      background: 'none', 
-                      border: 'none', 
-                      cursor: 'pointer',
-                      padding: '8px',
-                      borderRadius: '4px',
-                      color: '#718096',
-                      fontSize: '16px',
-                      transition: 'background-color 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                    >
-                      ⋯
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} style={{ 
-                  padding: '60px 20px', 
-                  textAlign: 'center',
-                  color: '#718096'
-                }}>
-                  <div style={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center', 
-                    gap: '16px' 
-                  }}>
-                    <div style={{ fontSize: '48px' }}>📋</div>
-                    <div>
-                      <h3 style={{ 
-                        fontSize: '16px', 
-                        fontWeight: '600', 
-                        color: '#1a202c', 
-                        marginBottom: '8px' 
-                      }}>
-                        {t('no_subscriptions_found')}
-                      </h3>
-                      <p style={{ fontSize: '14px', color: '#718096' }}>
-                        {statusFilter || (dateRange.start !== '2025-01-01' || dateRange.end !== '2026-12-31') 
-                          ? t('no_subscriptions_filter')
-                          : t('no_subscriptions_available')
-                        }
-                      </p>
-                    </div>
-                    {(statusFilter || dateRange.start !== '2025-01-01' || dateRange.end !== '2026-12-31') && (
-                      <button 
-                        onClick={() => {
-                          setStatusFilter('');
-                          setDateRange({ start: '2025-01-01', end: '2026-12-31' });
-                        }}
-                        style={{
-                          padding: '8px 16px',
-                          background: '#319795',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontSize: '14px'
-                        }}
-                      >
-                        {t('clear_filters')}
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
+              >
+                {t('clear_filters')}
+              </button>
             )}
-          </tbody>
-        </table>
-      </div>
+          </div>
 
-      {/* Pagination */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: '24px',
-        marginBottom: '32px'
-      }}>
-        <div style={{ color: '#718096', fontSize: '14px' }}>
-          {subscriptions && subscriptions.length > 0 ? (
+          <div className="flex items-center gap-3">
+            <input
+              type="date"
+              value={dateRange.start}
+              onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+              className={`px-3 py-2 rounded-lg text-sm cursor-pointer outline-none ${dateRange.start !== '2025-01-01'
+                  ? 'border-2 border-[#319795] bg-[#f0fdfa] text-[#319795]'
+                  : 'border border-[#e2e8f0] bg-white text-[#4a5568]'
+                }`}
+            />
+            <span className="text-[#718096] text-sm">{t('to')}</span>
+            <input
+              type="date"
+              value={dateRange.end}
+              onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+              className={`px-3 py-2 rounded-lg text-sm cursor-pointer outline-none ${dateRange.end !== '2026-12-31'
+                  ? 'border-2 border-[#319795] bg-[#f0fdfa] text-[#319795]'
+                  : 'border border-[#e2e8f0] bg-white text-[#4a5568]'
+                }`}
+            />
+          </div>
+        </div>
+
+        <div className="text-[#718096] text-sm mb-4">
+          {subscriptions.length > 0 ? (
             `${t('showing')} ${((currentPage - 1) * 10) + 1} ${t('to')} ${Math.min(currentPage * 10, analytics.totalSubscriptions || 0)} ${t('of')} ${analytics.totalSubscriptions || 0} ${t('subscriptions')}`
           ) : (
             t('no_subscriptions_found')
           )}
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button 
-            style={{
-              padding: '8px 12px',
-              border: '1px solid #e2e8f0',
-              background: currentPage === 1 ? '#f7fafc' : 'white',
-              borderRadius: '6px',
-              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-              color: currentPage === 1 ? '#cbd5e0' : '#718096'
-            }}
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-          >
-            ‹
-          </button>
-          
-          {/* Show page numbers */}
-          {analytics.totalSubscriptions && Math.ceil(analytics.totalSubscriptions / 10) > 1 && 
-            [...Array(Math.min(5, Math.ceil(analytics.totalSubscriptions / 10)))].map((_, index) => {
-              const pageNum = index + 1;
-              return (
-                <button 
-                  key={pageNum}
-                  style={{
-                    padding: '8px 12px',
-                    border: `1px solid ${currentPage === pageNum ? '#319795' : '#e2e8f0'}`,
-                    background: currentPage === pageNum ? '#319795' : 'white',
-                    color: currentPage === pageNum ? 'white' : '#4a5568',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontWeight: currentPage === pageNum ? '500' : 'normal'
-                  }}
-                  onClick={() => setCurrentPage(pageNum)}
-                >
-                  {pageNum}
-                </button>
-              );
-            })
-          }
-          
-          <button 
-            style={{
-              padding: '8px 12px',
-              border: '1px solid #e2e8f0',
-              background: currentPage >= Math.ceil((analytics.totalSubscriptions || 0) / 10) ? '#f7fafc' : 'white',
-              borderRadius: '6px',
-              cursor: currentPage >= Math.ceil((analytics.totalSubscriptions || 0) / 10) ? 'not-allowed' : 'pointer',
-              color: currentPage >= Math.ceil((analytics.totalSubscriptions || 0) / 10) ? '#cbd5e0' : '#4a5568'
-            }}
-            disabled={currentPage >= Math.ceil((analytics.totalSubscriptions || 0) / 10)}
-            onClick={() => setCurrentPage(prev => prev + 1)}
-          >
-            ›
-          </button>
-        </div>
-      </div>
 
-      {/* Bottom Section with Charts */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
-        {/* Revenue Growth Projection */}
-        <div style={{
-          background: 'white',
-          borderRadius: '12px',
-          border: '1px solid #e2e8f0',
-          padding: '24px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-        }}>
-          <h3 style={{ 
-            fontSize: '18px', 
-            fontWeight: '600', 
-            color: '#1a202c', 
-            marginBottom: '20px' 
-          }}>
-            {t('revenue_growth_projection')}
-          </h3>
-          <div style={{ 
-            height: '240px', 
-            background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)', 
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'space-around',
-            padding: '20px',
-            position: 'relative'
-          }}>
-            {/* Mock Chart Bars */}
-            {analytics.revenueGrowth && analytics.revenueGrowth.length > 0 ? 
-              analytics.revenueGrowth.map((data, index) => {
-                const maxRevenue = Math.max(...analytics.revenueGrowth.map(r => r.revenue));
-                const height = maxRevenue > 0 ? (data.revenue / maxRevenue) * 160 : 20;
-                
+        {/* Subscriptions Table */}
+        <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm relative">
+          {filterLoading && (
+            <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10 text-sm text-[#718096]">
+              {t('applying_filters')}
+            </div>
+          )}
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-[#f8fafc]">
+                {['user_header', 'plan_header', 'status', 'billing_cycle', 'next_payment'].map((header) => (
+                  <th key={header} className="px-5 py-4 text-left text-[12px] font-semibold text-[#718096] uppercase tracking-wider">
+                    {t(header)}
+                  </th>
+                ))}
+                <th className="px-5 py-4"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {subscriptions && subscriptions.length > 0 ? (
+                subscriptions.map((sub, index) => (
+                  <tr
+                    key={sub.id}
+                    className={`transition-colors duration-200 cursor-pointer hover:bg-[#f8fafc] ${index < subscriptions.length - 1 ? 'border-bottom border-[#f1f5f9]' : ''
+                      }`}
+                  >
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="flex items-center justify-center w-10 h-10 text-sm font-semibold text-white rounded-full"
+                          style={{ background: getAvatarColor(sub.user.initials) }}
+                        >
+                          {sub.user.initials}
+                        </div>
+                        <div>
+                          <div className="font-medium text-[#1a202c] text-sm">{sub.user.name}</div>
+                          <div className="text-[12px] text-[#718096]">{sub.user.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div>
+                        <div className="font-medium text-[#1a202c] text-sm">{sub.plan.name}</div>
+                        <div className="text-[12px] text-[#718096]">{sub.plan.price}</div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className={`px-3 py-1 rounded-full text-[12px] font-semibold uppercase tracking-wider ${sub.status === 'active' ? 'bg-[#d4edda] text-[#155724]' :
+                          sub.status === 'past_due' ? 'bg-[#fff3cd] text-[#856404]' : 'bg-[#f8d7da] text-[#721c24]'
+                        }`}>
+                        {sub.status === 'past_due' ? t('past_due').toUpperCase() : t(sub.status).toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-sm text-[#4a5568]">{sub.billingCycle}</td>
+                    <td className="px-5 py-4 text-sm text-[#4a5568]">{sub.nextPayment}</td>
+                    <td className="px-5 py-4">
+                      <button className="bg-transparent border-none cursor-pointer p-2 rounded hover:bg-[#f1f5f9] text-[#718096] text-base transition-colors">
+                        ⋯
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="px-5 py-[60px] text-center text-[#718096]">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="text-[48px]">📋</div>
+                      <div>
+                        <h3 className="text-base font-semibold text-[#1a202c] mb-2">{t('no_subscriptions_found')}</h3>
+                        <p className="text-sm text-[#718096]">
+                          {statusFilter || (dateRange.start !== '2025-01-01' || dateRange.end !== '2026-12-31')
+                            ? t('no_subscriptions_filter')
+                            : t('no_subscriptions_available')}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        <div className="flex items-center justify-between mt-6 mb-8">
+          <div className="text-[#718096] text-sm">
+            {/* Re-using same logic as above for consistency */}
+          </div>
+          <div className="flex gap-2">
+            <button
+              className={`px-3 py-2 border border-[#e2e8f0] rounded-md transition-colors ${currentPage === 1 ? 'bg-[#f7fafc] cursor-not-allowed text-[#cbd5e0]' : 'bg-white cursor-pointer text-[#718096]'
+                }`}
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            >
+              ‹
+            </button>
+
+            {analytics.totalSubscriptions && Math.ceil(analytics.totalSubscriptions / 10) > 1 &&
+              [...Array(Math.min(5, Math.ceil(analytics.totalSubscriptions / 10)))].map((_, index) => {
+                const pageNum = index + 1;
                 return (
-                  <div key={index} style={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}>
-                    <div style={{
-                      width: '40px',
-                      height: `${height}px`,
-                      background: index === analytics.revenueGrowth.length - 1 ? 
-                        'linear-gradient(135deg, #319795 0%, #2d7d7d 100%)' : 
-                        'linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%)',
-                      borderRadius: '4px 4px 0 0',
-                      transition: 'all 0.3s ease',
-                      boxShadow: index === analytics.revenueGrowth.length - 1 ? 
-                        '0 4px 12px rgba(49, 151, 149, 0.3)' : 'none'
-                    }}></div>
-                    <span style={{ 
-                      fontSize: '12px', 
-                      color: '#718096',
-                      fontWeight: '500'
-                    }}>
-                      {data.month}
-                    </span>
+                  <button
+                    key={pageNum}
+                    className={`px-3 py-2 border rounded-md cursor-pointer transition-colors ${currentPage === pageNum
+                        ? 'border-[#319795] bg-[#319795] text-white font-medium'
+                        : 'border-[#e2e8f0] bg-white text-[#4a5568] font-normal'
+                      }`}
+                    onClick={() => setCurrentPage(pageNum)}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })
+            }
+
+            <button
+              className={`px-3 py-2 border border-[#e2e8f0] rounded-md transition-colors ${currentPage >= Math.ceil((analytics.totalSubscriptions || 0) / 10)
+                  ? 'bg-[#f7fafc] cursor-not-allowed text-[#cbd5e0]'
+                  : 'bg-white cursor-pointer text-[#4a5568]'
+                }`}
+              disabled={currentPage >= Math.ceil((analytics.totalSubscriptions || 0) / 10)}
+              onClick={() => setCurrentPage(prev => prev + 1)}
+            >
+              ›
+            </button>
+          </div>
+        </div>
+
+        {/* Bottom Section with Charts */}
+        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-6">
+          {/* Revenue Growth Projection */}
+          <div className="bg-white rounded-xl border border-[#e2e8f0] p-6 shadow-sm">
+            <h3 className="text-lg font-semibold text-[#1a202c] mb-5">{t('revenue_growth_projection')}</h3>
+            <div className="h-[240px] bg-gradient-to-br from-[#f8fafc] to-[#e2e8f0] rounded-lg flex items-end justify-around p-5 relative">
+              {analytics.revenueGrowth && analytics.revenueGrowth.length > 0 ?
+                analytics.revenueGrowth.map((data, index) => {
+                  const maxRevenue = Math.max(...analytics.revenueGrowth.map(r => r.revenue));
+                  const height = maxRevenue > 0 ? (data.revenue / maxRevenue) * 160 : 20;
+                  const isLast = index === analytics.revenueGrowth.length - 1;
+
+                  return (
+                    <div key={index} className="flex flex-col items-center gap-2">
+                      <div
+                        className={`w-10 rounded-t-sm transition-all duration-300 ${isLast
+                            ? 'bg-gradient-to-b from-[#319795] to-[#2d7d7d] shadow-[0_4px_12px_rgba(49,151,149,0.3)]'
+                            : 'bg-gradient-to-b from-[#e2e8f0] to-[#cbd5e0]'
+                          }`}
+                        style={{ height: `${height}px` }}
+                      ></div>
+                      <span className="text-[12px] text-[#718096] font-medium">{data.month}</span>
+                    </div>
+                  )
+                }) : (
+                  <div className="flex items-center justify-center w-full h-full text-[#718096] text-sm">
+                    {t('no_revenue_data')}
                   </div>
                 )
-              }) : 
-              // Fallback if no data
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                width: '100%',
-                height: '100%',
-                color: '#718096',
-                fontSize: '14px'
-              }}>
-                {t('no_revenue_data')}
+              }
+            </div>
+          </div>
+
+          {/* Plan Distribution */}
+          <div className="bg-white rounded-xl border border-[#e2e8f0] p-6 shadow-sm">
+            <div className="mb-5">
+              <h3 className="text-lg font-semibold text-[#1a202c] mb-1">{t('plan_distribution')}</h3>
+              <p className="text-sm text-[#718096]">{t('user_preference_by_plan')}</p>
+            </div>
+
+            {[
+              { name: 'Basic', color: 'from-[#319795] to-[#2d7d7d]' },
+              { name: 'Professional', color: 'from-[#3182ce] to-[#2c5aa0]' },
+              { name: 'Enterprise', color: 'from-[#38a169] to-[#2f855a]' }
+            ].map((plan) => (
+              <div key={plan.name} className="mb-6">
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm text-[#4a5568] font-medium">{t(plan.name.toLowerCase())}</span>
+                  <span className="text-sm font-semibold text-[#1a202c]">
+                    {analytics.planDistribution?.[plan.name] || 0}%
+                  </span>
+                </div>
+                <div className="h-2 bg-[#f1f5f9] rounded-full overflow-hidden">
+                  <div
+                    className={`h-full bg-gradient-to-r ${plan.color} rounded-full`}
+                    style={{ width: `${analytics.planDistribution?.[plan.name] || 0}%` }}
+                  ></div>
+                </div>
               </div>
-            }
+            ))}
+
+            <button className="w-full py-3 bg-gradient-to-br from-[#319795] to-[#2d7d7d] text-white border-none rounded-lg text-sm font-medium cursor-pointer transition-all shadow-[0_2px_8px_rgba(49,151,149,0.2)] hover:opacity-90 active:scale-[0.98]">
+              {t('detailed_analytics')}
+            </button>
           </div>
         </div>
 
-        {/* Plan Distribution */}
-        <div style={{
-          background: 'white',
-          borderRadius: '12px',
-          border: '1px solid #e2e8f0',
-          padding: '24px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-        }}>
-          <div style={{ marginBottom: '20px' }}>
-            <h3 style={{ 
-              fontSize: '18px', 
-              fontWeight: '600', 
-              color: '#1a202c', 
-              marginBottom: '4px' 
-            }}>
-              {t('plan_distribution')}
-            </h3>
-            <p style={{ fontSize: '14px', color: '#718096' }}>
-              {t('user_preference_by_plan')}
-            </p>
-          </div>
-          
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ fontSize: '14px', color: '#4a5568', fontWeight: '500' }}>{t('basic')}</span>
-              <span style={{ fontSize: '14px', fontWeight: '600', color: '#1a202c' }}>
-                {analytics.planDistribution?.['Basic'] || 0}%
-              </span>
-            </div>
-            <div style={{ 
-              height: '8px', 
-              background: '#f1f5f9', 
-              borderRadius: '4px',
-              overflow: 'hidden'
-            }}>
-              <div style={{ 
-                width: `${analytics.planDistribution?.['Basic'] || 0}%`, 
-                height: '100%', 
-                background: 'linear-gradient(90deg, #319795 0%, #2d7d7d 100%)',
-                borderRadius: '4px'
-              }}></div>
-            </div>
-          </div>
+        {/* New Subscription Modal */}
+        {showNewSubscriptionModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-4">
+            <div className="bg-white rounded-xl p-8 w-[500px] max-w-full max-h-[90vh] overflow-auto shadow-2xl">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-[#1a202c] m-0">{t('create_new_subscription')}</h2>
+                <button
+                  onClick={() => setShowNewSubscriptionModal(false)}
+                  className="bg-transparent border-none text-2xl cursor-pointer text-[#718096] p-1 hover:text-black"
+                >
+                  ×
+                </button>
+              </div>
 
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ fontSize: '14px', color: '#4a5568', fontWeight: '500' }}>{t('professional')}</span>
-              <span style={{ fontSize: '14px', fontWeight: '600', color: '#1a202c' }}>
-                {analytics.planDistribution?.['Professional'] || 0}%
-              </span>
-            </div>
-            <div style={{ 
-              height: '8px', 
-              background: '#f1f5f9', 
-              borderRadius: '4px',
-              overflow: 'hidden'
-            }}>
-              <div style={{ 
-                width: `${analytics.planDistribution?.['Professional'] || 0}%`, 
-                height: '100%', 
-                background: 'linear-gradient(90deg, #3182ce 0%, #2c5aa0 100%)',
-                borderRadius: '4px'
-              }}></div>
+              <form onSubmit={createNewSubscription} className="flex flex-col gap-5">
+                <div>
+                  <label className="block text-sm font-medium text-[#374151] mb-2">{t('user_email')} *</label>
+                  <input
+                    type="email"
+                    placeholder="user@example.com"
+                    className="w-full p-3 border border-[#e2e8f0] rounded-lg text-sm outline-none focus:border-[#319795] transition-colors"
+                    value={newSubscriptionData.userEmail}
+                    onChange={(e) => setNewSubscriptionData(prev => ({ ...prev, userEmail: e.target.value }))}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#374151] mb-2">{t('plan_header')} *</label>
+                  <select
+                    className="w-full p-3 border border-[#e2e8f0] rounded-lg text-sm outline-none bg-white focus:border-[#319795]"
+                    value={newSubscriptionData.planId}
+                    onChange={(e) => setNewSubscriptionData(prev => ({ ...prev, planId: e.target.value }))}
+                    required
+                  >
+                    <option value="">{t('select_plan')}</option>
+                    <option value="1">Basic - $29/month</option>
+                    <option value="2">Professional - $79/month</option>
+                    <option value="3">Enterprise - $249/month</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#374151] mb-2">{t('billing_cycle')} *</label>
+                  <select
+                    className="w-full p-3 border border-[#e2e8f0] rounded-lg text-sm outline-none bg-white focus:border-[#319795]"
+                    value={newSubscriptionData.billingCycle}
+                    onChange={(e) => setNewSubscriptionData(prev => ({ ...prev, billingCycle: e.target.value }))}
+                  >
+                    <option value="monthly">{t('monthly')}</option>
+                    <option value="yearly">{t('yearly')}</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowNewSubscriptionModal(false)}
+                    className="flex-1 p-3 border border-[#e2e8f0] rounded-lg bg-white text-[#374151] text-sm font-medium cursor-pointer hover:bg-gray-50"
+                  >
+                    {t('cancel')}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={createLoading}
+                    className={`flex-1 p-3 border-none rounded-lg text-white text-sm font-medium cursor-pointer transition-all ${createLoading ? 'bg-[#cbd5e0] cursor-not-allowed' : 'bg-gradient-to-br from-[#319795] to-[#2d7d7d] hover:opacity-90'
+                      }`}
+                  >
+                    {createLoading ? t('creating') + '...' : t('create_subscription')}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
-
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ fontSize: '14px', color: '#4a5568', fontWeight: '500' }}>{t('enterprise')}</span>
-              <span style={{ fontSize: '14px', fontWeight: '600', color: '#1a202c' }}>
-                {analytics.planDistribution?.['Enterprise'] || 0}%
-              </span>
-            </div>
-            <div style={{ 
-              height: '8px', 
-              background: '#f1f5f9', 
-              borderRadius: '4px',
-              overflow: 'hidden'
-            }}>
-              <div style={{ 
-                width: `${analytics.planDistribution?.['Enterprise'] || 0}%`, 
-                height: '100%', 
-                background: 'linear-gradient(90deg, #38a169 0%, #2f855a 100%)',
-                borderRadius: '4px'
-              }}></div>
-            </div>
-          </div>
-
-          <button style={{
-            width: '100%',
-            padding: '12px',
-            background: 'linear-gradient(135deg, #319795 0%, #2d7d7d 100%)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '14px',
-            fontWeight: '500',
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-            boxShadow: '0 2px 8px rgba(49, 151, 149, 0.2)'
-          }}>
-            {t('detailed_analytics')}
-          </button>
-        </div>
+        )}
       </div>
-
-      {/* New Subscription Modal */}
-      {showNewSubscriptionModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '12px',
-            padding: '32px',
-            width: '500px',
-            maxWidth: '90vw',
-            maxHeight: '90vh',
-            overflow: 'auto',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#1a202c', margin: 0 }}>
-                {t('create_new_subscription')}
-              </h2>
-              <button 
-                onClick={() => setShowNewSubscriptionModal(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  color: '#718096',
-                  padding: '4px'
-                }}
-              >
-                ×
-              </button>
-            </div>
-
-            <form onSubmit={createNewSubscription} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                  {t('user_email')} *
-                </label>
-                <input
-                  type="email"
-                  placeholder="user@example.com"
-                  value={newSubscriptionData.userEmail}
-                  onChange={(e) => setNewSubscriptionData(prev => ({ ...prev, userEmail: e.target.value }))}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                  {t('plan_header')} *
-                </label>
-                <select 
-                  value={newSubscriptionData.planId}
-                  onChange={(e) => setNewSubscriptionData(prev => ({ ...prev, planId: e.target.value }))}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    outline: 'none',
-                    background: 'white'
-                  }}
-                >
-                  <option value="">{t('select_plan')}</option>
-                  <option value="1">Basic - $29/month</option>
-                  <option value="2">Professional - $79/month</option>
-                  <option value="3">Enterprise - $249/month</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                  {t('billing_cycle')} *
-                </label>
-                <select 
-                  value={newSubscriptionData.billingCycle}
-                  onChange={(e) => setNewSubscriptionData(prev => ({ ...prev, billingCycle: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    outline: 'none',
-                    background: 'white'
-                  }}
-                >
-                  <option value="monthly">{t('monthly')}</option>
-                  <option value="yearly">{t('yearly')}</option>
-                </select>
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowNewSubscriptionModal(false)
-                    setNewSubscriptionData({
-                      userEmail: '',
-                      planId: '',
-                      billingCycle: 'monthly'
-                    })
-                  }}
-                  style={{
-                    flex: 1,
-                    padding: '12px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    background: 'white',
-                    color: '#374151',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {t('cancel')}
-                </button>
-                <button
-                  type="submit"
-                  disabled={createLoading}
-                  style={{
-                    flex: 1,
-                    padding: '12px',
-                    border: 'none',
-                    borderRadius: '8px',
-                    background: createLoading ? '#cbd5e0' : 'linear-gradient(135deg, #319795 0%, #2d7d7d 100%)',
-                    color: 'white',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: createLoading ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  {createLoading ? t('creating') + '...' : t('create_subscription')}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

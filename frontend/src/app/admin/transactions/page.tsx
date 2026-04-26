@@ -28,24 +28,15 @@ export default function AdminTransactions() {
     try {
       setLoading(true)
       const token = localStorage.getItem('token')
-      
+
       if (!token) {
         console.error('No token found - user needs to login');
         setLoading(false)
         return
       }
-      
+
       const headers = { Authorization: `Bearer ${token}` }
 
-      console.log('🔍 Fetching transactions data with filters:', {
-        status: statusFilter,
-        paymentType: paymentTypeFilter,
-        dateRange,
-        page: currentPage,
-        chartPeriod: filter
-      });
-
-      // Fetch transactions with all filters
       const transactionsResponse = await axios.get(`${API_URL}/api/transactions`, {
         headers,
         params: {
@@ -58,9 +49,6 @@ export default function AdminTransactions() {
         }
       })
 
-      console.log('✅ Transactions response:', transactionsResponse.data);
-
-      // Fetch analytics with period filter
       const analyticsResponse = await axios.get(`${API_URL}/api/transactions/analytics`, {
         headers,
         params: {
@@ -70,15 +58,10 @@ export default function AdminTransactions() {
         }
       })
 
-      console.log('✅ Analytics response:', analyticsResponse.data);
-
       setTransactions(transactionsResponse.data.transactions || [])
       setAnalytics(analyticsResponse.data || {})
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error fetching data:', error)
-      console.error('Error details:', error.response?.data);
-      
-      // Set empty data instead of fallback
       setTransactions([])
       setAnalytics({
         totalRevenue: 0,
@@ -95,10 +78,7 @@ export default function AdminTransactions() {
   const clearFilters = () => {
     setStatusFilter('')
     setPaymentTypeFilter('')
-    setDateRange({
-      start: '2025-01-01',
-      end: '2026-12-31'
-    })
+    setDateRange({ start: '2025-01-01', end: '2026-12-31' })
     setCurrentPage(1)
   }
 
@@ -106,8 +86,8 @@ export default function AdminTransactions() {
     try {
       const token = localStorage.getItem('token')
       const headers = { Authorization: `Bearer ${token}` }
-      
-      const response = await axios.get(`${API_URL}/api/transactions/export`, {
+
+      await axios.get(`${API_URL}/api/transactions/export`, {
         headers,
         params: {
           format: 'csv',
@@ -117,306 +97,137 @@ export default function AdminTransactions() {
           endDate: dateRange.end
         }
       })
-      
-      // Show success message
+
       const successDiv = document.createElement('div')
-      successDiv.style.cssText = `
-        position: fixed; top: 20px; right: 20px; z-index: 9999;
-        background: linear-gradient(135deg, #319795 0%, #2d7d7d 100%);
-        color: white; padding: 16px 24px; border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3);
-        font-size: 14px; font-weight: 500;
-      `
+      successDiv.className = "fixed top-5 right-5 z-[9999] bg-gradient-to-br from-teal-600 to-teal-800 text-white px-6 py-4 rounded-lg shadow-lg text-sm font-medium"
       successDiv.textContent = t('export_initiated')
       document.body.appendChild(successDiv)
-      
-      setTimeout(() => {
-        document.body.removeChild(successDiv)
-      }, 4000)
-      
+      setTimeout(() => document.body.removeChild(successDiv), 4000)
+
     } catch (error) {
-      console.error('Export failed:', error)
-      
-      // Show error message
       const errorDiv = document.createElement('div')
-      errorDiv.style.cssText = `
-        position: fixed; top: 20px; right: 20px; z-index: 9999;
-        background: #f56565; color: white; padding: 16px 24px; border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(245, 101, 101, 0.3);
-        font-size: 14px; font-weight: 500;
-      `
+      errorDiv.className = "fixed top-5 right-5 z-[9999] bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg text-sm font-medium"
       errorDiv.textContent = t('export_failed')
       document.body.appendChild(errorDiv)
-      
-      setTimeout(() => {
-        document.body.removeChild(errorDiv)
-      }, 4000)
+      setTimeout(() => document.body.removeChild(errorDiv), 4000)
     }
   }
 
   if (loading) {
-    return <div className="loading">{t('loading')}...</div>
+    return <div className="flex items-center justify-center min-h-screen text-gray-500">{t('loading')}...</div>
   }
 
   return (
-    <div style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
+    <div className={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#1a202c', marginBottom: '8px' }}>
+      <div className="mb-6">
+        <h1 className="mb-2 text-2xl font-semibold text-gray-900">
           {t('transactions_title')}
         </h1>
-        <p style={{ color: '#718096' }}>
+        <p className="text-gray-500">
           {t('transactions_desc')}
         </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="stats-grid" style={{ marginBottom: '30px' }}>
-        <div className="stat-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-            <div>
-              <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
-                {t('revenue')}
+      <div className="grid grid-cols-1 gap-6 mb-8 md:grid-cols-3">
+        {[
+          { label: t('revenue'), val: `$${analytics.totalRevenue?.toLocaleString() || '0'}`, sub: t('vs_previous_30_days'), growth: analytics.revenueGrowth, icon: '📈' },
+          { label: t('monthly_volume'), val: `$${analytics.monthlyVolume?.toLocaleString() || '0'}`, sub: t('processed_this_month'), growth: analytics.volumeGrowth, icon: '📊' },
+          { label: t('failed_transactions'), val: `${analytics.failedTransactions || 0}%`, sub: `${t('industry_avg')}: 2.1%`, growth: analytics.failureChange, icon: '⚠️' }
+        ].map((card, i) => (
+          <div key={i} className="p-6 bg-white border border-gray-100 shadow-sm rounded-xl">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <div className="mb-1 text-xs tracking-wider text-gray-500 uppercase">{card.label}</div>
+                <div className="text-3xl font-bold text-gray-900">{card.val}</div>
+                <div className="mt-1 text-xs text-gray-400">{card.icon} {card.sub}</div>
               </div>
-              <div style={{ fontSize: '28px', fontWeight: '700', color: '#1a202c' }}>
-                ${analytics.totalRevenue?.toLocaleString() || '0'}
+              <div className={`text-xs font-semibold px-2 py-1 rounded ${card.growth >= 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
+                {card.growth >= 0 ? '+' : ''}{card.growth || 0}%
               </div>
-              <div style={{ fontSize: '12px', color: '#718096', marginTop: '4px' }}>
-                📈 {t('vs_previous_30_days')}
-              </div>
-            </div>
-            <div style={{ 
-              fontSize: '12px', 
-              fontWeight: '600',
-              color: analytics.revenueGrowth >= 0 ? '#38a169' : '#e53e3e',
-              background: analytics.revenueGrowth >= 0 ? '#f0fff4' : '#fed7d7',
-              padding: '4px 8px',
-              borderRadius: '4px'
-            }}>
-              {analytics.revenueGrowth >= 0 ? '+' : ''}{analytics.revenueGrowth || 0}%
             </div>
           </div>
-        </div>
-
-        <div className="stat-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-            <div>
-              <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
-                {t('monthly_volume')}
-              </div>
-              <div style={{ fontSize: '28px', fontWeight: '700', color: '#1a202c' }}>
-                ${analytics.monthlyVolume?.toLocaleString() || '0'}
-              </div>
-              <div style={{ fontSize: '12px', color: '#718096', marginTop: '4px' }}>
-                📊 {t('processed_this_month')}
-              </div>
-            </div>
-            <div style={{ 
-              fontSize: '12px', 
-              fontWeight: '600',
-              color: '#38a169',
-              background: '#f0fff4',
-              padding: '4px 8px',
-              borderRadius: '4px'
-            }}>
-              +{analytics.volumeGrowth || 0}%
-            </div>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-            <div>
-              <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
-                {t('failed_transactions')}
-              </div>
-              <div style={{ fontSize: '28px', fontWeight: '700', color: '#1a202c' }}>
-                {analytics.failedTransactions || 0}%
-              </div>
-              <div style={{ fontSize: '12px', color: '#718096', marginTop: '4px' }}>
-                ⚠️ {t('industry_avg')}: 2.1%
-              </div>
-            </div>
-            <div style={{ 
-              fontSize: '12px', 
-              fontWeight: '600',
-              color: '#e53e3e',
-              background: '#fed7d7',
-              padding: '4px 8px',
-              borderRadius: '4px'
-            }}>
-              {analytics.failureChange || 0}%
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Revenue Trends Chart */}
-      <div className="content-card" style={{ marginBottom: '30px' }}>
-        <div className="card-header">
-          <div>
-            <h3 className="card-title">{t('revenue_trends')}</h3>
-          </div>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button 
-              className={`btn ${filter === 'Daily' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => setFilter('Daily')}
-            >
-              {t('daily')}
-            </button>
-            <button 
-              className={`btn ${filter === 'Weekly' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => setFilter('Weekly')}
-            >
-              {t('weekly')}
-            </button>
-            <button 
-              className={`btn ${filter === 'Monthly' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => setFilter('Monthly')}
-            >
-              {t('monthly')}
-            </button>
+      <div className="p-6 mb-8 bg-white border border-gray-100 shadow-sm rounded-xl">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-800">{t('revenue_trends')}</h3>
+          <div className="flex gap-3">
+            {['Daily', 'Weekly', 'Monthly'].map((p) => (
+              <button
+                key={p}
+                className={`px-4 py-2 rounded-lg text-sm transition-colors ${filter === p ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                onClick={() => setFilter(p)}
+              >
+                {t(p.toLowerCase())}
+              </button>
+            ))}
           </div>
         </div>
-        <div className="card-content">
+
+        <div className="min-h-[340px]">
           {analytics.revenueData && analytics.revenueData.length > 0 ? (
             <div>
-              {/* Chart visualization */}
-              <div style={{ 
-                height: '300px', 
-                background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)', 
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'flex-end',
-                justifyContent: 'space-around',
-                padding: '20px',
-                position: 'relative'
-              }}>
+              <div className="h-[300px] bg-gradient-to-b from-slate-50 to-slate-100 rounded-lg flex items-end justify-around p-5 relative">
                 {analytics.revenueData.map((data: any, index: number) => {
                   const maxRevenue = Math.max(...analytics.revenueData.map((r: any) => r.amount));
                   const height = maxRevenue > 0 ? (data.amount / maxRevenue) * 200 : 20;
-                  
+                  const isLast = index === analytics.revenueData.length - 1;
+
                   return (
-                    <div key={index} style={{ 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}>
-                      <div style={{
-                        width: '40px',
-                        height: `${height}px`,
-                        background: index === analytics.revenueData.length - 1 ? 
-                          'linear-gradient(135deg, #319795 0%, #2d7d7d 100%)' : 
-                          'linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%)',
-                        borderRadius: '4px 4px 0 0',
-                        transition: 'all 0.3s ease',
-                        boxShadow: index === analytics.revenueData.length - 1 ? 
-                          '0 4px 12px rgba(49, 151, 149, 0.3)' : 'none',
-                        position: 'relative'
-                      }}>
-                        <div style={{
-                          position: 'absolute',
-                          top: '-25px',
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          fontSize: '10px',
-                          color: '#4a5568',
-                          fontWeight: '500'
-                        }}>
+                    <div key={index} className="flex flex-col items-center gap-2">
+                      <div
+                        className={`w-10 rounded-t-md transition-all duration-300 relative group ${isLast ? 'bg-gradient-to-t from-teal-700 to-teal-500 shadow-teal-200 shadow-lg' : 'bg-gradient-to-t from-gray-300 to-gray-200'}`}
+                        style={{ height: `${height}px` }}
+                      >
+                        <div className="absolute -top-7 left-1/2 -translate-x-1/2 text-[10px] font-bold text-gray-600">
                           ${Math.round(data.amount / 1000)}k
                         </div>
                       </div>
-                      <span style={{ 
-                        fontSize: '12px', 
-                        color: '#718096',
-                        fontWeight: '500'
-                      }}>
-                        {data.date}
-                      </span>
+                      <span className="text-xs font-medium text-gray-500">{data.date}</span>
                     </div>
                   )
                 })}
               </div>
-              
-              {/* Chart summary */}
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between',
-                marginTop: '16px',
-                fontSize: '12px',
-                color: '#718096'
-              }}>
+              <div className="flex justify-between mt-4 text-xs text-gray-400">
                 <span>{t('period')}: {t(filter.toLowerCase())}</span>
                 <span>{t('total')}: ${analytics.revenueData.reduce((sum: number, item: any) => sum + item.amount, 0).toLocaleString()}</span>
               </div>
             </div>
           ) : (
-            <div style={{ 
-              height: '300px', 
-              background: '#f8fafc', 
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#718096',
-              flexDirection: 'column',
-              gap: '12px'
-            }}>
-              <div style={{ fontSize: '48px' }}>📈</div>
+            <div className="h-[300px] bg-slate-50 rounded-lg flex flex-col items-center justify-center gap-3 text-gray-400">
+              <div className="text-5xl">📈</div>
               <div>{t('no_revenue_data')}</div>
-              <div style={{ fontSize: '12px' }}>{t('adjust_filters')}</div>
+              <div className="text-xs">{t('adjust_filters')}</div>
             </div>
           )}
         </div>
       </div>
 
       {/* Controls */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: '24px',
-        flexWrap: 'wrap',
-        gap: '16px'
-      }}>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-          {/* Date Range */}
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
             <input
               type="date"
               value={dateRange.start}
               onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-              style={{ 
-                padding: '8px 12px', 
-                borderRadius: '6px', 
-                border: '1px solid #e2e8f0',
-                fontSize: '14px'
-              }}
+              className="px-3 py-2 text-sm border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-teal-500"
             />
-            <span style={{ color: '#718096', fontSize: '14px' }}>{t('to')}</span>
+            <span className="text-sm text-gray-400">{t('to')}</span>
             <input
               type="date"
               value={dateRange.end}
               onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-              style={{ 
-                padding: '8px 12px', 
-                borderRadius: '6px', 
-                border: '1px solid #e2e8f0',
-                fontSize: '14px'
-              }}
+              className="px-3 py-2 text-sm border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-teal-500"
             />
           </div>
 
-          {/* Payment Type Filter */}
-          <select 
-            style={{ 
-              padding: '8px 12px', 
-              borderRadius: '6px', 
-              border: '1px solid #e2e8f0',
-              fontSize: '14px',
-              background: 'white'
-            }}
+          <select
+            className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-teal-500"
             value={paymentTypeFilter}
             onChange={(e) => setPaymentTypeFilter(e.target.value)}
           >
@@ -427,15 +238,8 @@ export default function AdminTransactions() {
             <option value="paypal">{t('paypal')}</option>
           </select>
 
-          {/* Status Filter */}
-          <select 
-            style={{ 
-              padding: '8px 12px', 
-              borderRadius: '6px', 
-              border: '1px solid #e2e8f0',
-              fontSize: '14px',
-              background: 'white'
-            }}
+          <select
+            className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-teal-500"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -446,41 +250,23 @@ export default function AdminTransactions() {
           </select>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button 
-            className="btn btn-secondary"
+        <div className="flex gap-3">
+          <button
             onClick={clearFilters}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '6px',
-              border: '1px solid #e2e8f0',
-              background: 'white',
-              color: '#4a5568',
-              fontSize: '14px',
-              cursor: 'pointer'
-            }}
+            className="px-4 py-2 text-sm text-gray-600 transition-colors bg-white border border-gray-200 rounded-md hover:bg-gray-50"
           >
             {t('clear_filters')}
           </button>
-          <button 
-            className="btn btn-primary"
+          <button
             onClick={exportReport}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '6px',
-              border: 'none',
-              background: 'linear-gradient(135deg, #319795 0%, #2d7d7d 100%)',
-              color: 'white',
-              fontSize: '14px',
-              cursor: 'pointer'
-            }}
+            className="px-4 py-2 text-sm text-white transition-all rounded-md bg-gradient-to-r from-teal-600 to-teal-700 hover:shadow-md"
           >
             ↓ {t('export_report')}
           </button>
         </div>
       </div>
 
-      <div style={{ color: '#718096', fontSize: '14px', marginBottom: '16px' }}>
+      <div className="mb-4 text-sm text-gray-500">
         {transactions.length > 0 ? (
           `${t('showing')} ${((currentPage - 1) * 10) + 1} ${t('to')} ${Math.min(currentPage * 10, analytics.totalTransactions || transactions.length)} ${t('of')} ${analytics.totalTransactions || transactions.length} ${t('results')}`
         ) : (
@@ -489,72 +275,51 @@ export default function AdminTransactions() {
       </div>
 
       {/* Transactions Table */}
-      <div className="content-card">
-        <div style={{ padding: 0 }}>
-          <table className="data-table">
-            <thead>
+      <div className="overflow-hidden bg-white border border-gray-100 shadow-sm rounded-xl">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead className="border-b border-gray-100 bg-gray-50">
               <tr>
-                <th>{t('user_header')}</th>
-                <th>{t('amount_header')}</th>
-                <th>{t('date')}</th>
-                <th>{t('payment_method_header')}</th>
-                <th>{t('status')}</th>
-                <th>{t('actions')}</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">{t('user_header')}</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">{t('amount_header')}</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">{t('date')}</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">{t('payment_method_header')}</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">{t('status')}</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">{t('actions')}</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-50">
               {transactions.map((transaction) => (
-                <tr key={transaction.id}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        background: '#319795',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
-                        fontSize: '14px',
-                        fontWeight: '600'
-                      }}>
+                <tr key={transaction.id} className="transition-colors hover:bg-gray-50">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center w-10 h-10 text-sm font-bold text-white bg-teal-600 rounded-full">
                         {transaction.user.initials}
                       </div>
                       <div>
-                        <div style={{ fontWeight: '500', color: '#1a202c' }}>
-                          {transaction.user.name}
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#718096' }}>
-                          {transaction.user.email}
-                        </div>
+                        <div className="font-medium text-gray-900">{transaction.user.name}</div>
+                        <div className="text-xs text-gray-400">{transaction.user.email}</div>
                       </div>
                     </div>
                   </td>
-                  <td style={{ fontWeight: '600', color: '#1a202c' }}>
+                  <td className="px-6 py-4 font-semibold text-gray-900">
                     ${transaction.amount.toFixed(2)}
                   </td>
-                  <td>{transaction.date}</td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span>💳</span>
-                      {transaction.paymentMethod}
+                  <td className="px-6 py-4 text-sm text-gray-600">{transaction.date}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <span>💳</span> {transaction.paymentMethod}
                     </div>
                   </td>
-                  <td>
-                    <span className={`status-badge ${transaction.status}`}>
-                      {t(transaction.status).toUpperCase()}
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${transaction.status === 'successful' ? 'bg-green-100 text-green-700' :
+                        transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                      }`}>
+                      {t(transaction.status)}
                     </span>
                   </td>
-                  <td>
-                    <button style={{ 
-                      background: 'none', 
-                      border: 'none', 
-                      cursor: 'pointer',
-                      padding: '4px'
-                    }}>
-                      ⋯
-                    </button>
+                  <td className="px-6 py-4">
+                    <button className="p-1 text-xl text-gray-400 hover:text-gray-600">⋯</button>
                   </td>
                 </tr>
               ))}
@@ -565,62 +330,33 @@ export default function AdminTransactions() {
 
       {/* Pagination */}
       {transactions.length > 0 && (
-        <div className="pagination" style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center',
-          gap: '8px',
-          marginTop: '24px'
-        }}>
-          <button 
+        <div className="flex items-center justify-center gap-2 mt-8">
+          <button
             disabled={currentPage === 1}
             onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-            style={{
-              padding: '8px 12px',
-              border: '1px solid #e2e8f0',
-              background: currentPage === 1 ? '#f7fafc' : 'white',
-              borderRadius: '6px',
-              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-              color: currentPage === 1 ? '#cbd5e0' : '#4a5568'
-            }}
+            className="p-2 transition-colors border border-gray-200 rounded-md disabled:bg-gray-50 disabled:text-gray-300 hover:bg-gray-50"
           >
             ‹
           </button>
-          
-          {/* Show page numbers */}
+
           {[...Array(Math.min(5, Math.ceil((analytics.totalTransactions || transactions.length) / 10)))].map((_, index) => {
             const pageNum = index + 1;
             return (
-              <button 
+              <button
                 key={pageNum}
-                className={currentPage === pageNum ? "active" : ""}
                 onClick={() => setCurrentPage(pageNum)}
-                style={{
-                  padding: '8px 12px',
-                  border: `1px solid ${currentPage === pageNum ? '#319795' : '#e2e8f0'}`,
-                  background: currentPage === pageNum ? '#319795' : 'white',
-                  color: currentPage === pageNum ? 'white' : '#4a5568',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontWeight: currentPage === pageNum ? '500' : 'normal'
-                }}
+                className={`w-10 h-10 rounded-md text-sm font-medium transition-all ${currentPage === pageNum ? "bg-teal-600 text-white shadow-md shadow-teal-100" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                  }`}
               >
                 {pageNum}
               </button>
             );
           })}
-          
-          <button 
+
+          <button
             disabled={currentPage >= Math.ceil((analytics.totalTransactions || transactions.length) / 10)}
             onClick={() => setCurrentPage(prev => prev + 1)}
-            style={{
-              padding: '8px 12px',
-              border: '1px solid #e2e8f0',
-              background: currentPage >= Math.ceil((analytics.totalTransactions || transactions.length) / 10) ? '#f7fafc' : 'white',
-              borderRadius: '6px',
-              cursor: currentPage >= Math.ceil((analytics.totalTransactions || transactions.length) / 10) ? 'not-allowed' : 'pointer',
-              color: currentPage >= Math.ceil((analytics.totalTransactions || transactions.length) / 10) ? '#cbd5e0' : '#4a5568'
-            }}
+            className="p-2 transition-colors border border-gray-200 rounded-md disabled:bg-gray-50 disabled:text-gray-300 hover:bg-gray-50"
           >
             ›
           </button>
