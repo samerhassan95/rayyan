@@ -430,9 +430,7 @@ export const translations = {
     add_customer: 'اضافة عميل',
     add_new_customer: 'اضافة عميل جديد',
     add_customer_description: 'يرجى ملء جميع الحقول المطلوبة',
-<<<<<<< HEAD
     suspend_user: 'حظر',
-=======
     system_insights: 'رؤى النظام',
     system_insights_desc: 'زاد نشاط العملاء بنسبة 14% هذا الأسبوع. نوصي بمراجعة مخاطر الإلغاء على 4 حسابات مؤسسية كانت غير نشطة لأكثر من 5 أيام.',
     view_risk_report: 'عرض تقرير المخاطر',
@@ -464,7 +462,6 @@ export const translations = {
     all_notifications: 'جميع الإشعارات',
     unread_notifications: 'الإشعارات غير المقروءة',
     read_notifications: 'الإشعارات المقروءة'
->>>>>>> 264a0f0d63c06057656b41c2454006dbbc2e40b2
   },
   en: {
     // Sidebar
@@ -853,9 +850,7 @@ export const translations = {
     add_new_customer: 'Add New Customer',
     add_customer: 'Add Customer',
     add_customer_description: 'Enter the details below to add a new customer to your platform.',
-<<<<<<< HEAD
 suspend_user: 'Suspend User',
-=======
     system_insights: 'System Insights',
     system_insights_desc: 'Customer activity has increased by 14% this week. We recommend reviewing the churn risk on 4 Enterprise accounts that have been inactive for more than 5 days.',
     view_risk_report: 'View Risk Report',
@@ -888,7 +883,6 @@ suspend_user: 'Suspend User',
     unread_notifications: 'Unread Notifications',
     read_notifications: 'Read Notifications'
 
->>>>>>> 264a0f0d63c06057656b41c2454006dbbc2e40b2
 
     
     // Additional translations for users page
