@@ -32,6 +32,12 @@ export default function AdminUsers() {
   const [showAddUserModal, setShowAddUserModal] = useState(false)
   const [addUserLoading, setAddUserLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [showFilterModal, setShowFilterModal] = useState(false)
+  const [filters, setFilters] = useState({
+    status: 'all',
+    plan: 'all',
+    twoFactor: 'all'
+  })
   const [newUser, setNewUser] = useState({
     username: '',
     email: '',
@@ -71,7 +77,7 @@ export default function AdminUsers() {
 
   useEffect(() => {
     fetchUsers()
-  }, [currentPage, searchTerm])
+  }, [currentPage, searchTerm, filters])
 
   const fetchUsers = async () => {
     try {
@@ -82,6 +88,11 @@ export default function AdminUsers() {
       params.append('page', currentPage.toString())
       params.append('limit', '15')
       if (searchTerm) params.append('search', searchTerm)
+      
+      // Add filter parameters
+      if (filters.status !== 'all') params.append('status', filters.status)
+      if (filters.plan !== 'all') params.append('plan', filters.plan)
+      if (filters.twoFactor !== 'all') params.append('twoFactor', filters.twoFactor)
 
       const response = await axios.get(`${API_URL}/api/admin/users?${params}`, { headers })
 
@@ -160,6 +171,22 @@ export default function AdminUsers() {
     } catch (error) {
       console.error('Failed to update user status:', error)
     }
+  }
+
+  const applyFilters = () => {
+    setShowFilterModal(false)
+    setCurrentPage(1) // Reset to first page when filtering
+    fetchUsers()
+  }
+
+  const resetFilters = () => {
+    setFilters({
+      status: 'all',
+      plan: 'all',
+      twoFactor: 'all'
+    })
+    setShowFilterModal(false)
+    setCurrentPage(1)
   }
 
   if (loading) {
@@ -264,21 +291,98 @@ export default function AdminUsers() {
           data={users} // Use the users state from API instead of hardcoded data
           onRowClick={(user) => handleUserClick(user.id)} // Make rows clickable
           filterSection={
-            <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">
-              <span className="text-lg">≡</span> {t('filter')}
-            </button>
-          }
-          footerSection={
-            <div className="flex items-center justify-between text-sm text-gray-500">
-              <span>{t('showing')} 1 {t('to')} {users.length} {t('of')} {pagination?.total || users.length} {t('results')}</span>
-              <div className="flex gap-2">
-                <button className="px-3 py-1 border rounded hover:bg-gray-50" disabled={currentPage <= 1}>{'<'}</button>
-                <button className="px-3 py-1 text-white bg-[#488981] rounded">{currentPage}</button>
-                {pagination?.totalPages > currentPage && (
-                  <button className="px-3 py-1 border rounded hover:bg-gray-50">{currentPage + 1}</button>
+            <div className="relative" style={{ zIndex: 10000 }}>
+              <button 
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+                onClick={() => setShowFilterModal(!showFilterModal)}
+                style={{
+                  background: (filters.status !== 'all' || filters.plan !== 'all' || filters.twoFactor !== 'all') ? '#319795' : undefined,
+                  color: (filters.status !== 'all' || filters.plan !== 'all' || filters.twoFactor !== 'all') ? 'white' : undefined
+                }}
+              >
+                <span className="text-lg">≡</span> {t('filter')}
+                {(filters.status !== 'all' || filters.plan !== 'all' || filters.twoFactor !== 'all') && (
+                  <span className="ml-1">({t('active')})</span>
                 )}
-                <button className="px-3 py-1 border rounded hover:bg-gray-50" disabled={currentPage >= (pagination?.totalPages || 1)}>{'>'}</button>
-              </div>
+              </button>
+
+              {showFilterModal && (
+                <div 
+                  className="fixed bg-white border border-gray-200 rounded-xl p-4 shadow-xl"
+                  style={{
+                    [isRTL ? 'left' : 'right']: '20px',
+                    top: '200px',
+                    minWidth: '300px',
+                    maxWidth: '350px',
+                    zIndex: 9999,
+                    maxHeight: '500px',
+                    overflowY: 'auto'
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <h4 className="pb-2 mb-3 text-base font-medium border-b">{t('filter_users')}</h4>
+
+                  {/* Status Filter */}
+                  <div className="mb-3">
+                    <label className="block mb-1 text-xs font-semibold text-gray-600">{t('status')}</label>
+                    <select
+                      value={filters.status}
+                      onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#319795]"
+                    >
+                      <option value="all">{t('all_status')}</option>
+                      <option value="active">{t('active')}</option>
+                      <option value="inactive">{t('inactive')}</option>
+                    </select>
+                  </div>
+
+                  {/* Plan Filter */}
+                  <div className="mb-3">
+                    <label className="block mb-1 text-xs font-semibold text-gray-600">{t('plan_header')}</label>
+                    <select
+                      value={filters.plan}
+                      onChange={(e) => setFilters(prev => ({ ...prev, plan: e.target.value }))}
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#319795]"
+                    >
+                      <option value="all">{t('all_plans')}</option>
+                      <option value="Free Plan">Free Plan</option>
+                      <option value="Basic">Basic</option>
+                      <option value="Professional">Professional</option>
+                      <option value="Enterprise">Enterprise</option>
+                    </select>
+                  </div>
+
+                  {/* 2FA Filter */}
+                  <div className="mb-4">
+                    <label className="block mb-1 text-xs font-semibold text-gray-600">{t('two_factor_auth')}</label>
+                    <select
+                      value={filters.twoFactor}
+                      onChange={(e) => setFilters(prev => ({ ...prev, twoFactor: e.target.value }))}
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#319795]"
+                    >
+                      <option value="all">{t('all')}</option>
+                      <option value="enabled">{t('enabled')}</option>
+                      <option value="disabled">{t('disabled')}</option>
+                    </select>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      className="flex-1 py-2.5 text-sm font-medium transition-colors border border-gray-300 rounded-full hover:bg-gray-50"
+                      onClick={resetFilters}
+                    >
+                      {t('clear')}
+                    </button>
+                    <button
+                      className="flex-1 py-2.5 text-sm font-medium text-white bg-[#319795] rounded-full hover:bg-[#2c7a7b]"
+                      onClick={applyFilters}
+                    >
+                      {t('apply')}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           }
         />
@@ -290,37 +394,44 @@ export default function AdminUsers() {
                 <Image src={insights} alt="insights" width={24} height={24} />
               </div>
               <div className='space-y-1'>
-                <p className='text-[#475266] text-sm leading-[20px] font-medium'>System Insights</p>
-                <p className="text-[#475266CC] leading-[19.5px] text-sm">Customer activity has increased by 14% this week. We recommend reviewing the
-                  churn risk on 4 Enterprise accounts that have been inactive for more than 5 days.
+                <p className='text-[#475266] text-sm leading-[20px] font-medium'>
+                  {t('system_insights')}
+                </p>
+                <p className="text-[#475266CC] leading-[19.5px] text-sm">
+                  {isRTL 
+                    ? `زاد نشاط العملاء بنسبة ${statistics?.systemInsights?.activityIncrease || 14}% هذا الأسبوع. نوصي بمراجعة مخاطر الإلغاء على ${statistics?.systemInsights?.inactiveEnterpriseAccounts || 4} حسابات مؤسسية كانت غير نشطة لأكثر من 5 أيام.`
+                    : `Customer activity has increased by ${statistics?.systemInsights?.activityIncrease || 14}% this week. We recommend reviewing the churn risk on ${statistics?.systemInsights?.inactiveEnterpriseAccounts || 4} Enterprise accounts that have been inactive for more than 5 days.`
+                  }
                 </p>
                 <div className="pt-2">
                   <button className='flex items-center gap-2 text-sm font-medium text-[#475266] '>
-                    View Risk Report
-                    <Image src={arrowLeft} alt="insights" width={12} height={12} />
+                    {t('view_risk_report')}
+                    <Image src={arrowLeft} alt="arrow" width={12} height={12} />
                   </button>
                 </div>
-
               </div>
             </div>
           </div>
           <div className="space-y-4 bg-linear p-7 rounded-xl">
             <div className="flex items-center justify-between">
               <div className="p-3 bg-transparent rounded-xl">
-                <Image src={networking} alt="insights" width={24} height={24} />
+                <Image src={networking} alt="network" width={24} height={24} />
               </div>
-              <div className='bg-[#FFFFFF3D] rounded-full px-3 py-1.5 text-white font-medium leading-[15px] text-[10px] backdrop-blur-[4px] uppercase'>LIVE FEED</div>
+              <div className='bg-[#FFFFFF3D] rounded-full px-3 py-1.5 text-white font-medium leading-[15px] text-[10px] backdrop-blur-[4px] uppercase'>
+                {t('live_feed')}
+              </div>
             </div>
             <div className='space-y-2'>
               <p className='text-[#FFFFFFB2] uppercase tracking-[1.1px] text-sm leading-[16.5px]'>
-                NETWORK HEALTH
+                {t('network_health')}
               </p>
               <p className='text-3xl font-medium text-white leading-[28px]'>
-                99.98%
+                {statistics?.networkHealth || '99.98'}%
               </p>
               <div className='h-1.5 bg-[#FFFFFF3D] w-full rounded-full overflow-hidden'>
                 <div
-                  className='h-full bg-white rounded-full w-[99.98%]'
+                  className='h-full bg-white rounded-full transition-all duration-500'
+                  style={{ width: `${statistics?.networkHealth || 99.98}%` }}
                 ></div>
               </div>
             </div>
@@ -426,6 +537,14 @@ export default function AdminUsers() {
               {message}
             </div>
           </div>
+        )}
+
+        {/* Filter Modal Overlay */}
+        {showFilterModal && (
+          <div 
+            className="fixed inset-0 z-[9998]"
+            onClick={() => setShowFilterModal(false)}
+          />
         )}
 
 
