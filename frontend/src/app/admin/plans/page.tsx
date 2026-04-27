@@ -6,7 +6,10 @@ import { useLanguage } from '../../../i18n/LanguageContext'
 import Image from 'next/image'
 import StatGroup from '../../components/StateCard';
 import DataTable, { Column } from '../../components/GenericTable'
-
+// @ts-ignore
+import { Splide as SplideType, SplideSlide as SplideSlideType } from '@splidejs/react-splide';
+import '@splidejs/react-splide/css';
+import '@splidejs/react-splide/css/skyblue';
 //ICONS
 
 import edit from "../../../assets/icons/edit-black.svg"
@@ -55,7 +58,39 @@ export default function AdminPlans() {
   })
   const [message, setMessage] = useState('')
 
+//splide
 
+const Splide = SplideType as any;
+const SplideSlide = SplideSlideType as any;
+
+
+const splideOptions = {
+  type: 'loop',
+  focus: 'center',
+  start: plans.findIndex(p => p.recommended) || 0,
+  perPage: 3, // يظهر 3 في الشاشات الكبيرة
+  gap: '2rem',
+  arrows: false,
+  pagination: true,
+  trimSpace: false,
+  // لا تستخدم fixedWidth هنا إذا أردت توزيعاً تلقائياً
+  breakpoints: {
+    1280: {
+      perPage: 3,
+      gap: '1.5rem',
+    },
+    1024: {
+      perPage: 2, // يظهر 2 في التابلت
+      gap: '1rem',
+      padding: '2rem', // لإظهار لمحة من الكروت الجانبية
+    },
+    768: {
+      perPage: 1, // يظهر 1 في الموبايل
+      gap: '1rem',
+      padding: '15%', // يخلي الكارت اللي في النص واضح واللي جنبه باين منه جزء
+    },
+  },
+};
 
   useEffect(() => {
     fetchData()
@@ -347,9 +382,8 @@ export default function AdminPlans() {
             </div>
           </div>
 
-
           <button
-            className="flex justify-center gap-2 p-2.5 px-3 mx-auto text-base text-white transition-colors rounded-full item-center bg-linear"
+            className="flex justify-center gap-2 p-2.5 px-4 mx-auto text-base text-white transition-colors rounded-full item-center bg-linear"
             onClick={() => setShowCreatePlan(true)}
           >
             <Image
@@ -378,110 +412,116 @@ export default function AdminPlans() {
       }
 
       {/* ============================== Pricing Cards =========================*/}
-      <div className="grid items-center grid-cols-1 gap-8 mb-10 xl:grid-cols-3">
-        {plans.map((plan) => (
-          <div
-            key={plan.id}
-            className={`relative p-8 rounded-[1rem] transition-all duration-300 ${plan.recommended
-              ? ' text-white scale-105 z-10 bg-gradient-to-br from-[#488981] to-[#51d1b8]'
-              : 'bg-white text-gray-900 border border-gray-100 shadow-sm hover:shadow-md'
+   <div className="w-full max-w-[1440px] mx-auto mb-10 px-4">
+      <Splide options={splideOptions} aria-label="Plans Slider">
+        {plans.map((plan: any) => (
+          <SplideSlide key={plan.id} className="px-2 py-12"> 
+            <div
+              className={`relative p-8 rounded-[1.5rem] transition-all duration-300 h-full flex flex-col shadow-sm ${
+                plan.recommended
+                  ? 'text-white scale-105 z-10 bg-gradient-to-br from-[#488981] to-[#51d1b8]'
+                  : 'bg-white text-gray-900 border border-gray-100 hover:shadow-md'
               }`}
-          >
-            {/* Recommended Badge */}
-            {!!plan.recommended && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-linear text-white text-[10px] font-bold tracking-widest py-1 px-4 rounded-full shadow-sm">
-                RECOMMENDED
-              </div>
-            )}
-
-            {/* Header Area: Tier & Actions */}
-            <div className="flex items-start justify-between">
-              <div className={`text-[11px] font-semibold uppercase tracking-[0.15em] ${plan.recommended ? 'text-teal-50/80' : 'text-gray-400'
-                }`}>
-                {plan.tier}
-              </div>
-
-              {/* Edit/Delete Actions */}
-              <div className="flex items-center gap-3">
-                <button
-                  className="transition-transform hover:scale-110 opacity-80 hover:opacity-100"
-                  onClick={() => handleEditClick(plan)}
-                >
-                  <Image
-                    src={plan.recommended ? editWhite : edit}
-                    alt="Edit"
-                    width={16}
-                    height={16}
-                  />
-                </button>
-                <button
-                  className="transition-transform hover:scale-110 opacity-80 hover:opacity-100"
-                  onClick={() => {
-                    setPlanToDelete(plan.id);
-                    setShowDeleteConfirm(true);
-                  }}
-                >
-                  <Image
-                    src={plan.recommended ? trashWhite : trash}
-                    alt="Delete"
-                    width={16}
-                    height={16}
-                  />
-                </button>
-              </div>
-            </div>
-
-            {/* Plan Name & Pricing */}
-            <div className="">
-              <h3 className="mb-4 text-3xl font-medium">{plan.name}</h3>
-
-              <div className="flex items-baseline gap-1">
-                <span className="text-5xl font-bold">
-                  ${(billingPeriod === 'Monthly' || billingPeriod === t('monthly')) ? plan.monthlyPrice : plan.yearlyPrice}
-                </span>
-                <span className={`text-lg ${plan.recommended ? 'text-white/70' : 'text-gray-400'}`}>
-                  /{(billingPeriod === 'Monthly' || billingPeriod === t('monthly')) ? t('mo') : t('yr')}
-                </span>
-              </div>
-
-              <p className={`mt-4 text-[14px]  max-w-[250px] ${plan.recommended ? 'text-white/90' : 'text-gray-500'
-                }`}>
-                {plan.description}
-              </p>
-            </div>
-
-            {/* Features List */}
-            <ul className="mb-10 space-y-4">
-              {plan.features.map((feature, index) => {
-                const isUnavailable = feature.includes('Not included') || feature.includes('mapping');
-
-                return (
-                  <li key={index} className={`flex items-center gap-3 text-sm ${isUnavailable ? 'opacity-40' : 'opacity-100'
-                    }`}>
-                    <span className={`flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full border ${plan.recommended ? 'border-white/30 text-white' : 'border-gray-200 text-teal-600'
-                      }`}>
-                      {isUnavailable ? x : tick}
-                    </span>
-                    <span className={isUnavailable ? 'line-through' : ''}>{feature}</span>
-                  </li>
-                );
-              })}
-            </ul>
-
-            {/* Action Button */}
-            <button
-              className={`w-full py-4 px-6 rounded-lg font-bold text-[15px] transition-all ${plan.recommended
-                ? 'bg-black/10 text-white backdrop-blur-md border border-white/20 hover:bg-black/20'
-                : 'bg-white text-gray-900 border-2 border-gray-100 hover:border-[#4FB8A3] hover:text-[#4FB8A3]'
-                }`}
-              onClick={() => updatePlan(plan.id, { recommended: !plan.recommended })}
             >
-              {plan.recommended ? "Upgrade to Pro" : `Configure ${plan.name}`}
-            </button>
+              {/* Recommended Badge */}
+              {!!plan.recommended && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-extrabold tracking-widest py-1.5 px-5 rounded-full text-white scale-105 z-10 bg-gradient-to-br from-[#488981] to-[#51d1b8] z-20">
+                  RECOMMENDED
+                </div>
+              )}
 
-          </div>
+              {/* Header: Tier & Actions */}
+              <div className="flex items-start justify-between mb-6">
+                <div className={`text-[11px] font-bold uppercase tracking-[0.2em] ${plan.recommended ? 'text-white/80' : 'text-gray-400'}`}>
+                  {plan.tier}
+                </div>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => handleEditClick(plan)} className="transition-transform hover:scale-110 active:scale-95">
+                    <Image src={plan.recommended ? editWhite : edit} alt="Edit" width={18} height={18} />
+                  </button>
+                  <button 
+                    onClick={() => { setPlanToDelete(plan.id); setShowDeleteConfirm(true); }} 
+                    className="transition-transform hover:scale-110 active:scale-95"
+                  >
+                    <Image src={plan.recommended ? trashWhite : trash} alt="Delete" width={18} height={18} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Name & Pricing */}
+              <div className="mb-8">
+                <h3 className="mb-2 text-3xl font-bold">{plan.name}</h3>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-5xl font-black">
+                    ${(billingPeriod === 'Monthly' || billingPeriod === t('monthly')) ? plan.monthlyPrice : plan.yearlyPrice}
+                  </span>
+                  <span className={`text-sm font-medium ${plan.recommended ? 'text-white/70' : 'text-gray-400'}`}>
+                    /{(billingPeriod === 'Monthly' || billingPeriod === t('monthly')) ? t('mo') : t('yr')}
+                  </span>
+                </div>
+                <p className={`mt-4 text-[14px] leading-relaxed line-clamp-2 ${plan.recommended ? 'text-white/90' : 'text-gray-500'}`}>
+                  {plan.description}
+                </p>
+              </div>
+
+              {/* Features List */}
+              <ul className="flex-grow mb-10 space-y-4">
+                {plan.features.map((feature: string, index: number) => {
+                  const isUnavailable = feature.includes('Not included') || feature.includes('mapping');
+                  return (
+                    <li key={index} className={`flex items-center gap-3 text-[14px] ${isUnavailable ? 'opacity-40' : 'opacity-100'}`}>
+                      <span className={`flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full ${plan.recommended ? 'bg-white/20' : 'bg-teal-50'}`}>
+                         <Image 
+                           src={isUnavailable ? x : tick} 
+                           alt="icon" 
+                           width={12} 
+                           height={12} 
+                           className={plan.recommended && !isUnavailable ? 'brightness-0 invert' : ''} 
+                         />
+                      </span>
+                      <span className={isUnavailable ? 'line-through' : 'font-medium'}>{feature}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              {/* Action Button */}
+              <button
+                className={`w-full py-4 px-6 rounded-xl font-bold text-[15px] transition-all duration-300 ${
+                  plan.recommended
+                    ? 'bg-gradient-to-br from-[#488981] to-[#51d1b8] hover:bg-gray-50 active:scale-[0.98]'
+                    : 'bg-white text-gray-900 border-2 border-gray-100 hover:border-[#4FB8A3] hover:text-[#4FB8A3] active:scale-[0.98]'
+                }`}
+                onClick={() => updatePlan(plan.id, { recommended: !plan.recommended })}
+              >
+                {plan.recommended ? "Upgrade to Pro" : `Configure ${plan.name}`}
+              </button>
+            </div>
+          </SplideSlide>
         ))}
-      </div>
+      </Splide>
+
+      {/* تنسيق بسيط للـ Pagination لجعلها تظهر بشكل أرشق */}
+      <style jsx global>{`
+        .splide__pagination {
+          bottom: -1rem !important;
+        }
+        .splide__pagination__page {
+          background: #ccc !important;
+          width: 8px !important;
+          height: 8px !important;
+        }
+        .splide__pagination__page.is-active {
+          background: #488981 !important;
+          width: 24px !important;
+          height: 8px !important;
+          border-radius: 4px !important;
+          // transform: scale(1.4) !important;
+          margin: 0 10px !important;
+          
+        }
+      `}</style>
+    </div>
 
       {/* Additional Options */}
       <div className="mb-10 ">
@@ -575,7 +615,7 @@ export default function AdminPlans() {
 
                     <div className="flex gap-3 mt-8">
                       <button className="flex-1 py-3 font-bold text-gray-500 transition-colors hover:bg-gray-100 rounded-xl" onClick={() => setShowEditPlan(false)}>{t('cancel')}</button>
-                      <button className="flex-1 py-3 font-bold text-white transition-colors bg-blue-600 shadow-lg rounded-xl shadow-blue-200 hover:bg-blue-700" onClick={saveEditedPlan}>{t('save_changes')}</button>
+                      <button className="flex-1 py-3 font-bold text-white transition-colors bg-[#488981] rounded-xl" onClick={saveEditedPlan}>{t('save_changes')}</button>
                     </div>
                   </div>
                 </div>
@@ -708,7 +748,7 @@ export default function AdminPlans() {
                   {t('cancel')}
                 </button>
                 <button
-                  className="flex-1 px-6 py-3 font-medium text-white transition-colors bg-blue-600 rounded-lg shadow-lg hover:bg-blue-700 shadow-blue-200"
+                  className="flex-1 py-2.5 bg-[#488981] text-white rounded-lg  transition-colors font-medium"
                   onClick={createPlan}
                 >
                   {t('create_plan_btn')}
@@ -803,7 +843,7 @@ export default function AdminPlans() {
                   {t('cancel')}
                 </button>
                 <button
-                  className="flex-1 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-md shadow-indigo-100"
+                  className="flex-1 py-2.5 bg-[#488981] text-white rounded-lg  transition-colors font-medium"
                   onClick={createDiscountCode}
                 >
                   {t('create_code')}

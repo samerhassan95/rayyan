@@ -12,6 +12,7 @@
     "concurrently": "^8.2.2"
   },
   "dependencies": {
+    "@splidejs/react-splide": "^0.7.12",
     "axios": "^1.15.0"
   }
 }
