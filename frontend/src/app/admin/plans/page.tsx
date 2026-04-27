@@ -3,12 +3,26 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useLanguage } from '../../../i18n/LanguageContext'
+import Image from 'next/image'
+import StatGroup from '../../components/StateCard';
+import DataTable, { Column } from '../../components/GenericTable'
+
+//ICONS
+
+import edit from "../../../assets/icons/edit-black.svg"
+import trash from "../../../assets/icons/trash.svg"
+import trashWhite from "../../../assets/icons/trash-white.svg"
+import editWhite from "../../../assets/icons/edit.svg"
+import tick from "../../../assets/icons/tick.svg"
+import x from "../../../assets/icons/x.svg"
+import plus from "../../../assets/icons/plus.svg"
+
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export default function AdminPlans() {
   const { t, isRTL, language } = useLanguage()
-  const [billingPeriod, setBillingPeriod] = useState(language === 'ar' ? t('yearly') : 'Yearly')
+  const [billingPeriod, setBillingPeriod] = useState('Monthly');
   const [plans, setPlans] = useState<any[]>([])
   const [analytics, setAnalytics] = useState<any>({})
   const [discountCodes, setDiscountCodes] = useState<any[]>([])
@@ -19,6 +33,11 @@ export default function AdminPlans() {
   const [editingPlan, setEditingPlan] = useState<any>(null)
   const [planToDelete, setPlanToDelete] = useState<number | null>(null)
   const [showCreateCode, setShowCreateCode] = useState(false)
+  const [discountName, setDiscountName] = useState('');
+  const [newDiscountCode, setNewDiscountCode] = useState('');
+  const [discountType, setDiscountType] = useState('percentage'); // القيمة الافتراضية
+
+  // مصفوفة البيانات (مثال)
   const [newPlan, setNewPlan] = useState({
     name: '',
     tier: '',
@@ -36,9 +55,43 @@ export default function AdminPlans() {
   })
   const [message, setMessage] = useState('')
 
+
+
   useEffect(() => {
     fetchData()
   }, [])
+
+
+  //state card
+  const statsData = [
+    {
+      label: t('total_monthly_revenue'),
+      value: analytics.totalMonthlyRevenue?.toLocaleString(),
+      suffix: "$",
+      // يمكنك إضافة أيقونة هنا إذا أردتِ
+      icon: <span className="text-xl">💰</span>
+    },
+    {
+      label: t('active_subscriptions_label'),
+      value: analytics.activeSubscriptions?.toLocaleString(),
+      icon: <span className="text-xl">👥</span>
+    },
+    {
+      label: t('churn_rate'),
+      value: analytics.churnRate,
+      suffix: "%",
+      icon: <span className="text-xl">📉</span>
+    }
+  ];
+
+  const columns = [
+    { key: 'name', label: 'اسم الخصم', type: 'text' },
+    { key: 'code', label: 'كود الخصم', type: 'badge' },
+    { key: 'type', label: 'نوع الخصم', type: 'text' }, // نسبة مئوية أو مبلغ ثابت
+    { key: 'usageCount', label: 'مرات الاستخدام', type: 'text' },
+    { key: 'status', label: 'الحالة', type: 'statusActive' },
+    { key: 'actions', label: 'الإجراءات', type: 'actions' }
+  ];
 
   const fetchData = async () => {
     try {
@@ -48,10 +101,10 @@ export default function AdminPlans() {
 
       // Fetch plans
       const plansResponse = await axios.get(`${API_URL}/api/plans`, { headers })
-      
+
       // Fetch analytics
       const analyticsResponse = await axios.get(`${API_URL}/api/plans/analytics`, { headers })
-      
+
       // Fetch discount codes
       const codesResponse = await axios.get(`${API_URL}/api/plans/discount-codes`, { headers })
 
@@ -136,6 +189,60 @@ export default function AdminPlans() {
     setShowEditPlan(true)
   }
 
+  // Handlers for discount codes table actions
+  const handleEdit = (row: any) => {
+    // Populate the "create/edit code" modal with the selected row and open it for editing
+    setNewCode({
+      code: row.code || '',
+      discount: String(row.discount ?? ''),
+      type: row.type || 'percentage',
+      maxUsage: String(row.maxUsage ?? ''),
+      expiresAt: row.expiresAt ? row.expiresAt.split('T')[0] : ''
+    })
+    setShowCreateCode(true)
+  }
+
+  const handleDelete = async (row: any) => {
+    try {
+      const token = localStorage.getItem('token')
+      const headers = { Authorization: `Bearer ${token}` }
+      await axios.delete(`${API_URL}/api/plans/discount-codes/${row.id}`, { headers })
+      setMessage('✅ Discount code deleted')
+      fetchData()
+      setTimeout(() => setMessage(''), 3000)
+    } catch (error) {
+      setMessage('❌ Failed to delete discount code')
+      setTimeout(() => setMessage(''), 3000)
+    }
+  }
+  const handleCreateCode = () => {
+    if (!discountName || !newDiscountCode) {
+      alert("برجاء ملء البيانات الأساسية");
+      return;
+    }
+
+    const newEntry = {
+      id: Date.now(), // توليد ID مؤقت
+      name: discountName,
+      code: newDiscountCode,
+      type: discountType,
+      usageCount: 0,
+      status: 'active',
+    };
+
+    setDiscountCodes([newEntry, ...discountCodes]); // إضافة الكود الجديد في البداية
+
+    // تصفير الحقول بعد الإضافة بنجاح
+    setDiscountName('');
+    setNewDiscountCode('');
+  };
+
+  // const handleView = (row: any) => {
+  //   // Simple preview action - show a brief message; replace with a modal if needed
+  //   setMessage(`${t('code')}: ${row.code}`)
+  //   setTimeout(() => setMessage(''), 3000)
+  // }
+
   const saveEditedPlan = async () => {
     if (!editingPlan) return
     try {
@@ -199,764 +306,515 @@ export default function AdminPlans() {
   }
 
   return (
-    <div style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
-      {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#1a202c', marginBottom: '8px' }}>
-          {t('pricing_plans_title')}
-        </h1>
-        <p style={{ color: '#718096' }}>
-          {t('pricing_plans_desc')}
-        </p>
+    <div className={`p-6 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className="flex justify-between mb-6">
+
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900 ">
+            {t('pricing_plans_title')}
+          </h1>
+          <p className="text-gray-500">
+            {t('pricing_plans_desc')}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+
+          {/* Billing Period Toggle */}
+          <div className="flex justify-center ">
+            <div className="flex p-1.5 bg-[#F3F3F3] rounded-full">
+              <button
+                className={`px-4 py-1 rounded-full transition-all ${billingPeriod === 'Monthly'
+                  ? 'bg-white text-[#21665F] font-medium' // إضافة ظل خفيف للتمييز
+                  : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                onClick={() => setBillingPeriod('Monthly')}
+              >
+                {t('monthly')}
+              </button>
+
+              {/* زر السنوي */}
+              <button
+                className={`px-6 py-2 rounded-lg transition-all ${billingPeriod === 'Yearly'
+                  ? 'bg-white text-[#21665F] font-medium shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                onClick={() => setBillingPeriod('Yearly')}
+              >
+                {t('yearly')}
+              </button>
+            </div>
+          </div>
+
+
+          <button
+            className="flex justify-center gap-2 p-2.5 px-3 mx-auto text-base text-white transition-colors rounded-full item-center bg-linear"
+            onClick={() => setShowCreatePlan(true)}
+          >
+            <Image
+              src={plus}
+              alt="Add"
+              width={12}
+              height={12}
+            />
+
+            Add New Tier
+          </button>
+        </div>
       </div>
+
 
       {/* Message */}
-      {message && (
-        <div style={{ 
-          marginBottom: '24px',
-          padding: '12px 16px',
-          borderRadius: '8px',
-          backgroundColor: message.includes('✅') ? '#f0fff4' : '#fed7d7',
-          color: message.includes('✅') ? '#22543d' : '#742a2a',
-          border: `1px solid ${message.includes('✅') ? '#c6f6d5' : '#feb2b2'}`
-        }}>
-          {message}
-        </div>
-      )}
+      {
+        message && (
+          <div className={`mb-6 px-4 py-3 rounded-lg border ${message.includes('✅')
+            ? 'bg-green-50 text-green-800 border-green-200'
+            : 'bg-red-50 text-red-800 border-red-200'
+            }`}>
+            {message}
+          </div>
+        )
+      }
 
-      {/* Billing Period Toggle */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center',
-        marginBottom: '40px'
-      }}>
-        <div style={{ 
-          display: 'flex',
-          background: '#f7fafc',
-          borderRadius: '8px',
-          padding: '4px'
-        }}>
-          <button 
-            className={`btn ${billingPeriod === 'Monthly' || billingPeriod === t('monthly') ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setBillingPeriod(language === 'ar' ? t('monthly') : 'Monthly')}
-            style={{ margin: 0, borderRadius: '6px' }}
-          >
-            {t('monthly')}
-          </button>
-          <button 
-            className={`btn ${billingPeriod === 'Yearly' || billingPeriod === t('yearly') ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setBillingPeriod(language === 'ar' ? t('yearly') : 'Yearly')}
-            style={{ margin: 0, borderRadius: '6px' }}
-          >
-            {t('yearly')}
-          </button>
-        </div>
-      </div>
-
-      {/* Pricing Cards */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-        gap: '24px',
-        marginBottom: '40px'
-      }}>
+      {/* ============================== Pricing Cards =========================*/}
+      <div className="grid items-center grid-cols-1 gap-8 mb-10 xl:grid-cols-3">
         {plans.map((plan) => (
-          <div 
+          <div
             key={plan.id}
-            className="content-card" 
-            style={{ 
-              position: 'relative',
-              background: plan.recommended ? '#319795' : 'white',
-              color: plan.recommended ? 'white' : 'inherit'
-            }}
+            className={`relative p-8 rounded-[1rem] transition-all duration-300 ${plan.recommended
+              ? ' text-white scale-105 z-10 bg-gradient-to-br from-[#488981] to-[#51d1b8]'
+              : 'bg-white text-gray-900 border border-gray-100 shadow-sm hover:shadow-md'
+              }`}
           >
-            {plan.recommended && (
-              <div style={{
-                position: 'absolute',
-                top: '-12px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                background: '#2c7a7b',
-                color: 'white',
-                padding: '4px 16px',
-                borderRadius: '12px',
-                fontSize: '12px',
-                fontWeight: '600'
-              }}>
-                {t('recommended')}
+            {/* Recommended Badge */}
+            {!!plan.recommended && (
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-linear text-white text-[10px] font-bold tracking-widest py-1 px-4 rounded-full shadow-sm">
+                RECOMMENDED
               </div>
             )}
-            <div className="card-header" style={{ 
-              textAlign: 'center', 
-              borderBottom: 'none',
-              borderColor: plan.recommended ? 'rgba(255,255,255,0.2)' : undefined
-            }}>
-              <div style={{ 
-                fontSize: '12px', 
-                color: plan.recommended ? 'rgba(255,255,255,0.8)' : '#718096', 
-                textTransform: 'uppercase', 
-                letterSpacing: '0.5px', 
-                marginBottom: '8px' 
-              }}>
+
+            {/* Header Area: Tier & Actions */}
+            <div className="flex items-start justify-between">
+              <div className={`text-[11px] font-semibold uppercase tracking-[0.15em] ${plan.recommended ? 'text-teal-50/80' : 'text-gray-400'
+                }`}>
                 {plan.tier}
               </div>
-              <h3 style={{ 
-                fontSize: '24px', 
-                fontWeight: '600', 
-                color: plan.recommended ? 'white' : '#1a202c', 
-                marginBottom: '16px' 
-              }}>
-                {plan.name}
-              </h3>
-              <div style={{ marginBottom: '16px' }}>
-                <span style={{ 
-                  fontSize: '48px', 
-                  fontWeight: '700', 
-                  color: plan.recommended ? 'white' : '#1a202c' 
-                }}>
+
+              {/* Edit/Delete Actions */}
+              <div className="flex items-center gap-3">
+                <button
+                  className="transition-transform hover:scale-110 opacity-80 hover:opacity-100"
+                  onClick={() => handleEditClick(plan)}
+                >
+                  <Image
+                    src={plan.recommended ? editWhite : edit}
+                    alt="Edit"
+                    width={16}
+                    height={16}
+                  />
+                </button>
+                <button
+                  className="transition-transform hover:scale-110 opacity-80 hover:opacity-100"
+                  onClick={() => {
+                    setPlanToDelete(plan.id);
+                    setShowDeleteConfirm(true);
+                  }}
+                >
+                  <Image
+                    src={plan.recommended ? trashWhite : trash}
+                    alt="Delete"
+                    width={16}
+                    height={16}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Plan Name & Pricing */}
+            <div className="">
+              <h3 className="mb-4 text-3xl font-medium">{plan.name}</h3>
+
+              <div className="flex items-baseline gap-1">
+                <span className="text-5xl font-bold">
                   ${(billingPeriod === 'Monthly' || billingPeriod === t('monthly')) ? plan.monthlyPrice : plan.yearlyPrice}
                 </span>
-                <span style={{ 
-                  fontSize: '16px', 
-                  color: plan.recommended ? 'rgba(255,255,255,0.8)' : '#718096' 
-                }}>
+                <span className={`text-lg ${plan.recommended ? 'text-white/70' : 'text-gray-400'}`}>
                   /{(billingPeriod === 'Monthly' || billingPeriod === t('monthly')) ? t('mo') : t('yr')}
                 </span>
               </div>
-              <p style={{ 
-                color: plan.recommended ? 'rgba(255,255,255,0.8)' : '#718096', 
-                fontSize: '14px', 
-                marginBottom: '24px' 
-              }}>
+
+              <p className={`mt-4 text-[14px]  max-w-[250px] ${plan.recommended ? 'text-white/90' : 'text-gray-500'
+                }`}>
                 {plan.description}
               </p>
             </div>
-            <div className="card-content">
-              <ul style={{ listStyle: 'none', padding: 0, marginBottom: '24px' }}>
-                {plan.features.map((feature: string, index: number) => (
-                  <li key={index} style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-                    <span style={{ 
-                      color: plan.recommended ? '#68d391' : '#38a169', 
-                      marginRight: '8px' 
-                    }}>✓</span>
-                    {feature}
+
+            {/* Features List */}
+            <ul className="mb-10 space-y-4">
+              {plan.features.map((feature, index) => {
+                const isUnavailable = feature.includes('Not included') || feature.includes('mapping');
+
+                return (
+                  <li key={index} className={`flex items-center gap-3 text-sm ${isUnavailable ? 'opacity-40' : 'opacity-100'
+                    }`}>
+                    <span className={`flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full border ${plan.recommended ? 'border-white/30 text-white' : 'border-gray-200 text-teal-600'
+                      }`}>
+                      {isUnavailable ? x : tick}
+                    </span>
+                    <span className={isUnavailable ? 'line-through' : ''}>{feature}</span>
                   </li>
-                ))}
-              </ul>
-              <button 
-                className={plan.recommended ? '' : 'btn btn-secondary'}
-                onClick={() => updatePlan(plan.id, { recommended: !plan.recommended })}
-                style={plan.recommended ? {
-                  width: '100%',
-                  padding: '12px',
-                  background: 'rgba(255,255,255,0.2)',
-                  color: 'white',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: '500'
-                } : { width: '100%' }}
-              >
-                {plan.recommended ? t('remove_recommendation') : t('make_recommended')}
-              </button>
-            </div>
-            <div style={{ 
-              position: 'absolute',
-              top: '16px',
-              right: '16px',
-              display: 'flex',
-              gap: '8px'
-            }}>
-              <button 
-                style={{ 
-                  background: 'none', 
-                  border: 'none', 
-                  cursor: 'pointer', 
-                  color: plan.recommended ? 'rgba(255,255,255,0.8)' : '#718096',
-                  fontSize: '18px'
-                }}
-                onClick={() => handleEditClick(plan)}
-              >
-                ✏️
-              </button>
-              <button 
-                style={{ 
-                  background: 'none', 
-                  border: 'none', 
-                  cursor: 'pointer', 
-                  color: plan.recommended ? 'rgba(255,255,255,0.8)' : '#e53e3e',
-                  fontSize: '18px'
-                }}
-                onClick={() => {
-                  setPlanToDelete(plan.id)
-                  setShowDeleteConfirm(true)
-                }}
-              >
-                🗑️
-              </button>
-            </div>
+                );
+              })}
+            </ul>
+
+            {/* Action Button */}
+            <button
+              className={`w-full py-4 px-6 rounded-lg font-bold text-[15px] transition-all ${plan.recommended
+                ? 'bg-black/10 text-white backdrop-blur-md border border-white/20 hover:bg-black/20'
+                : 'bg-white text-gray-900 border-2 border-gray-100 hover:border-[#4FB8A3] hover:text-[#4FB8A3]'
+                }`}
+              onClick={() => updatePlan(plan.id, { recommended: !plan.recommended })}
+            >
+              {plan.recommended ? "Upgrade to Pro" : `Configure ${plan.name}`}
+            </button>
+
           </div>
         ))}
       </div>
 
       {/* Additional Options */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '40px' }}>
-        {/* Create New Tier */}
-        <div className="content-card">
-          <div className="card-header">
-            <h3 className="card-title">{t('create_new_tier')}</h3>
-            <p className="card-subtitle">{t('create_new_tier_desc')}</p>
-          </div>
-          <div className="card-content" style={{ textAlign: 'center' }}>
-            <button 
-              className="btn btn-primary" 
-              onClick={() => setShowCreatePlan(true)}
-              style={{ 
-                width: '60px', 
-                height: '60px', 
-                borderRadius: '50%',
-                fontSize: '24px',
-                marginBottom: '16px'
-              }}
-            >
-              +
-            </button>
-            <p style={{ color: '#718096', fontSize: '14px' }}>
-              {t('configure_pricing_features')}
-            </p>
-          </div>
-        </div>
+      <div className="mb-10 ">
 
         {/* Global Discount Codes */}
-        <div className="content-card">
-          <div className="card-header">
-            <div>
-              <h3 className="card-title">{t('global_discount_codes')}</h3>
-              <p className="card-subtitle">{t('global_discount_codes_desc')}</p>
+        <DataTable
+          title="Global Discount Codes"
+          description="Manage active coupons and referral percentage rules."
+          filterSection={
+            <div className="flex items-center gap-2 rounded-full bg-linear">
+              {/* حقل الكود */}
+              <button className="flex items-center gap-2 px-4 py-2 text-gray-900 rounded-full bg-linear" onClick={() => setShowCreateCode(true)}
+
+              >
+                <Image src={plus} alt="Add" width={12} height={12} />
+                <span className='text-white'>{t('manage_codes')}</span>
+              </button>
             </div>
-            <button 
-              className="btn btn-secondary"
-              onClick={() => setShowCreateCode(true)}
-            >
-              {t('manage_codes')}
-            </button>
-          </div>
-          <div className="card-content">
-            {discountCodes.slice(0, 3).map(code => (
-              <div key={code.id} style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                padding: '8px 0',
-                borderBottom: '1px solid #f7fafc'
-              }}>
-                <div>
-                  <div style={{ fontWeight: '500' }}>{code.code}</div>
-                  <div style={{ fontSize: '12px', color: '#718096' }}>
-                    {code.discount}% off • {code.usageCount}/{code.maxUsage} used
-                  </div>
-                </div>
-                <span style={{ 
-                  background: code.active ? '#f0fff4' : '#fed7d7',
-                  color: code.active ? '#38a169' : '#e53e3e',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  fontSize: '12px'
-                }}>
-                  {code.active ? t('active') : t('inactive')}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+          }
+          columns={[
+            { key: 'name', label: 'Code Name ', type: 'text' },
+            { key: 'code', label: 'Discount Code', type: 'text' },
+            { key: 'discount', label: 'Discount value', type: 'text' },
+            { key: 'usageCount', label: 'Usage Count', type: 'text' },
+            { key: 'active', label: 'Status', type: 'status' },
+            { key: 'actions', label: 'Actions', type: 'actions' }
+          ]}
+          data={discountCodes.map(item => ({
+            ...item,
+            typeLabel: item.type === 'percentage' ? 'نسبة مئوية' : 'مبلغ ثابت',
+            badgeBg: item.status === 'active' ? '#E6F4F1' : '#FEE2E2', // ألوان اختيارية للـ badge
+            badgeColor: item.status === 'active' ? '#4FB8A3' : '#EF4444'
+          }))}
+          onEdit={(row) => handleEdit(row)}
+          onDelete={(row) => handleDelete(row)}
+          rowsPerPage={5}
+
+        />
       </div>
 
       {/* Revenue Stats */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
-            {t('total_monthly_revenue')}
-          </div>
-          <div style={{ fontSize: '32px', fontWeight: '700', color: '#1a202c', marginBottom: '8px' }}>
-            ${analytics.totalMonthlyRevenue?.toLocaleString() || '0'}
-          </div>
-          <div style={{ fontSize: '12px', color: '#38a169' }}>
-            📈 +{analytics.revenueGrowth || 0}% from last month
-          </div>
-        </div>
+      <StatGroup
+        items={statsData}
+        gridCols="lg:grid-cols-3"
+      />
 
-        <div className="stat-card">
-          <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
-            {t('active_subscriptions_label')}
-          </div>
-          <div style={{ fontSize: '32px', fontWeight: '700', color: '#1a202c', marginBottom: '8px' }}>
-            {analytics.activeSubscriptions?.toLocaleString() || '0'}
-          </div>
-          <div style={{ fontSize: '12px', color: '#718096' }}>
-            {t('professional_tier_is')} {analytics.professionalTierPercentage || 0}% {t('of_users')}
-          </div>
-        </div>
+      {/* Modals Overlay (Universal Tailwind Styles) */}
+      {
+        (showEditPlan || showDeleteConfirm || showCreatePlan || showCreateCode) && (
+          <div className="fixed inset-0 z-[1000]  flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="w-full max-w-2xl overflow-hidden duration-200 bg-white shadow-2xl rounded-3xl animate-in fade-in zoom-in">
 
-        <div className="stat-card">
-          <div style={{ fontSize: '12px', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
-            {t('churn_rate')}
-          </div>
-          <div style={{ fontSize: '32px', fontWeight: '700', color: '#1a202c', marginBottom: '8px' }}>
-            {analytics.churnRate || 0}%
-          </div>
-          <div style={{ fontSize: '12px', color: analytics.churnRate < analytics.industryAverageChurn ? '#38a169' : '#e53e3e' }}>
-            {analytics.churnRate < analytics.industryAverageChurn ? '✓' : '⚠️'} {analytics.churnRate < analytics.industryAverageChurn ? 'Lower than' : 'Higher than'} industry average
-          </div>
-        </div>
-      </div>
+              {/* Edit Plan Modal Content */}
+              {showEditPlan && editingPlan && (
+                <div className="p-8">
+                  <h3 className="mb-1 text-xl font-bold">{t('edit_plan')}</h3>
+                  <p className="mb-6 text-sm text-gray-500">{t('edit_plan_desc')}</p>
 
-      {/* Edit Plan Modal */}
-      {showEditPlan && editingPlan && (
-        <div className="modal-overlay" style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          backdropFilter: 'blur(4px)'
-        }}>
-          <div className="modal-content" style={{
-            background: 'white',
-            borderRadius: '16px',
-            padding: '32px',
-            width: '550px',
-            maxHeight: '90vh',
-            overflow: 'auto',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-          }}>
-            <h3 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '8px' }}>{t('edit_plan')}</h3>
-            <p style={{ color: '#718096', marginBottom: '24px' }}>{t('edit_plan_desc')}</p>
-            
-            <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('plan_name')}</label>
-              <input
-                type="text"
-                value={editingPlan.name}
-                onChange={(e) => setEditingPlan((prev: any) => ({ ...prev, name: e.target.value }))}
-                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
-              />
+                  <div className="space-y-4">
+
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('plan_name')}</label>
+                      <input
+                        type="text"
+                        className="w-full p-3 mt-1 border border-gray-200 outline-none bg-gray-50 rounded-xl focus:ring-2 focus:ring-blue-500"
+                        value={editingPlan.name}
+                        onChange={(e) => setEditingPlan(prev => ({ ...prev, name: e.target.value }))}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('monthly_price')} ($)</label>
+                        <input
+                          type="number"
+                          className="w-full p-3 mt-1 border border-gray-200 outline-none bg-gray-50 rounded-xl"
+                          value={editingPlan.monthlyPrice}
+                          onChange={(e) => setEditingPlan(prev => ({ ...prev, monthlyPrice: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('yearly_price')} ($)</label>
+                        <input
+                          type="number"
+                          className="w-full p-3 mt-1 border border-gray-200 outline-none bg-gray-50 rounded-xl"
+                          value={editingPlan.yearlyPrice}
+                          onChange={(e) => setEditingPlan(prev => ({ ...prev, yearlyPrice: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 mt-8">
+                      <button className="flex-1 py-3 font-bold text-gray-500 transition-colors hover:bg-gray-100 rounded-xl" onClick={() => setShowEditPlan(false)}>{t('cancel')}</button>
+                      <button className="flex-1 py-3 font-bold text-white transition-colors bg-blue-600 shadow-lg rounded-xl shadow-blue-200 hover:bg-blue-700" onClick={saveEditedPlan}>{t('save_changes')}</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Delete Confirmation Modal Content */}
+              {showDeleteConfirm && (
+                <div className="p-8 text-center">
+                  <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 text-3xl text-red-500 rounded-full bg-red-50">⚠️</div>
+                  <h3 className="mb-2 text-xl font-bold">{t('delete_plan_confirm_title')}</h3>
+                  <p className="mb-8 text-sm leading-relaxed text-gray-500">{t('delete_plan_confirm_desc')}</p>
+                  <div className="flex gap-3">
+                    <button className="flex-1 py-3 font-bold text-gray-500 transition-colors hover:bg-gray-50 rounded-xl" onClick={() => setShowDeleteConfirm(false)}>{t('keep_plan')}</button>
+                    <button className="flex-1 py-3 font-bold text-white transition-colors bg-red-600 shadow-lg rounded-xl shadow-red-200 hover:bg-red-700" onClick={deletePlan}>{t('yes_delete')}</button>
+                  </div>
+                </div>
+              )}
             </div>
+          </div>
 
-            <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('tier')}</label>
-              <input
-                type="text"
-                value={editingPlan.tier}
-                onChange={(e) => setEditingPlan((prev: any) => ({ ...prev, tier: e.target.value }))}
-                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
-              />
-            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-              <div className="form-group">
-                <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('monthly_price')} ($)</label>
-                <input
-                  type="number"
-                  value={editingPlan.monthlyPrice}
-                  onChange={(e) => setEditingPlan((prev: any) => ({ ...prev, monthlyPrice: e.target.value }))}
-                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
-                />
-              </div>
-              <div className="form-group">
-                <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('yearly_price')} ($)</label>
-                <input
-                  type="number"
-                  value={editingPlan.yearlyPrice}
-                  onChange={(e) => setEditingPlan((prev: any) => ({ ...prev, yearlyPrice: e.target.value }))}
-                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
-                />
-              </div>
-            </div>
+        )
+      }
 
-            <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('description')}</label>
-              <textarea
-                value={editingPlan.description}
-                onChange={(e) => setEditingPlan((prev: any) => ({ ...prev, description: e.target.value }))}
-                rows={3}
-                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
-              />
-            </div>
+      <>
+        {/* Create Plan Modal */}
+        {showCreatePlan && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl p-8 w-full max-w-[550px] max-h-[90vh] overflow-y-auto shadow-2xl">
+              <h3 className="mb-6 text-2xl font-semibold text-slate-900">{t('create_new_plan')}</h3>
 
-            <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('features')}</label>
-              {(editingPlan.features || []).map((feature: string, index: number) => (
-                <div key={index} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+              <div className="space-y-4">
+                {/* Plan Name */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">{t('plan_name')}</label>
                   <input
                     type="text"
-                    value={feature}
-                    onChange={(e) => {
-                      const newFeatures = [...editingPlan.features]
-                      newFeatures[index] = e.target.value
-                      setEditingPlan((prev: any) => ({ ...prev, features: newFeatures }))
-                    }}
-                    style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                    value={newPlan.name}
+                    onChange={(e) => setNewPlan(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g., Premium"
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                   />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const newFeatures = editingPlan.features.filter((_: any, i: number) => i !== index)
-                      setEditingPlan((prev: any) => ({ ...prev, features: newFeatures }))
-                    }}
-                    style={{ background: '#fed7d7', color: '#e53e3e', border: 'none', borderRadius: '8px', padding: '10px 14px', cursor: 'pointer' }}
-                  >
-                    ✕
-                  </button>
                 </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => setEditingPlan((prev: any) => ({ ...prev, features: [...(prev.features || []), ''] }))}
-                style={{ 
-                  background: '#e6fffa', 
-                  color: '#319795', 
-                  border: '1px dashed #319795', 
-                  borderRadius: '8px', 
-                  padding: '10px', 
-                  width: '100%',
-                  cursor: 'pointer',
-                  fontWeight: '500'
-                }}
-              >
-                + {t('add_feature')}
-              </button>
-            </div>
 
-            <div style={{ display: 'flex', gap: '12px', marginTop: '32px' }}>
-              <button
-                className="btn btn-secondary"
-                onClick={() => setShowEditPlan(false)}
-                style={{ flex: 1, padding: '12px', borderRadius: '8px' }}
-              >
-                {t('cancel')}
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={saveEditedPlan}
-                style={{ flex: 1, padding: '12px', borderRadius: '8px' }}
-              >
-                {t('save_changes')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="modal-overlay" style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1100,
-          backdropFilter: 'blur(4px)'
-        }}>
-          <div className="modal-content" style={{
-            background: 'white',
-            borderRadius: '16px',
-            padding: '32px',
-            width: '400px',
-            textAlign: 'center',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
-          }}>
-            <div style={{ 
-              width: '64px', 
-              height: '64px', 
-              background: '#fff5f5', 
-              borderRadius: '50%', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              margin: '0 auto 20px',
-              fontSize: '32px'
-            }}>
-              ⚠️
-            </div>
-            <h3 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '12px' }}>{t('delete_plan_confirm_title')}</h3>
-            <p style={{ color: '#718096', marginBottom: '32px', lineHeight: '1.5' }}>
-              {t('delete_plan_confirm_desc')}
-            </p>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                className="btn btn-secondary"
-                onClick={() => {
-                  setShowDeleteConfirm(false)
-                  setPlanToDelete(null)
-                }}
-                style={{ flex: 1, padding: '12px', borderRadius: '8px' }}
-              >
-                {t('keep_plan')}
-              </button>
-              <button
-                className="btn btn-danger"
-                onClick={deletePlan}
-                style={{ 
-                  flex: 1, 
-                  padding: '12px', 
-                  borderRadius: '8px',
-                  background: '#e53e3e',
-                  color: 'white',
-                  border: 'none',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
-              >
-                {t('yes_delete')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create Plan Modal */}
-      {showCreatePlan && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          backdropFilter: 'blur(4px)'
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '16px',
-            padding: '32px',
-            width: '550px',
-            maxHeight: '90vh',
-            overflow: 'auto',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
-          }}>
-            <h3 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '24px' }}>{t('create_new_plan')}</h3>
-            
-            <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('plan_name')}</label>
-              <input
-                type="text"
-                value={newPlan.name}
-                onChange={(e) => setNewPlan(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="e.g., Premium"
-                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
-              />
-            </div>
-
-            <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('tier')}</label>
-              <input
-                type="text"
-                value={newPlan.tier}
-                onChange={(e) => setNewPlan(prev => ({ ...prev, tier: e.target.value }))}
-                placeholder="e.g., PROFESSIONAL"
-                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
-              />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-              <div className="form-group">
-                <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('monthly_price')} ($)</label>
-                <input
-                  type="number"
-                  value={newPlan.monthlyPrice}
-                  onChange={(e) => setNewPlan(prev => ({ ...prev, monthlyPrice: e.target.value }))}
-                  placeholder="29"
-                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
-                />
-              </div>
-              <div className="form-group">
-                <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('yearly_price')} ($)</label>
-                <input
-                  type="number"
-                  value={newPlan.yearlyPrice}
-                  onChange={(e) => setNewPlan(prev => ({ ...prev, yearlyPrice: e.target.value }))}
-                  placeholder="290"
-                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
-                />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('description')}</label>
-              <textarea
-                value={newPlan.description}
-                onChange={(e) => setNewPlan(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Perfect for..."
-                rows={3}
-                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '4px' }}
-              />
-            </div>
-
-            <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: '600', color: '#4a5568', textTransform: 'uppercase' }}>{t('features')}</label>
-              {newPlan.features.map((feature, index) => (
-                <div key={index} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                {/* Tier */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">{t('tier')}</label>
                   <input
                     type="text"
-                    value={feature}
-                    onChange={(e) => updateFeature(index, e.target.value)}
-                    placeholder="Feature description"
-                    style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                    value={newPlan.tier}
+                    onChange={(e) => setNewPlan(prev => ({ ...prev, tier: e.target.value }))}
+                    placeholder="e.g., PROFESSIONAL"
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                   />
+                </div>
+
+                {/* Prices Grid */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">{t('monthly_price')} ($)</label>
+                    <input
+                      type="number"
+                      value={newPlan.monthlyPrice}
+                      onChange={(e) => setNewPlan(prev => ({ ...prev, monthlyPrice: e.target.value }))}
+                      placeholder="29"
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">{t('yearly_price')} ($)</label>
+                    <input
+                      type="number"
+                      value={newPlan.yearlyPrice}
+                      onChange={(e) => setNewPlan(prev => ({ ...prev, yearlyPrice: e.target.value }))}
+                      placeholder="290"
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">{t('description')}</label>
+                  <textarea
+                    value={newPlan.description}
+                    onChange={(e) => setNewPlan(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Perfect for..."
+                    rows={3}
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-none"
+                  />
+                </div>
+
+                {/* Features Section */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">{t('features')}</label>
+                  {newPlan.features.map((feature, index) => (
+                    <div key={index} className="flex gap-2 mb-1">
+                      <input
+                        type="text"
+                        value={feature}
+                        onChange={(e) => updateFeature(index, e.target.value)}
+                        placeholder="Feature description"
+                        className="flex-1 px-4 py-2 transition-all border rounded-lg border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeFeature(index)}
+                        className="px-4 py-2 font-bold text-red-600 transition-colors bg-red-100 rounded-lg hover:bg-red-200"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
                   <button
                     type="button"
-                    onClick={() => removeFeature(index)}
-                    style={{ background: '#fed7d7', color: '#e53e3e', border: 'none', borderRadius: '4px', padding: '10px 14px', cursor: 'pointer' }}
+                    onClick={addFeature}
+                    className="w-full py-2.5 border-2 border-dashed border-teal-500 bg-teal-50 text-teal-700 rounded-lg font-medium hover:bg-teal-100 transition-colors mt-2"
                   >
-                    ✕
+                    + {t('add_feature')}
                   </button>
                 </div>
-              ))}
-              <button
-                type="button"
-                onClick={addFeature}
-                style={{ 
-                  background: '#e6fffa', 
-                  color: '#319795', 
-                  border: '1px dashed #319795', 
-                  borderRadius: '8px', 
-                  padding: '10px', 
-                  width: '100%',
-                  cursor: 'pointer',
-                  fontWeight: '500'
-                }}
-              >
-                + {t('add_feature')}
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px', marginTop: '32px' }}>
-              <button
-                className="btn btn-secondary"
-                onClick={() => setShowCreatePlan(false)}
-                style={{ flex: 1, padding: '12px', borderRadius: '8px' }}
-              >
-                {t('cancel')}
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={createPlan}
-                style={{ flex: 1, padding: '12px', borderRadius: '8px' }}
-              >
-                {t('create_plan_btn')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create Discount Code Modal */}
-      {showCreateCode && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            width: '400px'
-          }}>
-            <h3 style={{ marginBottom: '20px' }}>{t('create_discount_code')}</h3>
-            
-            <div className="form-group">
-              <label>{t('code')}</label>
-              <input
-                type="text"
-                value={newCode.code}
-                onChange={(e) => setNewCode(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
-                placeholder="WELCOME20"
-              />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div className="form-group">
-                <label>{t('discount')}</label>
-                <input
-                  type="number"
-                  value={newCode.discount}
-                  onChange={(e) => setNewCode(prev => ({ ...prev, discount: e.target.value }))}
-                  placeholder="20"
-                />
               </div>
-              <div className="form-group">
-                <label>{t('type')}</label>
-                <select
-                  value={newCode.type}
-                  onChange={(e) => setNewCode(prev => ({ ...prev, type: e.target.value }))}
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 mt-8">
+                <button
+                  className="flex-1 px-6 py-3 font-medium transition-colors rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  onClick={() => setShowCreatePlan(false)}
                 >
-                  <option value="percentage">{t('percentage')}</option>
-                  <option value="fixed">{t('fixed_amount')}</option>
-                </select>
+                  {t('cancel')}
+                </button>
+                <button
+                  className="flex-1 px-6 py-3 font-medium text-white transition-colors bg-blue-600 rounded-lg shadow-lg hover:bg-blue-700 shadow-blue-200"
+                  onClick={createPlan}
+                >
+                  {t('create_plan_btn')}
+                </button>
               </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div className="form-group">
-                <label>{t('max_usage')}</label>
-                <input
-                  type="number"
-                  value={newCode.maxUsage}
-                  onChange={(e) => setNewCode(prev => ({ ...prev, maxUsage: e.target.value }))}
-                  placeholder="100"
-                />
-              </div>
-              <div className="form-group">
-                <label>{t('expires_at')}</label>
-                <input
-                  type="date"
-                  value={newCode.expiresAt}
-                  onChange={(e) => setNewCode(prev => ({ ...prev, expiresAt: e.target.value }))}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
-              <button
-                className="btn btn-secondary"
-                onClick={() => setShowCreateCode(false)}
-                style={{ flex: 1 }}
-              >
-                {t('cancel')}
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={createDiscountCode}
-                style={{ flex: 1 }}
-              >
-                {t('create_code')}
-              </button>
             </div>
           </div>
-        </div>
-      )}
-    </div>
-  )
+        )}
+
+        {/* Create Discount Code Modal */}
+        {showCreateCode && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-xl p-6 bg-white shadow-2xl rounded-xl">
+              <h3 className="mb-5 text-xl font-bold text-slate-800">{t('create_discount_code')}</h3>
+
+              <div className="space-y-4">
+                <div className="flex flex-col gap-1">
+
+                  <label className="text-sm font-medium text-slate-600">{t('code_name')}</label>
+                  <input
+                    type="text"
+                    value={newCode.discountName}
+                    onChange={(e) => setNewCode(prev => ({ ...prev, discountName: e.target.value.toUpperCase() }))}
+                    placeholder="WELCOME20"
+                    className="w-full px-4 py-2 border rounded-lg outline-none border-slate-200 focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+
+                  <label className="text-sm font-medium text-slate-600">{t('code')}</label>
+                  <input
+                    type="text"
+                    value={newCode.code}
+                    onChange={(e) => setNewCode(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
+                    placeholder="WELCOME20"
+                    className="w-full px-4 py-2 border rounded-lg outline-none border-slate-200 focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-slate-600">{t('discount')}</label>
+                    <input
+                      type="number"
+                      value={newCode.discount}
+                      onChange={(e) => setNewCode(prev => ({ ...prev, discount: e.target.value }))}
+                      placeholder="20"
+                      className="w-full px-4 py-2 border rounded-lg outline-none border-slate-200 focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-slate-600">{t('type')}</label>
+                    <select
+                      value={newCode.type}
+                      onChange={(e) => setNewCode(prev => ({ ...prev, type: e.target.value }))}
+                      className="w-full px-4 py-2 bg-white border rounded-lg outline-none border-slate-200 focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="percentage">{t('percentage')}</option>
+                      <option value="fixed">{t('fixed_amount')}</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-slate-600">{t('max_usage')}</label>
+                    <input
+                      type="number"
+                      value={newCode.maxUsage}
+                      onChange={(e) => setNewCode(prev => ({ ...prev, maxUsage: e.target.value }))}
+                      placeholder="100"
+                      className="w-full px-4 py-2 border rounded-lg outline-none border-slate-200 focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-slate-600">{t('expires_at')}</label>
+                    <input
+                      type="date"
+                      value={newCode.expiresAt}
+                      onChange={(e) => setNewCode(prev => ({ ...prev, expiresAt: e.target.value }))}
+                      className="w-full px-4 py-2 border rounded-lg outline-none border-slate-200 focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  className="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors"
+                  onClick={() => setShowCreateCode(false)}
+                >
+                  {t('cancel')}
+                </button>
+                <button
+                  className="flex-1 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-md shadow-indigo-100"
+                  onClick={createDiscountCode}
+                >
+                  {t('create_code')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    </div >
+
+
+  );
 }

@@ -7,6 +7,21 @@ import { useLanguage } from '../../../../i18n/LanguageContext'
 import Image from 'next/image'
 import edit from '../../../../assets/icons/edit.svg'
 import suspend from '../../../../assets/icons/suspand.svg'
+import unSuspend from '../../../../assets/icons/user.svg'
+import StatGroup from '../../../components/StateCard'
+import DataTable, { Column } from '../../../components/GenericTable'
+
+
+import percent1 from "../../../../assets/icons/percent-1.svg"
+import percent2 from "../../../../assets/icons/percent-2.svg"
+import percent3 from "../../../../assets/icons/percent-3.svg"
+import percent4 from "../../../../assets/icons/percent-4.svg"
+
+import fingerPrint from "../../../../assets/icons/fingerprint.svg"
+import encription from "../../../../assets/icons/encription.svg"
+import location from "../../../../assets/icons/location.svg"
+import email from "../../../../assets/icons/email.svg"
+
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
@@ -289,14 +304,14 @@ const UsageActivityChart = ({ period, userId }: { period: string, userId: string
       </svg>
 
       {/* ملخص الرسم البياني */}
-      <div className="flex justify-between items-center mt-4 px-4 py-3 bg-slate-50 rounded-lg text-[12px] text-slate-600">
+      {/* <div className="flex justify-between items-center mt-4 px-4 py-3 bg-slate-50 rounded-lg text-[12px] text-slate-600">
         <div>
           <span className="font-bold">Period:</span> {period} | <span className="font-bold">Points:</span> {chartData.length}
         </div>
         <div>
           <span className="font-bold">Range:</span> {minValue} - {maxValue} | <span className="font-bold">Avg:</span> {Math.round(values.reduce((a, b) => a + b, 0) / values.length)}
         </div>
-      </div>
+      </div> */}
     </div>
   )
 }
@@ -321,6 +336,103 @@ export default function UserDetail() {
   const router = useRouter()
   const params = useParams()
   const userId = params.id
+
+  const statsData = [
+    {
+      label: t('total_proposal'),
+      value: userDetail?.statistics?.totalPayments || '0.00',
+      suffix: "$", // السافكس هنا دولار بما أنه دفع
+      icon: percent1// مثال لأيقونة
+    },
+    {
+      label: t('active_subs'),
+      value: userDetail?.statistics?.activeSubscriptions || '0',
+      icon: percent2// مثال لأيقونة
+    },
+    {
+      label: t('total_payments'),
+      value: userDetail?.statistics?.totalSpend || '0.00',
+      suffix: "$",
+      icon: percent3// مثال لأيقونة
+    },
+    {
+      label: t('support_tickets'),
+      value: userDetail?.statistics?.openTickets || '0',
+      suffix: " ",
+      icon: percent4// مثال لأيقونة
+    },
+  ];
+
+  const columns: Column[] = [
+    {
+      key: 'id',
+      label: 'TICKET ID',
+      type: 'text',
+      render: (value) => <span className="font-bold text-gray-900">{value}</span>
+    },
+    {
+      key: 'subject',
+      label: 'SUBJECT',
+      type: 'text',
+      render: (value) => <span className="text-gray-400">{value}</span>
+    },
+    {
+      key: 'status',
+      label: 'STATUS',
+      type: 'text',
+      render: (value) => (
+        <span className="bg-[#E6F4F2] text-[#488981] px-3 py-1 rounded-full text-[10px] font-bold uppercase">
+          {value}
+        </span>
+      )
+    },
+    {
+      key: 'priority',
+      label: 'PRIORITY',
+      type: 'text',
+      render: (value) => (
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
+          <span className="text-sm font-medium">{value}</span>
+        </div>
+      )
+    },
+    {
+      key: 'lastUpdate',
+      label: 'LAST UPDATE',
+      type: 'text',
+      render: (value) => <span className="font-medium text-gray-900">{value}</span>
+    },
+    {
+      key: 'action',
+      label: 'ACTIONS',
+      type: 'action'
+    },
+  ];
+
+  const data = [
+    {
+      id: '#TIC-8842',
+      subject: 'Technical Support..',
+      status: 'OPEN',
+      priority: 'Medium',
+      lastUpdate: '2 hours ago',
+    },
+    {
+      id: '#TIC-8842',
+      subject: 'Technical Support..',
+      status: 'OPEN',
+      priority: 'Medium',
+      lastUpdate: '2 hours ago',
+    },
+    {
+      id: '#TIC-8842',
+      subject: 'Technical Support..',
+      status: 'OPEN',
+      priority: 'Medium',
+      lastUpdate: '2 hours ago',
+    },];
+
 
   useEffect(() => {
     if (userId) {
@@ -449,219 +561,94 @@ export default function UserDetail() {
 
       {/* User Profile Container */}
       <div className="flex justify-between p-8 mb-6 bg-white border rounded-xl border-slate-200">
-        <div className="flex items-center gap-6 mb-8">
-
-          {/* Avatar / Initial */}
+        <div className="flex items-center gap-6">
+          {/* Avatar */}
           <div className="w-[128px] h-[128px] rounded-full bg-slate-900 flex items-center justify-center text-white text-[48px] font-semibold shrink-0">
             {userDetail.user.username?.charAt(0)?.toUpperCase()}
           </div>
 
           <div className="flex-1">
-            {isEditingProfile ? (
-              <div className="space-y-4">
-                <div>
-                  <input
-                    type="text"
-                    value={editForm.username}
-                    onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
-                    className="text-[28px] font-semibold text-slate-900 border-2 border-slate-200 rounded-lg px-2 py-1 bg-white mb-2 w-[300px] focus:border-teal-500 outline-none"
-                  />
-                  <input
-                    type="text"
-                    value={editForm.job_title}
-                    onChange={(e) => setEditForm({ ...editForm, job_title: e.target.value })}
-                    placeholder="Job Title"
-                    className="text-slate-500 text-base border border-slate-200 rounded px-3 py-2 w-[300px] block focus:border-teal-500 outline-none"
-                  />
-                </div>
+            {/* View Mode Only */}
+            <div>
+              <h1 className="text-[24px] leading-[32px] font-semibold text-[#2B3437] capitalize m-0">
+                {userDetail.user.username}
+              </h1>
+              <p className="mb-4 leading-[28px] font-light text-lg text-[#586064]">
+                {userDetail.user.job_title || t('platform_user')}
+              </p>
 
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-2">
-                    <span>📧</span>
-                    <input
-                      type="email"
-                      value={editForm.email}
-                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                      className="text-slate-600 border border-slate-200 rounded px-2 py-1 w-[200px] focus:border-teal-500 outline-none"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span>📍</span>
-                    <input
-                      type="text"
-                      value={editForm.address}
-                      onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                      placeholder="Address"
-                      className="text-slate-600 border border-slate-200 rounded px-2 py-1 w-[200px] focus:border-teal-500 outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <input
-                    type="text"
-                    value={editForm.phone}
-                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                    placeholder="Phone Number"
-                    className="text-slate-600 border border-slate-200 rounded p-2 w-[300px] focus:border-teal-500 outline-none"
-                  />
-                </div>
-
-                <div>
-                  <textarea
-                    value={editForm.bio}
-                    onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
-                    placeholder="Bio"
-                    rows={3}
-                    className="text-slate-600 border border-slate-200 rounded p-2 w-[400px] resize-y block focus:border-teal-500 outline-none"
-                  />
-                </div>
+              <div className="flex items-center justify-between gap-6 mb-4 text-slate-600">
+                <p className="flex items-center gap-1.5">
+                  <Image src={email} alt="email" width={16} height={16} /> {userDetail.user.email}</p>
+                <p className="flex items-center gap-1.5"><Image src={location} alt="location" width={16} height={16} />{userDetail.user.address || t('location_not_set')}</p>
               </div>
-            ) : (
-              /* View Mode */
-              <div>
-                <h1 className="text-[28px] font-semibold text-slate-900 m-0">
-                  {userDetail.user.username}
-                </h1>
-                <p className="mb-4 text-base text-slate-500">
-                  {userDetail.user.job_title || t('platform_user')}
-                </p>
 
-                <div className="flex items-center gap-6 mb-4 text-slate-600">
-                  <span>📧 {userDetail.user.email}</span>
-                  <span>📍 {userDetail.user.address || t('location_not_set')}</span>
-                </div>
+              {/* {userDetail.user.phone && (
+          <div className="mb-2 text-slate-600">
+            <span>📞 {userDetail.user.phone}</span>
+          </div>
+        )} */}
 
-                {userDetail.user.phone && (
-                  <div className="mb-2 text-slate-600">
-                    <span>📞 {userDetail.user.phone}</span>
-                  </div>
-                )}
+              {/* {userDetail.user.bio && (
+          <div className="mb-4 italic text-slate-600">
+            "{userDetail.user.bio}"
+          </div>
+        )} */}
 
-                {userDetail.user.bio && (
-                  <div className="mb-4 italic text-slate-600">
-                    "{userDetail.user.bio}"
-                  </div>
-                )}
-
-                {/* Badges */}
-                <div className="flex gap-3">
-                  {userDetail.user.acquisition_source && (
-                    <span className="bg-teal-50 text-teal-600 px-3 py-1 rounded-full text-[12px] font-medium">
-                      {userDetail.user.acquisition_source}
-                    </span>
-                  )}
-                  <span className="bg-teal-50 text-teal-600 px-3 py-1 rounded-full text-[12px] font-medium">
-                    {userDetail.user.role}
+              {/* Badges */}
+              <div className="flex gap-3">
+                {userDetail.user.acquisition_source && (
+                  <span className="bg-[#EAEFF1] text-[#545F73] px-5 py-1.5 rounded-full text-[12px] font-medium">
+                    {userDetail.user.acquisition_source}
                   </span>
-                  <span className={`px-3 py-1 rounded-full text-[12px] font-medium ${userDetail.user.status === 'active'
-                    ? 'bg-teal-50 text-teal-600'
-                    : 'bg-red-100 text-red-600'
-                    }`}>
-                    {userDetail.user.status}
-                  </span>
-                </div>
+                )}
+                <span className="bg-[#EAEFF1] text-[#545F73] px-5 py-1.5 rounded-full text-[12px] font-medium">
+                  {userDetail.user.role}
+                </span>
+                <span className={`px-5 py-1.5 rounded-full text-[12px] font-medium ${userDetail.user.status === 'active' ? 'bg-[#EAEFF1] text-[#545F73]' : 'bg-red-100 text-red-600'}`}>
+                  {userDetail.user.status}
+                </span>
               </div>
-            )}
+            </div>
           </div>
         </div>
-        <div>
-          {/* Action Buttons */}
-          <div className="flex self-start gap-3">
-            {!isEditingProfile ? (
+
+        <div className="flex self-start gap-3">
+          <button
+            onClick={() => setIsEditingProfile(true)}
+            className="bg-linear flex items-center gap-2 text-white px-4 py-2.5 rounded-full font-medium hover:bg-opacity-90 transition-colors cursor-pointer"
+          >
+            <Image src={edit} alt="edit" width={14} height={14} />
+            {t('edit_profile')}
+          </button>
+
+          <button
+            onClick={suspendUser}
+            className="bg-[#f8f8f8] flex items-center gap-2 px-4 py-2.5 rounded-full font-medium hover:bg-slate-200 transition-colors cursor-pointer border border-gray-200"
+          >
+            {userDetail.user.status === 'active' ? (
               <>
-                <button
-                  onClick={() => setIsEditingProfile(true)}
-                  className="bg-linear flex items-center gap-2 text-white px-4 py-2.5 rounded-full font-medium hover:bg-slate-300 transition-colors cursor-pointer"
-                >
-                  <Image src={edit} alt="edit" width={14} height={14} />
-                  {t('edit_profile')}
-                </button>
-                <button
-                  onClick={suspendUser}
-                  className="bg-[#f8f8f8] flex items-center gap-2 px-4 py-2.5 rounded-full font-medium hover:bg-slate-200 transition-colors cursor-pointer border border-gray-200"
-                >
-                  {userDetail.user.status === 'active' ? (
-                    <>
-                      <Image src={suspend} alt="suspend" width={16} height={16} />
-                      <span className="">{t('suspend_user')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Image src={edit} alt="activate" width={16} height={16} />
-                      <span className="text-green-600">{t('activate')}</span>
-                    </>
-                  )}
-                </button>
+                <Image src={suspend} alt="suspend" width={16} height={16} />
+                <span>{t('suspend_user')}</span>
               </>
             ) : (
               <>
-                <button
-                  onClick={handleSaveProfile}
-                  className="bg-teal-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-teal-700 transition-colors cursor-pointer"
-                >
-                  💾 {t('save')}
-                </button>
-                <button
-                  onClick={() => setIsEditingProfile(false)}
-                  className="bg-slate-200 text-slate-600 px-4 py-2.5 rounded-lg font-medium hover:bg-slate-300 transition-colors cursor-pointer"
-                >
-                  ❌ {t('cancel')}
-                </button>
+                <Image src={unSuspend} alt="activate" width={16} height={16} />
+                <span className="text-green-600">{t('activate')}</span>
               </>
             )}
-          </div>
+          </button>
         </div>
       </div>
-
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-5 mb-8 sm:grid-cols-2 lg:grid-cols-4">
+      <StatGroup items={statsData} />
 
-        {/* Total Payments */}
-        <div className="p-5 text-center bg-white border shadow-sm rounded-xl border-slate-200">
-          <div className="mb-1 text-2xl font-bold text-slate-900">
-            ${userDetail?.statistics?.totalPayments || '0.00'}
-          </div>
-          <div className="text-[12px] color-slate-500 uppercase tracking-wider font-medium">
-            {t('total_payments_label')}
-          </div>
-        </div>
 
-        {/* Active Subscriptions */}
-        <div className="p-5 text-center bg-white border shadow-sm rounded-xl border-slate-200">
-          <div className="mb-1 text-2xl font-bold text-slate-900">
-            {userDetail?.statistics?.activeSubscriptions || '0'}
-          </div>
-          <div className="text-[12px] color-slate-500 uppercase tracking-wider font-medium">
-            {t('active_subscriptions_label')}
-          </div>
-        </div>
-
-        {/* Total Spend */}
-        <div className="p-5 text-center bg-white border shadow-sm rounded-xl border-slate-200">
-          <div className="mb-1 text-2xl font-bold text-slate-900">
-            ${userDetail?.statistics?.totalSpend || '0.00'}
-          </div>
-          <div className="text-[12px] color-slate-500 uppercase tracking-wider font-medium">
-            {t('total_spend_label')}
-          </div>
-        </div>
-
-        {/* Support Tickets */}
-        <div className="p-5 text-center bg-white border shadow-sm rounded-xl border-slate-200">
-          <div className="mb-1 text-2xl font-bold text-slate-900">
-            {userDetail?.statistics?.openTickets || '0'} Open
-          </div>
-          <div className="text-[12px] color-slate-500 uppercase tracking-wider font-medium">
-            {t('support_tickets')}
-          </div>
-        </div>
-
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8">
+      {/* Usage Activity */}
+      <div className="grid h-full grid-cols-1 gap-8 lg:grid-cols-12">
         {/* Left Column */}
-        <div className="space-y-8">
+        <div className="col-span-12 space-y-8 lg:col-span-8">
           {/* Usage Activity Chart Container */}
           <div className="p-6 bg-white border shadow-sm rounded-xl border-slate-200">
             <div className="flex items-center justify-between mb-4">
@@ -687,81 +674,24 @@ export default function UserDetail() {
             <UsageActivityChart period={chartPeriod} userId={userId} />
           </div>
 
-          {/* Support Tickets Table Container */}
-          <div className="p-6 bg-white border shadow-sm rounded-xl border-slate-200">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[18px] font-semibold text-slate-900">{t('support_tickets')}</h3>
-              <div className="flex items-center gap-2">
-                <select
-                  value={supportTicketsFilter}
-                  onChange={(e) => setSupportTicketsFilter(e.target.value)}
-                  className="p-1 px-2 border border-slate-200 rounded text-[12px] bg-white outline-none focus:border-teal-500"
-                >
-                  <option value="all">{t('all_tickets')}</option>
-                  <option value="open">{t('open')}</option>
-                  <option value="pending">{t('pending')}</option>
-                  <option value="resolved">{t('resolved')}</option>
-                </select>
-              </div>
-            </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-slate-50">
-                    <th className="px-4 py-3 text-left text-[12px] font-semibold text-slate-500 uppercase tracking-wider">{t('ticket_id')}</th>
-                    <th className="px-4 py-3 text-left text-[12px] font-semibold text-slate-500 uppercase tracking-wider">{t('subject')}</th>
-                    <th className="px-4 py-3 text-left text-[12px] font-semibold text-slate-500 uppercase tracking-wider">{t('status')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {userDetail?.supportTickets?.length > 0 ? (
-                    userDetail.supportTickets
-                      .filter((ticket: any) => supportTicketsFilter === 'all' || ticket.status === supportTicketsFilter)
-                      .slice(0, 5)
-                      .map((ticket: any) => (
-                        <tr key={ticket.id} className="transition-colors hover:bg-slate-50/50">
-                          <td className="p-4 font-medium text-slate-700">#{ticket.ticket_number}</td>
-                          <td className="p-4 text-slate-600">{ticket.subject}</td>
-                          <td className="p-4">
-                            <span className={`px-2 py-1 rounded-full text-[12px] font-medium ${ticket.status === 'open'
-                              ? 'bg-red-100 text-red-800'
-                              : ticket.status === 'pending'
-                                ? 'bg-orange-100 text-orange-800'
-                                : 'bg-green-100 text-green-800'
-                              }`}>
-                              {ticket.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                  ) : (
-                    <tr>
-                      <td colSpan={3} className="py-10 italic text-center text-slate-500">
-                        {t('no_support_tickets')}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
         </div>
 
         {/* Right Column - Security Context */}
-        <div className="space-y-8">
-          <div className="p-6 bg-white border shadow-sm rounded-xl border-slate-200">
-            <h3 className="text-[16px] font-semibold text-slate-900 mb-5">{t('security_context')}</h3>
+        <div className="col-span-12 space-y-8 lg:col-span-4">
+          <div className="p-6 space-y-5 bg-white border rounded-xl border-slate-200">
+            <h3 className="text-[16px] font-semibold text-slate-900 ">{t('security_context')}</h3>
 
             {/* 2FA Status */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-2 text-sm text-slate-600">🔐 {t('two_factor_status')}</span>
+            <div className="">
+              <div className="flex items-center justify-between bg-[#F1F4F6] p-3 rounded-lg">
+                <span className="flex items-center gap-2 text-sm text-slate-600">
+                  <Image src={fingerPrint} alt='Finger Print' width={16} height={16} /> {t('two_factor_status')}</span>
                 <button
                   onClick={toggleTwoFactor}
-                  className={`px-2 py-0.5 rounded text-[12px] font-bold border-none cursor-pointer transition-opacity hover:opacity-80 ${userDetail?.user?.two_factor_enabled
-                    ? 'bg-teal-50 text-teal-600'
-                    : 'bg-red-50 text-red-600'
+                  className={`px-2 py-0.5 rounded-full text-[12px] font-bold border-none cursor-pointer transition-opacity hover:opacity-80 ${userDetail?.user?.two_factor_enabled
+                    ? 'bg-[#91FEEF] text-[#006259]'
+                    : 'bg-red-200 text-red-600'
                     }`}
                 >
                   {userDetail?.user?.two_factor_enabled ? t('enabled') : t('disabled')}
@@ -770,37 +700,45 @@ export default function UserDetail() {
             </div>
 
             {/* Encryption */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-2 text-sm text-slate-600">🔒 {t('data_encryption')}</span>
-                <span className="bg-teal-50 text-teal-600 px-2 py-0.5 rounded text-[12px] font-bold">
+            <div className="">
+              <div className="flex items-center justify-between bg-[#F1F4F6] p-3 rounded-lg">
+                <span className="flex items-center gap-2 text-sm text-slate-600">
+                  <Image src={encription} alt='encription' width={14} height={14} />
+                  {t('data_encryption')}</span>
+                <span className="bg-[#91FEEF] text-[#006259] px-2 py-0.5 rounded-full text-[12px] font-bold">
                   AES-256
                 </span>
               </div>
             </div>
 
             {/* Access Tier */}
-            <div className="mb-6">
-              <div className="mb-2">
-                <span className="text-sm text-slate-600">{t('access_tier')}</span>
+            <div className=" bg-[#F1F4F6] p-3 rounded-lg">
+
+              <div className="flex items-center justify-between w-full ">
+                <div className="mb-2">
+                  <span className="text-sm text-slate-600">{t('access_tier')}</span>
+                </div>
+                <div className="mb-2">
+                  <span className="text-[16px] font-medium text-slate-900">Level 4</span>
+                </div>
+
               </div>
-              <div className="mb-2">
-                <span className="text-[16px] font-semibold text-slate-900">Level 4</span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                <div className="w-[80%] h-full bg-teal-600"></div>
+              <div className="h-2 overflow-hidden rounded-full bg-[#ABB3B733]">
+                <div className="w-[80%] h-full bg-[#545F73] rounded-full"></div>
               </div>
             </div>
 
             {/* Action Button */}
             <button
-              className="bg-teal-600 text-white border-none py-2.5 px-4 rounded-lg cursor-pointer text-sm font-medium w-full hover:bg-teal-700 transition-colors"
+              className=" text-[#586064] border-2 border-dashed py-2.5 px-4 rounded-lg cursor-pointer text-sm font-medium w-full hover:bg-teal-200 transition-colors"
               onClick={() => {
                 setModalMessage('Permission management feature coming soon!')
                 setShowSuccessModal(true)
               }}
             >
-              + {t('add_permission')}
+              <span className='px-2'>+</span>
+
+              {t('add_permission')}
             </button>
           </div>
         </div>
@@ -815,6 +753,125 @@ export default function UserDetail() {
         </Modal>
       </div>
 
+      <div className="mt-6">
+        {/* Support Tickets Table Container */}
+        <DataTable
+          title="Support Tickets"
+          description="Reviewing the latest 10 activities"
+          columns={columns}
+          data={data}
+          rowsPerPage={4}
+          filterSection={
+            <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 transition-colors border border-gray-100 rounded-full bg-gray-50 hover:bg-gray-100">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+              </svg>
+              Filter
+            </button>
+          }
+        />
+      </div>
+      {/* Edit Profile Modal */}
+      {isEditingProfile && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-2xl overflow-hidden bg-white shadow-xl rounded-2xl">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
+              <h2 className="text-xl font-bold text-slate-800">{t('edit_profile')}</h2>
+              <button
+                onClick={() => setIsEditingProfile(false)}
+                className="transition-colors text-slate-400 hover:text-slate-600"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className="block mb-1 text-sm font-medium text-slate-700">Username</label>
+                  <input
+                    type="text"
+                    value={editForm.username}
+                    onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+                    className="w-full px-3 py-2 text-lg font-semibold border rounded-lg outline-none text-slate-900 border-slate-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block mb-1 text-sm font-medium text-slate-700">Job Title</label>
+                  <input
+                    type="text"
+                    value={editForm.job_title}
+                    onChange={(e) => setEditForm({ ...editForm, job_title: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg outline-none text-slate-600 border-slate-200 focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-slate-700">Email</label>
+                  <input
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg outline-none text-slate-600 border-slate-200 focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-slate-700">Phone</label>
+                  <input
+                    type="text"
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg outline-none text-slate-600 border-slate-200 focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block mb-1 text-sm font-medium text-slate-700">Address</label>
+                  <input
+                    type="text"
+                    value={editForm.address}
+                    onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg outline-none text-slate-600 border-slate-200 focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block mb-1 text-sm font-medium text-slate-700">Bio</label>
+                  <textarea
+                    value={editForm.bio}
+                    onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                    rows={4}
+                    className="w-full px-3 py-2 border rounded-lg outline-none resize-none text-slate-600 border-slate-200 focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end gap-3 px-6 py-4 border-t bg-slate-50 border-slate-100">
+              <button
+                onClick={() => setIsEditingProfile(false)}
+                className="px-6 py-2 font-medium transition-colors rounded-lg text-slate-600 hover:bg-slate-200"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                onClick={() => {
+                  handleSaveProfile();
+                  setIsEditingProfile(false); // Close after save
+                }}
+                className="px-6 py-2 font-medium text-white transition-colors bg-teal-600 rounded-lg shadow-sm hover:bg-teal-700"
+              >
+                {t('save')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConfirmationModal
         isOpen={showConfirmModal}

@@ -921,3 +921,8 @@ body.dark-mode .admin-layout svg text {
   background-image: linear-gradient(to right, #58A19a
 , #51d1b8);
 }
+
+[dir="rtl"] .bg-linear{
+  background-image: linear-gradient(to right,
+ #51d1b8,  #58A19a);
+}

@@ -20,9 +20,9 @@ const StatCard = ({ icon, value, label, suffix = "" }) => (
   </div>
 );
 
-const StatGroup = ({ items = [] }) => {
+const StatGroup = ({ items = [], gridCols = "xl:grid-cols-4" }) => {
   return (
-    <div className="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2 xl:grid-cols-4">
+    <div className={`grid grid-cols-1 gap-6 mb-8 md:grid-cols-2 ${gridCols}`}>
       {items.map((item, index) => (
         <StatCard
           key={index}

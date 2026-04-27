@@ -4,12 +4,16 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import StatGroup from '../../components/StateCard';
 import { useLanguage } from '../../../i18n/LanguageContext'
-
+import Image from 'next/image';
 import percent1 from "../../../assets/icons/percent-1.svg"
 import percent2 from "../../../assets/icons/percent-2.svg"
 import percent3 from "../../../assets/icons/percent-3.svg"
 import percent4 from "../../../assets/icons/percent-4.svg"
 
+import filterIcon from "../../../assets/icons/filter.svg"
+import plus from '../../../assets/icons/plus.svg'
+
+import DataTable, { Column } from '../../components/GenericTable'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
@@ -33,6 +37,65 @@ export default function AdminSubscriptions() {
     start: '2025-01-01',
     end: '2026-12-31'
   })
+  const [filteredTransactions, setFilteredTransactions] = useState<any[]>([])
+  const [isFilteringTransactions, setIsFilteringTransactions] = useState(false)
+  const [transactionFilter, setTransactionFilter] = useState({
+    status: 'all',
+    dateRange: 'all',
+    amount: 'all'
+  })
+
+  const columns = [
+    {
+      key: 'user',
+      label: t('user_header'),
+      render: (value, row) => {
+        // نضمن إننا بنبعت نص للـ Component
+        const name = row.user?.name || row.name || 'Unknown';
+        return (
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-8 h-8 text-white rounded-full bg-gradient-to-br from-[#488981] to-[#51D1B8]">
+              {name.charAt(0)}
+            </div>
+            <span className="text-sm font-medium">{name}</span>
+          </div>
+        );
+      }
+    },
+    {
+      key: 'plan',
+      label: t('plan_header'),
+      type: 'plan',
+      render: (value, row) => (
+        <div>
+          <div className="text-sm font-medium text-gray-900">{row.plan.name}</div>
+          <div className="text-xs text-gray-500">{row.plan.price}</div>
+        </div>
+      )
+    },
+    {
+      key: 'status',
+      label: t('status'),
+      type: 'statusActive', // بيعالج اللون الأخضر والأحمر تلقائياً بناءً على كلمة active
+    },
+    {
+      key: 'billingCycle',
+      label: t('billing_cycle'),
+      type: 'text'
+    },
+    {
+      key: 'nextPayment',
+      label: t('next_payment'),
+      type: 'text'
+    },
+    {
+      key: 'actions',
+      label: t('actions'),
+      type: 'actions'
+    }
+  ];
+
+
 
   useEffect(() => {
     fetchData()
@@ -225,10 +288,10 @@ export default function AdminSubscriptions() {
   return (
     <div style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-start justify-between mb-2">
+      <div className="mb-6">
+        <div className="flex items-start justify-between ">
           <div>
-            <h1 className="text-[28px] font-bold text-[#1a202c] mb-2 tracking-[-0.5px]">
+            <h1 className="text-[28px] font-bold text-[#1a202c]  tracking-[-0.5px]">
               {t('subscription_management')}
             </h1>
             <p className="text-[#718096] text-base">
@@ -238,9 +301,10 @@ export default function AdminSubscriptions() {
 
           <button
             onClick={() => setShowNewSubscriptionModal(true)}
-            className="px-4 py-2 rounded-lg border-none bg-gradient-to-br from-[#319795] to-[#2d7d7d] text-white text-sm font-medium cursor-pointer flex items-center gap-2 shadow-[0_4px_12px_rgba(49,151,149,0.3)] transition-all duration-200 active:scale-95"
+            className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-white transition-all duration-200 rounded-full cursor-pointer bg-linear active:scale-95"
           >
-            + {t('new_subscription')}
+            <Image src={plus} alt="plus" width={10} height={10} />
+            {t('new_subscription')}
           </button>
         </div>
       </div>
@@ -272,215 +336,92 @@ export default function AdminSubscriptions() {
         ]}
       />
 
-      <div>
-        {/* Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              className={`px-4 py-2 rounded-lg border-none text-sm font-medium cursor-pointer transition-all duration-200 ${filter === 'Monthly'
-                  ? 'bg-gradient-to-br from-[#319795] to-[#2d7d7d] text-white shadow-[0_2px_8px_rgba(49,151,149,0.3)]'
-                  : 'bg-[#f7fafc] text-[#4a5568]'
-                }`}
-              onClick={() => setFilter('Monthly')}
-            >
-              {t('monthly')}
-            </button>
-            <button
-              className={`px-4 py-2 rounded-lg border-none text-sm font-medium cursor-pointer transition-all duration-200 ${filter === 'Yearly'
-                  ? 'bg-gradient-to-br from-[#319795] to-[#2d7d7d] text-white shadow-[0_2px_8px_rgba(49,151,149,0.3)]'
-                  : 'bg-[#f7fafc] text-[#4a5568]'
-                }`}
-              onClick={() => setFilter('Yearly')}
-            >
-              {t('yearly')}
-            </button>
+      <div className="space-y-8">
+        <DataTable
+          title={t('all_subscriptions')} // أو "All Customers"
+          description={t('reviewing_latest_activities')}
+          columns={columns}
+          data={subscriptions} // المصفوفة اللي جاية من الـ API أو الـ State
+          rowsPerPage={10}
+          onEdit={(row) => console.log('Edit', row)}
+          onDelete={(row) => console.log('Delete', row)}
+          filterSection={
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Monthly / Yearly Toggle */}
+              <div className="flex p-1 bg-gray-100 rounded-lg">
+                <button
+                  onClick={() => setFilter('Monthly')}
+                  className={`px-4 py-1 text-sm rounded-md transition-all ${filter === 'Monthly' ? 'bg-white shadow-sm text-primary font-bold' : 'text-gray-500'
+                    }`}
+                >
+                  {t('monthly')}
+                </button>
+                <button
+                  onClick={() => setFilter('Yearly')}
+                  className={`px-4 py-1 text-sm rounded-md transition-all ${filter === 'Yearly' ? 'bg-white shadow-sm text-primary font-bold' : 'text-gray-500'
+                    }`}
+                >
+                  {t('yearly')}
+                </button>
+              </div>
 
-            <select
-              className={`px-3 py-2 rounded-lg ml-4 text-sm cursor-pointer outline-none ${statusFilter
-                  ? 'border-2 border-[#319795] bg-[#f0fdfa] text-[#319795] font-medium'
-                  : 'border border-[#e2e8f0] bg-white text-[#4a5568] font-normal'
-                }`}
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="">{t('all_statuses')}</option>
-              <option value="active">{t('active')}</option>
-              <option value="past_due">{t('past_due')}</option>
-              <option value="cancelled">{t('cancelled')}</option>
-            </select>
-
-            {(statusFilter || dateRange.start !== '2025-01-01' || dateRange.end !== '2026-12-31') && (
               <button
-                className="px-3 py-1.5 rounded-md border border-[#e2e8f0] bg-white text-[#718096] text-xs cursor-pointer ml-2 hover:bg-gray-50"
-                onClick={() => {
-                  setStatusFilter('')
-                  setDateRange({ start: '2025-01-01', end: '2026-12-31' })
+                className="bg-[#eeeeee] flex items-center gap-1 px-3 py-1.5 text-sm rounded-full border border-[#e2e8f0] text-[#21665F]"
+                style={{
+                  background: filteredTransactions.length > 0 ? '#319795' : undefined,
+                  color: filteredTransactions.length > 0 ? 'white' : undefined
                 }}
               >
-                {t('clear_filters')}
+                <Image src={filterIcon} alt="Filter Icon" width={14} height={14} />
+                {t('filter')} {filteredTransactions.length > 0 && `(${filteredTransactions.length})`}
               </button>
-            )}
-          </div>
 
-          <div className="flex items-center gap-3">
-            <input
-              type="date"
-              value={dateRange.start}
-              onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-              className={`px-3 py-2 rounded-lg text-sm cursor-pointer outline-none ${dateRange.start !== '2025-01-01'
-                  ? 'border-2 border-[#319795] bg-[#f0fdfa] text-[#319795]'
-                  : 'border border-[#e2e8f0] bg-white text-[#4a5568]'
-                }`}
-            />
-            <span className="text-[#718096] text-sm">{t('to')}</span>
-            <input
-              type="date"
-              value={dateRange.end}
-              onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-              className={`px-3 py-2 rounded-lg text-sm cursor-pointer outline-none ${dateRange.end !== '2026-12-31'
-                  ? 'border-2 border-[#319795] bg-[#f0fdfa] text-[#319795]'
-                  : 'border border-[#e2e8f0] bg-white text-[#4a5568]'
-                }`}
-            />
-          </div>
-        </div>
+              {/* Status Filter */}
+              {/* <select
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg outline-none focus:border-primary"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="">{t('all_statuses')}</option>
+                <option value="active">{t('active')}</option>
+                <option value="past_due">{t('past_due')}</option>
+                <option value="cancelled">{t('cancelled')}</option>
+              </select> */}
 
-        <div className="text-[#718096] text-sm mb-4">
-          {subscriptions.length > 0 ? (
-            `${t('showing')} ${((currentPage - 1) * 10) + 1} ${t('to')} ${Math.min(currentPage * 10, analytics.totalSubscriptions || 0)} ${t('of')} ${analytics.totalSubscriptions || 0} ${t('subscriptions')}`
-          ) : (
-            t('no_subscriptions_found')
-          )}
-        </div>
+              {/* Date Range */}
+              {/* <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={dateRange.start}
+                  onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                  className="px-2 py-1 text-xs border rounded-md"
+                />
+                <span className="text-gray-400">to</span>
+                <input
+                  type="date"
+                  value={dateRange.end}
+                  onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                  className="px-2 py-1 text-xs border rounded-md"
+                />
+              </div> */}
 
-        {/* Subscriptions Table */}
-        <div className="bg-white rounded-xl border border-[#e2e8f0] overflow-hidden shadow-sm relative">
-          {filterLoading && (
-            <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10 text-sm text-[#718096]">
-              {t('applying_filters')}
-            </div>
-          )}
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-[#f8fafc]">
-                {['user_header', 'plan_header', 'status', 'billing_cycle', 'next_payment'].map((header) => (
-                  <th key={header} className="px-5 py-4 text-left text-[12px] font-semibold text-[#718096] uppercase tracking-wider">
-                    {t(header)}
-                  </th>
-                ))}
-                <th className="px-5 py-4"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {subscriptions && subscriptions.length > 0 ? (
-                subscriptions.map((sub, index) => (
-                  <tr
-                    key={sub.id}
-                    className={`transition-colors duration-200 cursor-pointer hover:bg-[#f8fafc] ${index < subscriptions.length - 1 ? 'border-bottom border-[#f1f5f9]' : ''
-                      }`}
-                  >
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="flex items-center justify-center w-10 h-10 text-sm font-semibold text-white rounded-full"
-                          style={{ background: getAvatarColor(sub.user.initials) }}
-                        >
-                          {sub.user.initials}
-                        </div>
-                        <div>
-                          <div className="font-medium text-[#1a202c] text-sm">{sub.user.name}</div>
-                          <div className="text-[12px] text-[#718096]">{sub.user.email}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <div>
-                        <div className="font-medium text-[#1a202c] text-sm">{sub.plan.name}</div>
-                        <div className="text-[12px] text-[#718096]">{sub.plan.price}</div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className={`px-3 py-1 rounded-full text-[12px] font-semibold uppercase tracking-wider ${sub.status === 'active' ? 'bg-[#d4edda] text-[#155724]' :
-                          sub.status === 'past_due' ? 'bg-[#fff3cd] text-[#856404]' : 'bg-[#f8d7da] text-[#721c24]'
-                        }`}>
-                        {sub.status === 'past_due' ? t('past_due').toUpperCase() : t(sub.status).toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-sm text-[#4a5568]">{sub.billingCycle}</td>
-                    <td className="px-5 py-4 text-sm text-[#4a5568]">{sub.nextPayment}</td>
-                    <td className="px-5 py-4">
-                      <button className="bg-transparent border-none cursor-pointer p-2 rounded hover:bg-[#f1f5f9] text-[#718096] text-base transition-colors">
-                        ⋯
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="px-5 py-[60px] text-center text-[#718096]">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="text-[48px]">📋</div>
-                      <div>
-                        <h3 className="text-base font-semibold text-[#1a202c] mb-2">{t('no_subscriptions_found')}</h3>
-                        <p className="text-sm text-[#718096]">
-                          {statusFilter || (dateRange.start !== '2025-01-01' || dateRange.end !== '2026-12-31')
-                            ? t('no_subscriptions_filter')
-                            : t('no_subscriptions_available')}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
+              {/* Clear Button */}
+              {(statusFilter || dateRange.start !== '2025-01-01') && (
+                <button
+                  onClick={() => {
+                    setStatusFilter('');
+                    setDateRange({ start: '2025-01-01', end: '2026-12-31' });
+                  }}
+                  className="text-xs text-red-500 hover:underline"
+                >
+                  {t('clear_filters')}
+                </button>
               )}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          }
+        />
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between mt-6 mb-8">
-          <div className="text-[#718096] text-sm">
-            {/* Re-using same logic as above for consistency */}
-          </div>
-          <div className="flex gap-2">
-            <button
-              className={`px-3 py-2 border border-[#e2e8f0] rounded-md transition-colors ${currentPage === 1 ? 'bg-[#f7fafc] cursor-not-allowed text-[#cbd5e0]' : 'bg-white cursor-pointer text-[#718096]'
-                }`}
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-            >
-              ‹
-            </button>
 
-            {analytics.totalSubscriptions && Math.ceil(analytics.totalSubscriptions / 10) > 1 &&
-              [...Array(Math.min(5, Math.ceil(analytics.totalSubscriptions / 10)))].map((_, index) => {
-                const pageNum = index + 1;
-                return (
-                  <button
-                    key={pageNum}
-                    className={`px-3 py-2 border rounded-md cursor-pointer transition-colors ${currentPage === pageNum
-                        ? 'border-[#319795] bg-[#319795] text-white font-medium'
-                        : 'border-[#e2e8f0] bg-white text-[#4a5568] font-normal'
-                      }`}
-                    onClick={() => setCurrentPage(pageNum)}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })
-            }
-
-            <button
-              className={`px-3 py-2 border border-[#e2e8f0] rounded-md transition-colors ${currentPage >= Math.ceil((analytics.totalSubscriptions || 0) / 10)
-                  ? 'bg-[#f7fafc] cursor-not-allowed text-[#cbd5e0]'
-                  : 'bg-white cursor-pointer text-[#4a5568]'
-                }`}
-              disabled={currentPage >= Math.ceil((analytics.totalSubscriptions || 0) / 10)}
-              onClick={() => setCurrentPage(prev => prev + 1)}
-            >
-              ›
-            </button>
-          </div>
-        </div>
 
         {/* Bottom Section with Charts */}
         <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-6">
@@ -498,8 +439,8 @@ export default function AdminSubscriptions() {
                     <div key={index} className="flex flex-col items-center gap-2">
                       <div
                         className={`w-10 rounded-t-sm transition-all duration-300 ${isLast
-                            ? 'bg-gradient-to-b from-[#319795] to-[#2d7d7d] shadow-[0_4px_12px_rgba(49,151,149,0.3)]'
-                            : 'bg-gradient-to-b from-[#e2e8f0] to-[#cbd5e0]'
+                          ? 'bg-gradient-to-b from-[#319795] to-[#2d7d7d] shadow-[0_4px_12px_rgba(49,151,149,0.3)]'
+                          : 'bg-gradient-to-b from-[#e2e8f0] to-[#cbd5e0]'
                           }`}
                         style={{ height: `${height}px` }}
                       ></div>
@@ -516,25 +457,25 @@ export default function AdminSubscriptions() {
           </div>
 
           {/* Plan Distribution */}
-          <div className="bg-white rounded-xl border border-[#e2e8f0] p-6 shadow-sm">
+          <div className="bg-[#3E7F77] rounded-xl p-6 shadow-sm">
             <div className="mb-5">
-              <h3 className="text-lg font-semibold text-[#1a202c] mb-1">{t('plan_distribution')}</h3>
-              <p className="text-sm text-[#718096]">{t('user_preference_by_plan')}</p>
+              <h3 className="mb-1 text-lg font-medium text-[#F4FFFC] leading-[28px]">{t('plan_distribution')}</h3>
+              <p className="text-sm text-[#F4FFFC] font-light leading-[20px]">{t('user_preference_by_plan')}</p>
             </div>
 
             {[
-              { name: 'Basic', color: 'from-[#319795] to-[#2d7d7d]' },
-              { name: 'Professional', color: 'from-[#3182ce] to-[#2c5aa0]' },
-              { name: 'Enterprise', color: 'from-[#38a169] to-[#2f855a]' }
+              { name: 'Basic', color: 'from-[#fff] to-[#fff]' },
+              { name: 'Professional', color: 'from-[#fff] to-[#fff]' },
+              { name: 'Enterprise', color: 'from-[#fff] to-[#fff]' }
             ].map((plan) => (
-              <div key={plan.name} className="mb-6">
+              <div key={plan.name} className="mb-6 uppercase">
                 <div className="flex justify-between mb-2">
-                  <span className="text-sm text-[#4a5568] font-medium">{t(plan.name.toLowerCase())}</span>
-                  <span className="text-sm font-semibold text-[#1a202c]">
+                  <span className="text-sm font-medium text-white">{t(plan.name.toLowerCase())}</span>
+                  <span className="text-sm font-medium text-[#F4FFFC]">
                     {analytics.planDistribution?.[plan.name] || 0}%
                   </span>
                 </div>
-                <div className="h-2 bg-[#f1f5f9] rounded-full overflow-hidden">
+                <div className="h-2 bg-[#F4FFFC1A] rounded-full overflow-hidden">
                   <div
                     className={`h-full bg-gradient-to-r ${plan.color} rounded-full`}
                     style={{ width: `${analytics.planDistribution?.[plan.name] || 0}%` }}
@@ -543,7 +484,7 @@ export default function AdminSubscriptions() {
               </div>
             ))}
 
-            <button className="w-full py-3 bg-gradient-to-br from-[#319795] to-[#2d7d7d] text-white border-none rounded-lg text-sm font-medium cursor-pointer transition-all shadow-[0_2px_8px_rgba(49,151,149,0.2)] hover:opacity-90 active:scale-[0.98]">
+            <button className="w-full py-3.5 bg-[#F4FFFC1A]  border  text-white border-none rounded-lg text-sm font-medium cursor-pointer transition-all hover:opacity-90 active:scale-[0.98]">
               {t('detailed_analytics')}
             </button>
           </div>

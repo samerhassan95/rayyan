@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useLanguage } from '../../../i18n/LanguageContext'
+import StatGroup from '../../components/StateCard'
+
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
@@ -130,26 +132,28 @@ export default function AdminTransactions() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-6 mb-8 md:grid-cols-3">
-        {[
-          { label: t('revenue'), val: `$${analytics.totalRevenue?.toLocaleString() || '0'}`, sub: t('vs_previous_30_days'), growth: analytics.revenueGrowth, icon: '📈' },
-          { label: t('monthly_volume'), val: `$${analytics.monthlyVolume?.toLocaleString() || '0'}`, sub: t('processed_this_month'), growth: analytics.volumeGrowth, icon: '📊' },
-          { label: t('failed_transactions'), val: `${analytics.failedTransactions || 0}%`, sub: `${t('industry_avg')}: 2.1%`, growth: analytics.failureChange, icon: '⚠️' }
-        ].map((card, i) => (
-          <div key={i} className="p-6 bg-white border border-gray-100 shadow-sm rounded-xl">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <div className="mb-1 text-xs tracking-wider text-gray-500 uppercase">{card.label}</div>
-                <div className="text-3xl font-bold text-gray-900">{card.val}</div>
-                <div className="mt-1 text-xs text-gray-400">{card.icon} {card.sub}</div>
-              </div>
-              <div className={`text-xs font-semibold px-2 py-1 rounded ${card.growth >= 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
-                {card.growth >= 0 ? '+' : ''}{card.growth || 0}%
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+     <StatGroup 
+  gridCols="xl:grid-cols-3"
+  items={[
+    { 
+      label: t('revenue'), 
+      value: analytics.totalRevenue?.toLocaleString() || '0', 
+      suffix: "$", // أو يمكنك وضع الـ $ داخل الـ value مباشرة
+      icon: <span className="text-2xl">📈</span> 
+    },
+    { 
+      label: t('monthly_volume'), 
+      value: analytics.monthlyVolume?.toLocaleString() || '0', 
+      suffix: "$",
+      icon: <span className="text-2xl">📊</span> 
+    },
+    { 
+      label: t('failed_transactions'), 
+      value: analytics.failedTransactions || 0, 
+      suffix: "%",
+      icon: <span className="text-2xl">⚠️</span> 
+    }
+  ]} />
 
       {/* Revenue Trends Chart */}
       <div className="p-6 mb-8 bg-white border border-gray-100 shadow-sm rounded-xl">
