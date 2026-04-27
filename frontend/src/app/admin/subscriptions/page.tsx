@@ -342,7 +342,7 @@ export default function AdminSubscriptions() {
           description={t('reviewing_latest_activities')}
           columns={columns}
           data={subscriptions} // المصفوفة اللي جاية من الـ API أو الـ State
-          rowsPerPage={10}
+          rowsPerPage={5}
           onEdit={(row) => console.log('Edit', row)}
           onDelete={(row) => console.log('Delete', row)}
           filterSection={

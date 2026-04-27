@@ -538,7 +538,7 @@ const displayTransactions = isFilteringTransactions || filteredTransactions.leng
         columns={TRANSACTION_COLUMNS}
         data={displayTransactions}
         isRTL={isRTL}
-        rowsPerPage={10}
+        rowsPerPage={5}
         // --- قسم الفلتر بنفس الشكل القديم ---
         filterSection={
           <div className='relative'>
@@ -604,7 +604,7 @@ const displayTransactions = isFilteringTransactions || filteredTransactions.leng
       />
       
       {/* View All Activity Button */}
-      <div className="text-center mt-4">
+      <div className="mt-4 text-center">
         <button className="btn btn-secondary" onClick={handleShowAllActivity}>
           {t('view_all_Activity')}
         </button>

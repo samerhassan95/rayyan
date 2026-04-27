@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useLanguage } from '../../../i18n/LanguageContext'
 import StatGroup from '../../components/StateCard'
-
+import DataTable, { Column } from '../../components/GenericTable'
+import Image from 'next/image'
+import filterIcon from '../../../assets/icons/filter.svg'
+import plus from '../../../assets/icons/plus.svg'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
@@ -119,6 +122,67 @@ export default function AdminTransactions() {
     return <div className="flex items-center justify-center min-h-screen text-gray-500">{t('loading')}...</div>
   }
 
+  const columns = [
+    {
+      key: 'user',
+      label: t('user_header'),
+      type: 'userEmail',
+      render: (_, row) => (
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-10 h-10 text-sm font-bold text-white bg-teal-600 rounded-full">
+            {row.user.initials}
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-gray-900">{row.user.name}</span>
+            <span className="text-xs text-gray-400">{row.user.email}</span>
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'amount',
+      label: t('amount_header'),
+      type: 'amount',
+      // الـ Component بتاعك بيعمل parseFloat لوحده، بس نتأكد من العملة
+      render: (value) => <span className="font-semibold text-gray-900">${value.toFixed(2)}</span>
+    },
+    {
+      key: 'date',
+      label: t('date'),
+      type: 'date'
+    },
+    {
+      key: 'paymentMethod',
+      label: t('payment_method_header'),
+      type: 'text',
+      render: (value) => (
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <span>💳</span> {value}
+        </div>
+      )
+    },
+    {
+      key: 'status',
+      label: t('status'),
+      type: 'badge',
+      render: (value) => {
+        const statusStyles = {
+          successful: 'bg-green-100 text-green-700',
+          pending: 'bg-yellow-100 text-yellow-700',
+          failed: 'bg-red-100 text-red-700',
+        };
+        return (
+          <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusStyles[value]}`}>
+            {t(value)}
+          </span>
+        );
+      }
+    },
+    { key: 'actions', label: 'Actions', type: 'actions' }
+
+  ];
+
+
   return (
     <div className={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
@@ -132,28 +196,28 @@ export default function AdminTransactions() {
       </div>
 
       {/* Stats Cards */}
-     <StatGroup 
-  gridCols="xl:grid-cols-3"
-  items={[
-    { 
-      label: t('revenue'), 
-      value: analytics.totalRevenue?.toLocaleString() || '0', 
-      suffix: "$", // أو يمكنك وضع الـ $ داخل الـ value مباشرة
-      icon: <span className="text-2xl">📈</span> 
-    },
-    { 
-      label: t('monthly_volume'), 
-      value: analytics.monthlyVolume?.toLocaleString() || '0', 
-      suffix: "$",
-      icon: <span className="text-2xl">📊</span> 
-    },
-    { 
-      label: t('failed_transactions'), 
-      value: analytics.failedTransactions || 0, 
-      suffix: "%",
-      icon: <span className="text-2xl">⚠️</span> 
-    }
-  ]} />
+      <StatGroup
+        gridCols="xl:grid-cols-3"
+        items={[
+          {
+            label: t('revenue'),
+            value: analytics.totalRevenue?.toLocaleString() || '0',
+            suffix: "$", // أو يمكنك وضع الـ $ داخل الـ value مباشرة
+            icon: <span className="text-2xl">📈</span>
+          },
+          {
+            label: t('monthly_volume'),
+            value: analytics.monthlyVolume?.toLocaleString() || '0',
+            suffix: "$",
+            icon: <span className="text-2xl">📊</span>
+          },
+          {
+            label: t('failed_transactions'),
+            value: analytics.failedTransactions || 0,
+            suffix: "%",
+            icon: <span className="text-2xl">⚠️</span>
+          }
+        ]} />
 
       {/* Revenue Trends Chart */}
       <div className="p-6 mb-8 bg-white border border-gray-100 shadow-sm rounded-xl">
@@ -211,161 +275,61 @@ export default function AdminTransactions() {
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <input
-              type="date"
-              value={dateRange.start}
-              onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-              className="px-3 py-2 text-sm border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-teal-500"
-            />
-            <span className="text-sm text-gray-400">{t('to')}</span>
-            <input
-              type="date"
-              value={dateRange.end}
-              onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-              className="px-3 py-2 text-sm border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-teal-500"
-            />
-          </div>
+      <DataTable
+        title={t('transactions_title')}
+        description={t('transactions_description')}
+        columns={columns}
+        data={transactions} // الداتا اللي جاية من الـ State بتاعتك
+        rowsPerPage={5}
+        onEdit={(row) => console.log(row)}
+        onDelete={(row) => console.log(row)}
 
-          <select
-            className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-teal-500"
-            value={paymentTypeFilter}
-            onChange={(e) => setPaymentTypeFilter(e.target.value)}
-          >
-            <option value="">{t('all_payment_types')}</option>
-            <option value="credit_card">{t('credit_card')}</option>
-            <option value="bank_transfer">{t('bank_transfer')}</option>
-            <option value="digital_wallet">{t('digital_wallet')}</option>
-            <option value="paypal">{t('paypal')}</option>
-          </select>
 
-          <select
-            className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-teal-500"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">{t('all_status')}</option>
-            <option value="successful">{t('successful')}</option>
-            <option value="pending">{t('pending')}</option>
-            <option value="failed">{t('failed')}</option>
-          </select>
-        </div>
+        filterSection={(
+          <div className="flex flex-wrap items-center gap-3">
+            {/* جزء التاريخ */}
+            {/* <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={dateRange.start}
+                onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                className="px-3 py-2 text-sm border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-teal-500"
+              />
+              <span className="text-sm text-gray-400">{t('to')}</span>
+              <input
+                type="date"
+                value={dateRange.end}
+                onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                className="px-3 py-2 text-sm border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            </div> */}
 
-        <div className="flex gap-3">
-          <button
-            onClick={clearFilters}
-            className="px-4 py-2 text-sm text-gray-600 transition-colors bg-white border border-gray-200 rounded-md hover:bg-gray-50"
-          >
-            {t('clear_filters')}
-          </button>
-          <button
-            onClick={exportReport}
-            className="px-4 py-2 text-sm text-white transition-all rounded-md bg-gradient-to-r from-teal-600 to-teal-700 hover:shadow-md"
-          >
-            ↓ {t('export_report')}
-          </button>
-        </div>
-      </div>
+            {/* اختيارات النوع والحالة */}
+            {/* <select
+              className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-md outline-none focus:ring-2 focus:ring-teal-500"
+              value={paymentTypeFilter}
+              onChange={(e) => setPaymentTypeFilter(e.target.value)}
+            >
+              <option value="">{t('all_payment_types')}</option>
+              <option value="credit_card">{t('credit_card')}</option>
+              <option value="bank_transfer">{t('bank_transfer')}</option>
+            </select> */}
 
-      <div className="mb-4 text-sm text-gray-500">
-        {transactions.length > 0 ? (
-          `${t('showing')} ${((currentPage - 1) * 10) + 1} ${t('to')} ${Math.min(currentPage * 10, analytics.totalTransactions || transactions.length)} ${t('of')} ${analytics.totalTransactions || transactions.length} ${t('results')}`
-        ) : (
-          t('no_transactions_found')
-        )}
-      </div>
+            <div className="flex gap-2">
+              {/* <button onClick={clearFilters} className="px-4 py-2 text-sm border rounded-md">{t('clear_filters')}</button> */}
 
-      {/* Transactions Table */}
-      <div className="overflow-hidden bg-white border border-gray-100 shadow-sm rounded-xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead className="border-b border-gray-100 bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">{t('user_header')}</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">{t('amount_header')}</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">{t('date')}</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">{t('payment_method_header')}</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">{t('status')}</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">{t('actions')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {transactions.map((transaction) => (
-                <tr key={transaction.id} className="transition-colors hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center w-10 h-10 text-sm font-bold text-white bg-teal-600 rounded-full">
-                        {transaction.user.initials}
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">{transaction.user.name}</div>
-                        <div className="text-xs text-gray-400">{transaction.user.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 font-semibold text-gray-900">
-                    ${transaction.amount.toFixed(2)}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{transaction.date}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <span>💳</span> {transaction.paymentMethod}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${transaction.status === 'successful' ? 'bg-green-100 text-green-700' :
-                        transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
-                      }`}>
-                      {t(transaction.status)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <button className="p-1 text-xl text-gray-400 hover:text-gray-600">⋯</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Pagination */}
-      {transactions.length > 0 && (
-        <div className="flex items-center justify-center gap-2 mt-8">
-          <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-            className="p-2 transition-colors border border-gray-200 rounded-md disabled:bg-gray-50 disabled:text-gray-300 hover:bg-gray-50"
-          >
-            ‹
-          </button>
-
-          {[...Array(Math.min(5, Math.ceil((analytics.totalTransactions || transactions.length) / 10)))].map((_, index) => {
-            const pageNum = index + 1;
-            return (
               <button
-                key={pageNum}
-                onClick={() => setCurrentPage(pageNum)}
-                className={`w-10 h-10 rounded-md text-sm font-medium transition-all ${currentPage === pageNum ? "bg-teal-600 text-white shadow-md shadow-teal-100" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
-                  }`}
-              >
-                {pageNum}
-              </button>
-            );
-          })}
+                className="bg-[#eeeeee] flex items-center gap-1 px-3 py-1.5 text-sm rounded-full border border-[#e2e8f0] text-[#21665F]"
 
-          <button
-            disabled={currentPage >= Math.ceil((analytics.totalTransactions || transactions.length) / 10)}
-            onClick={() => setCurrentPage(prev => prev + 1)}
-            className="p-2 transition-colors border border-gray-200 rounded-md disabled:bg-gray-50 disabled:text-gray-300 hover:bg-gray-50"
-          >
-            ›
-          </button>
-        </div>
-      )}
+              >
+                <Image src={filterIcon} alt="Filter Icon" width={14} height={14} />
+                {t('filter')}
+              </button>
+              <button onClick={exportReport} className="px-4 py-2 text-sm text-white bg-teal-600 rounded-full">{t('export_report')}</button>
+            </div>
+          </div>
+        )}
+      />
     </div>
   )
 }
