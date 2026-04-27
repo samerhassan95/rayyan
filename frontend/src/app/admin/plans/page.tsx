@@ -9,7 +9,6 @@ import DataTable, { Column } from '../../components/GenericTable'
 // @ts-ignore
 import { Splide as SplideType, SplideSlide as SplideSlideType } from '@splidejs/react-splide';
 import '@splidejs/react-splide/css';
-import '@splidejs/react-splide/css/skyblue';
 //ICONS
 
 import edit from "../../../assets/icons/edit-black.svg"
@@ -66,29 +65,19 @@ export default function AdminPlans() {
 
 
   const splideOptions = {
-    type: 'loop',
-    focus: 'center',
-    start: plans.findIndex(p => p.recommended) || 0,
-    perPage: 3, // يظهر 3 في الشاشات الكبيرة
+    type: 'slide',
+    perPage: 3,
     gap: '2rem',
-    arrows: false,
     pagination: true,
-    trimSpace: false,
-    // لا تستخدم fixedWidth هنا إذا أردت توزيعاً تلقائياً
+    arrows: false,
     breakpoints: {
-      1280: {
-        perPage: 3,
-        gap: '1.5rem',
-      },
       1024: {
-        perPage: 2, // يظهر 2 في التابلت
+        perPage: 2,
         gap: '1rem',
-        padding: '19%', // لإظهار لمحة من الكروت الجانبية
       },
       768: {
-        perPage: 1, // يظهر 1 في الموبايل
+        perPage: 1,
         gap: '1rem',
-        padding: '35%', // يخلي الكارت اللي في النص واضح واللي جنبه باين منه جزء
       },
     },
   };
@@ -96,6 +85,10 @@ export default function AdminPlans() {
   useEffect(() => {
     fetchData()
   }, [])
+
+  useEffect(() => {
+    console.log('Current plans in state:', plans);
+  }, [plans])
 
   useEffect(() => {
     console.log('Plans data received:', plans);
@@ -141,6 +134,7 @@ export default function AdminPlans() {
 
       // Fetch plans
       const plansResponse = await axios.get(`${API_URL}/api/plans`, { headers })
+      console.log('Plans API Response:', plansResponse.data);
 
       // Fetch analytics
       const analyticsResponse = await axios.get(`${API_URL}/api/plans/analytics`, { headers })
@@ -148,12 +142,17 @@ export default function AdminPlans() {
       // Fetch discount codes
       const codesResponse = await axios.get(`${API_URL}/api/plans/discount-codes`, { headers })
 
-      setPlans(plansResponse.data)
+      const parsedPlans = (plansResponse.data || []).map((p: any) => ({
+        ...p,
+        features: typeof p.features === 'string' ? JSON.parse(p.features) : (p.features || [])
+      }))
+      setPlans(parsedPlans)
       setAnalytics(analyticsResponse.data)
       setDiscountCodes(codesResponse.data)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching data:', error)
-      // Show empty state instead of fallback data
+      const errorMsg = error.response?.data?.error || error.message;
+      setMessage(`❌ Error: ${errorMsg}. Please try logging out and in.`);
       setPlans([])
       setAnalytics({
         totalMonthlyRevenue: 0,
@@ -219,13 +218,20 @@ export default function AdminPlans() {
       fetchData()
       setTimeout(() => setMessage(''), 3000)
     } catch (error: any) {
-      setMessage(`❌ ${error.response?.data?.error || 'Failed to delete plan'}`)
-      setTimeout(() => setMessage(''), 3000)
+      const errorMsg = error.response?.data?.error || error.message;
+      setMessage(`❌ Failed to delete plan: ${errorMsg}`)
+      setShowDeleteConfirm(false)
+      setTimeout(() => setMessage(''), 5000)
     }
   }
 
   const handleEditClick = (plan: any) => {
-    setEditingPlan({ ...plan })
+    setEditingPlan({
+      ...plan,
+      monthlyPrice: String(plan.monthlyPrice),
+      yearlyPrice: String(plan.yearlyPrice),
+      features: Array.isArray(plan.features) ? [...plan.features] : []
+    })
     setShowEditPlan(true)
   }
 
@@ -257,27 +263,6 @@ export default function AdminPlans() {
       setTimeout(() => setMessage(''), 3000)
     }
   }
-  const handleCreateCode = () => {
-    if (!discountName || !newDiscountCode) {
-      alert("برجاء ملء البيانات الأساسية");
-      return;
-    }
-
-    const newEntry = {
-      id: Date.now(), // توليد ID مؤقت
-      name: discountName,
-      code: newDiscountCode,
-      type: discountType,
-      usageCount: 0,
-      status: 'active',
-    };
-
-    setDiscountCodes([newEntry, ...discountCodes]); // إضافة الكود الجديد في البداية
-
-    // تصفير الحقول بعد الإضافة بنجاح
-    setDiscountName('');
-    setNewDiscountCode('');
-  };
 
   // const handleView = (row: any) => {
   //   // Simple preview action - show a brief message; replace with a modal if needed
@@ -429,177 +414,106 @@ export default function AdminPlans() {
       }
 
       {/* ============================== Pricing Cards =========================*/}
-   <div className="w-full max-w-[1440px] mx-auto mb-10 px-4">
-      {plans.length > 0 && (
-        <Splide options={splideOptions} aria-label="Plans Slider">
-          {plans.map((plan: any) => (
-            <SplideSlide key={plan.id} className="px-2 py-12"> 
-            <div
-              className={`relative p-8 rounded-[1.5rem] transition-all duration-300 h-full flex flex-col shadow-sm ${
-                plan.recommended
-                  ? 'text-white scale-105 z-10 bg-gradient-to-br from-[#488981] to-[#51d1b8]'
-                  : 'bg-white text-gray-900 border border-gray-100 hover:shadow-md'
-              }`}
-            >
-              {/* Recommended Badge */}
-              {!!plan.recommended && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-extrabold tracking-widest py-1.5 px-5 rounded-full text-white scale-105 z-10 bg-gradient-to-br from-[#488981] to-[#51d1b8] z-20">
-                  RECOMMENDED
-                </div>
-              )}
+      {/* ============================== Pricing Cards =========================*/}
+      <div className="w-full max-w-[1440px] mx-auto mb-10 px-4 min-h-[600px]">
+        {plans.length > 0 && (
+          <Splide key={plans.length} options={splideOptions} aria-label="Plans Slider">
+            {plans.map((plan: any) => (
+              <SplideSlide key={plan.id} className="px-2 py-12">
+                <div
+                  className={`relative p-8 rounded-[1.5rem] transition-all duration-300 h-full flex flex-col shadow-sm ${plan.recommended === 1 || plan.recommended === true
+                    ? 'text-white scale-105 z-10 bg-gradient-to-br from-[#488981] to-[#51d1b8]'
+                    : 'bg-white text-gray-900 border border-gray-100 hover:shadow-md'
+                    }`}
+                >
+                  {/* Recommended Badge */}
+                  {(plan.recommended === 1 || plan.recommended === true) && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-extrabold tracking-widest py-1.5 px-5 rounded-full text-white scale-105 z-10 bg-gradient-to-br from-[#488981] to-[#51d1b8] z-20">
+                      RECOMMENDED
+                    </div>
+                  )}
 
-              {/* Header: Tier & Actions */}
-              <div className="flex items-start justify-between mb-6">
-                <div className={`text-[11px] font-bold uppercase tracking-[0.2em] ${plan.recommended ? 'text-white/80' : 'text-gray-400'}`}>
-                  {plan.tier}
-                </div>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => handleEditClick(plan)} className="transition-transform hover:scale-110 active:scale-95">
-                    <Image src={plan.recommended ? editWhite : edit} alt="Edit" width={18} height={18} />
-                  </button>
-                  <button 
-                    onClick={() => { setPlanToDelete(plan.id); setShowDeleteConfirm(true); }} 
-                    className="transition-transform hover:scale-110 active:scale-95"
-                  >
-                    <Image src={plan.recommended ? trashWhite : trash} alt="Delete" width={18} height={18} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Name & Pricing */}
-              <div className="mb-8">
-                <h3 className="mb-2 text-3xl font-bold">{plan.name}</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-black">
-                    ${(billingPeriod === 'Monthly' || billingPeriod === t('monthly')) ? plan.monthlyPrice : plan.yearlyPrice}
-                  </span>
-                  <span className={`text-sm font-medium ${plan.recommended ? 'text-white/70' : 'text-gray-400'}`}>
-                    /{(billingPeriod === 'Monthly' || billingPeriod === t('monthly')) ? t('mo') : t('yr')}
-                  </span>
-                </div>
-                <p className={`mt-4 text-[14px] leading-relaxed line-clamp-2 ${plan.recommended ? 'text-white/90' : 'text-gray-500'}`}>
-                  {plan.description}
-                </p>
-              </div>
-
-              {/* Features List */}
-              <ul className="flex-grow mb-10 space-y-4">
-                {plan.features.map((feature: string, index: number) => {
-                  const isUnavailable = feature.includes('Not included') || feature.includes('mapping');
-                  return (
-                    <li key={index} className={`flex items-center gap-3 text-[14px] ${isUnavailable ? 'opacity-40' : 'opacity-100'}`}>
-                      <span className={`flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full ${plan.recommended ? 'bg-white/20' : 'bg-teal-50'}`}>
-                         <Image 
-                           src={isUnavailable ? x : tick} 
-                           alt="icon" 
-                           width={12} 
-                           height={12} 
-                           className={plan.recommended && !isUnavailable ? 'brightness-0 invert' : ''} 
-                         />
-                      </span>
-                      <span className={isUnavailable ? 'line-through' : 'font-medium'}>{feature}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-
-              {/* Action Button */}
-              <button
-                className={`w-full py-4 px-6 rounded-xl font-bold text-[15px] transition-all duration-300 ${
-                  plan.recommended
-                    ? 'bg-gradient-to-br from-[#488981] to-[#51d1b8] hover:bg-gray-50 active:scale-[0.98]'
-                    : 'bg-white text-gray-900 border-2 border-gray-100 hover:border-[#4FB8A3] hover:text-[#4FB8A3] active:scale-[0.98]'
-                }`}
-                onClick={() => updatePlan(plan.id, { recommended: !plan.recommended })}
-              >
-                {plan.recommended ? "Upgrade to Pro" : `Configure ${plan.name}`}
-              </button>
-            </div>
-          </SplideSlide>
-        ))}
-        </Splide>
-      )}
-
-                {/* Header: Tier & Actions */}
-                <div className="flex items-start justify-between mb-6">
-                  <div className={`text-[11px] font-bold uppercase tracking-[0.2em] ${plan.recommended ? 'text-white/80' : 'text-gray-400'}`}>
-                    {plan.tier}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <button onClick={() => handleEditClick(plan)} className="transition-transform hover:scale-110 active:scale-95">
-                      <Image src={plan.recommended ? editWhite : edit} alt="Edit" width={18} height={18} />
-                    </button>
-                    <button
-                      onClick={() => { setPlanToDelete(plan.id); setShowDeleteConfirm(true); }}
-                      className="transition-transform hover:scale-110 active:scale-95"
-                    >
-                      <Image src={plan.recommended ? trashWhite : trash} alt="Delete" width={18} height={18} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Name & Pricing */}
-                <div className="mb-8">
-                  <h3 className="mb-2 text-3xl font-bold">{plan.name}</h3>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-5xl font-black">
-                      ${(billingPeriod === 'Monthly' || billingPeriod === t('monthly')) ? plan.monthlyPrice : plan.yearlyPrice}
-                    </span>
-                    <span className={`text-sm font-medium ${plan.recommended ? 'text-white/70' : 'text-gray-400'}`}>
-                      /{(billingPeriod === 'Monthly' || billingPeriod === t('monthly')) ? t('mo') : t('yr')}
-                    </span>
-                  </div>
-                  <p className={`mt-4 text-[14px] leading-relaxed line-clamp-2 ${plan.recommended ? 'text-white/90' : 'text-gray-500'}`}>
-                    {plan.description}
-                  </p>
-                </div>
-
-                {/* Features List */}
-                <ul className="flex-grow mb-10 space-y-2">
-                  {plan.features.map((feature: string, index: number) => {
-                    const isUnavailable = feature.includes('Not included') || feature.includes('mapping');
-
-                    return (
-                      <li
-                        key={index}
-                        className={`flex items-center gap-1.5 text-sm  ${isUnavailable
-                            ? 'opacity-40'
-                            : plan.recommended ? 'text-white' : 'text-gray-900' // النص أبيض لو ريكوميندد
-                          }`}
+                  {/* Header: Tier & Actions */}
+                  <div className="flex items-start justify-between mb-6">
+                    <div className={`text-[11px] font-bold uppercase tracking-[0.2em] ${plan.recommended ? 'text-white/80' : 'text-gray-400'}`}>
+                      {plan.tier}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => handleEditClick(plan)} className="transition-transform hover:scale-110 active:scale-95">
+                        <Image src={plan.recommended ? editWhite : edit} alt="Edit" width={18} height={18} />
+                      </button>
+                      <button
+                        onClick={() => { setPlanToDelete(plan.id); setShowDeleteConfirm(true); }}
+                        className="transition-transform hover:scale-110 active:scale-95"
                       >
-                        <span className="flex items-center justify-center flex-shrink-0 w-6 h-6 rounded-full">
-                          <Image
-                            // نستخدم الأيقونات البيضاء لو الخطة ريكوميندد، وغير ذلك نستخدم الأيقونات العادية
-                            src={plan.recommended ? (isUnavailable ? xWhite : tickWhite) : (isUnavailable ? x : tick)}
-                            alt="icon"
-                            width={16}
-                            height={16}
-                            // الـ Filter ده بيضمن إن اللون يكون أبيض ناصع لو الصور فيها رمادي أو ألوان تانية
-                            className={plan.recommended ? 'brightness-0 invert' : ''}
-                          />
-                        </span>
-                        <span className={isUnavailable ? 'line-through' : ''}>
-                          {feature}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
+                        <Image src={plan.recommended ? trashWhite : trash} alt="Delete" width={18} height={18} />
+                      </button>
+                    </div>
+                  </div>
 
-                {/* Action Button */}
-                <button
-                  className={`w-full py-4 px-6 rounded-xl font-bold text-[15px] transition-all duration-300 ${plan.recommended
+                  {/* Name & Pricing */}
+                  <div className="mb-8">
+                    <h3 className="mb-2 text-3xl font-bold">{plan.name}</h3>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-5xl font-black">
+                        ${(billingPeriod === 'Monthly' || billingPeriod === t('monthly')) ? plan.monthlyPrice : plan.yearlyPrice}
+                      </span>
+                      <span className={`text-sm font-medium ${plan.recommended ? 'text-white/70' : 'text-gray-400'}`}>
+                        /{(billingPeriod === 'Monthly' || billingPeriod === t('monthly')) ? t('mo') : t('yr')}
+                      </span>
+                    </div>
+                    <p className={`mt-4 text-[14px] leading-relaxed line-clamp-2 ${plan.recommended ? 'text-white/90' : 'text-gray-500'}`}>
+                      {plan.description}
+                    </p>
+                  </div>
+
+                  {/* Features List */}
+                  <ul className="flex-grow mb-10 space-y-2 overflow-y-auto max-h-[150px]">
+                    {plan.features && Array.isArray(plan.features) && plan.features.map((feature: string, index: number) => {
+                      if (!feature) return null;
+                      const isUnavailable = feature.includes('Not included') || feature.includes('mapping');
+                      const isRec = plan.recommended === 1 || plan.recommended === true;
+
+                      return (
+                        <li
+                          key={index}
+                          className={`flex items-center gap-1.5 text-sm  ${isUnavailable
+                            ? 'opacity-40'
+                            : isRec ? 'text-white' : 'text-gray-900'
+                            }`}
+                        >
+                          <span className="flex items-center justify-center flex-shrink-0 w-6 h-6 rounded-full">
+                            <Image
+                              src={isRec ? (isUnavailable ? xWhite : tickWhite) : (isUnavailable ? x : tick)}
+                              alt="icon"
+                              width={16}
+                              height={16}
+                              className={isRec ? 'brightness-0 invert' : ''}
+                            />
+                          </span>
+                          <span className={isUnavailable ? 'line-through' : ''}>
+                            {feature}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  {/* Action Button */}
+                  <button
+                    className={`w-full py-4 px-6 rounded-xl font-bold text-[15px] transition-all duration-300 ${plan.recommended
                       ? 'bg-gradient-to-br from-[#488981] to-[#51d1b8] hover:bg-gray-50 active:scale-[0.98]'
                       : 'bg-white text-gray-900 border-2 border-gray-100 hover:border-[#4FB8A3] hover:text-[#4FB8A3] active:scale-[0.98]'
-                    }`}
-                  onClick={() => updatePlan(plan.id, { recommended: !plan.recommended })}
-                >
-                  {plan.recommended ? "Upgrade to Pro" : `Configure ${plan.name}`}
-                </button>
-              </div>
-            </SplideSlide>
-          ))}
-        </Splide>
+                      }`}
+                    onClick={() => updatePlan(plan.id, { recommended: !plan.recommended })}
+                  >
+                    {plan.recommended ? "Upgrade to Pro" : `Configure ${plan.name}`}
+                  </button>
+                </div>
+              </SplideSlide>
+            ))}
+          </Splide>
+        )}
 
         {/* تنسيق بسيط للـ Pagination لجعلها تظهر بشكل أرشق */}
         <style jsx global>{`
@@ -616,12 +530,11 @@ export default function AdminPlans() {
           width: 24px !important;
           height: 8px !important;
           border-radius: 4px !important;
-          // transform: scale(1.4) !important;
           margin: 0 10px !important;
-          
         }
       `}</style>
       </div>
+
 
       {/* Additional Options */}
       <div className="mb-10 ">
