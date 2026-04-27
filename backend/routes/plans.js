@@ -215,6 +215,7 @@ router.get('/discount-codes', async (req, res) => {
 
     const formattedCodes = codes.map(code => ({
       id: code.id,
+      name: code.name || '',
       code: code.code,
       discount: parseFloat(code.discount_value),
       type: code.discount_type,
@@ -233,12 +234,12 @@ router.get('/discount-codes', async (req, res) => {
 // Create discount code
 router.post('/discount-codes', async (req, res) => {
   try {
-    const { code, discount, type, maxUsage, expiresAt } = req.body;
+    const { name, code, discount, type, maxUsage, expiresAt } = req.body;
 
     const [result] = await pool.execute(`
-      INSERT INTO discount_codes (code, discount_value, discount_type, max_usage, expires_at) 
-      VALUES (?, ?, ?, ?, ?)
-    `, [code, discount, type, maxUsage, expiresAt]);
+      INSERT INTO discount_codes (name, code, discount_value, discount_type, max_usage, expires_at) 
+      VALUES (?, ?, ?, ?, ?, ?)
+    `, [name, code, discount, type, maxUsage, expiresAt]);
 
     const newCode = {
       id: result.insertId,
@@ -256,6 +257,35 @@ router.post('/discount-codes', async (req, res) => {
       message: 'Discount code created successfully',
       discountCode: newCode
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update discount code
+router.put('/discount-codes/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, code, discount, type, maxUsage, expiresAt, active } = req.body;
+
+    await pool.execute(`
+      UPDATE discount_codes 
+      SET name = ?, code = ?, discount_value = ?, discount_type = ?, max_usage = ?, expires_at = ?, active = ?
+      WHERE id = ?
+    `, [name, code, discount, type, maxUsage, expiresAt, active, id]);
+
+    res.json({ message: 'Discount code updated successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete discount code
+router.delete('/discount-codes/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.execute('DELETE FROM discount_codes WHERE id = ?', [id]);
+    res.json({ message: 'Discount code deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

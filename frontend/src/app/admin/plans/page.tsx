@@ -37,10 +37,7 @@ export default function AdminPlans() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [editingPlan, setEditingPlan] = useState<any>(null)
   const [planToDelete, setPlanToDelete] = useState<number | null>(null)
-  const [showCreateCode, setShowCreateCode] = useState(false)
-  const [discountName, setDiscountName] = useState('');
-  const [newDiscountCode, setNewDiscountCode] = useState('');
-  const [discountType, setDiscountType] = useState('percentage'); // القيمة الافتراضية
+  const [editingCode, setEditingCode] = useState<any>(null)
 
   // مصفوفة البيانات (مثال)
   const [newPlan, setNewPlan] = useState({
@@ -51,7 +48,9 @@ export default function AdminPlans() {
     description: '',
     features: ['']
   })
+  const [showCreateCode, setShowCreateCode] = useState(false)
   const [newCode, setNewCode] = useState({
+    name: '',
     code: '',
     discount: '',
     type: 'percentage',
@@ -66,6 +65,7 @@ export default function AdminPlans() {
   const SplideSlide = SplideSlideType as any;
 
 
+<<<<<<< HEAD
   const splideOptions = {
     type: 'loop',
     focus: 'center',
@@ -91,12 +91,32 @@ export default function AdminPlans() {
         gap: '1rem',
         padding: '35%', // يخلي الكارت اللي في النص واضح واللي جنبه باين منه جزء
       },
+=======
+const splideOptions = {
+  type: 'slide',
+  focus: 'center',
+  start: plans.findIndex(p => p.recommended) || 0,
+  perPage: 3, // يظهر 3 في الشاشات الكبيرة
+  gap: '2rem',
+  arrows: false,
+  pagination: true,
+  trimSpace: false,
+  // لا تستخدم fixedWidth هنا إذا أردت توزيعاً تلقائياً
+  breakpoints: {
+    1280: {
+      perPage: 3,
+      gap: '1.5rem',
+>>>>>>> 66de326ccad3990d0ffb6a1fd8ad4312917439c5
     },
   };
 
   useEffect(() => {
     fetchData()
   }, [])
+
+  useEffect(() => {
+    console.log('Plans data received:', plans);
+  }, [plans])
 
 
   //state card
@@ -228,13 +248,15 @@ export default function AdminPlans() {
 
   // Handlers for discount codes table actions
   const handleEdit = (row: any) => {
-    // Populate the "create/edit code" modal with the selected row and open it for editing
-    setNewCode({
+    setEditingCode({
+      id: row.id,
+      name: row.name || '',
       code: row.code || '',
       discount: String(row.discount ?? ''),
       type: row.type || 'percentage',
       maxUsage: String(row.maxUsage ?? ''),
-      expiresAt: row.expiresAt ? row.expiresAt.split('T')[0] : ''
+      expiresAt: row.expiresAt ? row.expiresAt.split('T')[0] : '',
+      active: row.active
     })
     setShowCreateCode(true)
   }
@@ -298,24 +320,34 @@ export default function AdminPlans() {
     }
   }
 
-  const createDiscountCode = async () => {
+  const saveDiscountCode = async () => {
     try {
       const token = localStorage.getItem('token')
       const headers = { Authorization: `Bearer ${token}` }
 
-      await axios.post(`${API_URL}/api/plans/discount-codes`, {
-        ...newCode,
-        discount: parseFloat(newCode.discount),
-        maxUsage: parseInt(newCode.maxUsage)
-      }, { headers })
+      if (editingCode) {
+        await axios.put(`${API_URL}/api/plans/discount-codes/${editingCode.id}`, {
+          ...editingCode,
+          discount: parseFloat(editingCode.discount),
+          maxUsage: parseInt(editingCode.maxUsage)
+        }, { headers })
+        setMessage('✅ Discount code updated successfully!')
+      } else {
+        await axios.post(`${API_URL}/api/plans/discount-codes`, {
+          ...newCode,
+          discount: parseFloat(newCode.discount),
+          maxUsage: parseInt(newCode.maxUsage)
+        }, { headers })
+        setMessage('✅ Discount code created successfully!')
+      }
 
-      setMessage('✅ Discount code created successfully!')
       setShowCreateCode(false)
-      setNewCode({ code: '', discount: '', type: 'percentage', maxUsage: '', expiresAt: '' })
+      setNewCode({ name: '', code: '', discount: '', type: 'percentage', maxUsage: '', expiresAt: '' })
+      setEditingCode(null)
       fetchData()
       setTimeout(() => setMessage(''), 3000)
     } catch (error) {
-      setMessage('❌ Failed to create discount code')
+      setMessage('❌ Failed to save discount code')
       setTimeout(() => setMessage(''), 3000)
     }
   }
@@ -414,22 +446,96 @@ export default function AdminPlans() {
       }
 
       {/* ============================== Pricing Cards =========================*/}
-      <div className=" max-w-[1440px] mx-auto mb-10 px-4">
+   <div className="w-full max-w-[1440px] mx-auto mb-10 px-4">
+      {plans.length > 0 && (
         <Splide options={splideOptions} aria-label="Plans Slider">
           {plans.map((plan: any) => (
-            <SplideSlide key={plan.id} className="px-2 py-12">
-              <div
-                className={`relative p-8 rounded-[1.5rem] transition-all duration-300 h-full flex flex-col shadow-sm ${plan.recommended
-                    ? 'text-white scale-105 z-10 bg-gradient-to-br from-[#488981] to-[#51d1b8]'
-                    : 'bg-white text-gray-900 border border-gray-100 hover:shadow-md'
-                  }`}
+            <SplideSlide key={plan.id} className="px-2 py-12"> 
+            <div
+              className={`relative p-8 rounded-[1.5rem] transition-all duration-300 h-full flex flex-col shadow-sm ${
+                plan.recommended
+                  ? 'text-white scale-105 z-10 bg-gradient-to-br from-[#488981] to-[#51d1b8]'
+                  : 'bg-white text-gray-900 border border-gray-100 hover:shadow-md'
+              }`}
+            >
+              {/* Recommended Badge */}
+              {!!plan.recommended && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-extrabold tracking-widest py-1.5 px-5 rounded-full text-white scale-105 z-10 bg-gradient-to-br from-[#488981] to-[#51d1b8] z-20">
+                  RECOMMENDED
+                </div>
+              )}
+
+              {/* Header: Tier & Actions */}
+              <div className="flex items-start justify-between mb-6">
+                <div className={`text-[11px] font-bold uppercase tracking-[0.2em] ${plan.recommended ? 'text-white/80' : 'text-gray-400'}`}>
+                  {plan.tier}
+                </div>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => handleEditClick(plan)} className="transition-transform hover:scale-110 active:scale-95">
+                    <Image src={plan.recommended ? editWhite : edit} alt="Edit" width={18} height={18} />
+                  </button>
+                  <button 
+                    onClick={() => { setPlanToDelete(plan.id); setShowDeleteConfirm(true); }} 
+                    className="transition-transform hover:scale-110 active:scale-95"
+                  >
+                    <Image src={plan.recommended ? trashWhite : trash} alt="Delete" width={18} height={18} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Name & Pricing */}
+              <div className="mb-8">
+                <h3 className="mb-2 text-3xl font-bold">{plan.name}</h3>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-5xl font-black">
+                    ${(billingPeriod === 'Monthly' || billingPeriod === t('monthly')) ? plan.monthlyPrice : plan.yearlyPrice}
+                  </span>
+                  <span className={`text-sm font-medium ${plan.recommended ? 'text-white/70' : 'text-gray-400'}`}>
+                    /{(billingPeriod === 'Monthly' || billingPeriod === t('monthly')) ? t('mo') : t('yr')}
+                  </span>
+                </div>
+                <p className={`mt-4 text-[14px] leading-relaxed line-clamp-2 ${plan.recommended ? 'text-white/90' : 'text-gray-500'}`}>
+                  {plan.description}
+                </p>
+              </div>
+
+              {/* Features List */}
+              <ul className="flex-grow mb-10 space-y-4">
+                {plan.features.map((feature: string, index: number) => {
+                  const isUnavailable = feature.includes('Not included') || feature.includes('mapping');
+                  return (
+                    <li key={index} className={`flex items-center gap-3 text-[14px] ${isUnavailable ? 'opacity-40' : 'opacity-100'}`}>
+                      <span className={`flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full ${plan.recommended ? 'bg-white/20' : 'bg-teal-50'}`}>
+                         <Image 
+                           src={isUnavailable ? x : tick} 
+                           alt="icon" 
+                           width={12} 
+                           height={12} 
+                           className={plan.recommended && !isUnavailable ? 'brightness-0 invert' : ''} 
+                         />
+                      </span>
+                      <span className={isUnavailable ? 'line-through' : 'font-medium'}>{feature}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              {/* Action Button */}
+              <button
+                className={`w-full py-4 px-6 rounded-xl font-bold text-[15px] transition-all duration-300 ${
+                  plan.recommended
+                    ? 'bg-gradient-to-br from-[#488981] to-[#51d1b8] hover:bg-gray-50 active:scale-[0.98]'
+                    : 'bg-white text-gray-900 border-2 border-gray-100 hover:border-[#4FB8A3] hover:text-[#4FB8A3] active:scale-[0.98]'
+                }`}
+                onClick={() => updatePlan(plan.id, { recommended: !plan.recommended })}
               >
-                {/* Recommended Badge */}
-                {!!plan.recommended && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-extrabold tracking-widest py-1.5 px-5 rounded-full text-white scale-105 z-10 bg-gradient-to-br from-[#488981] to-[#51d1b8] z-20">
-                    RECOMMENDED
-                  </div>
-                )}
+                {plan.recommended ? "Upgrade to Pro" : `Configure ${plan.name}`}
+              </button>
+            </div>
+          </SplideSlide>
+        ))}
+        </Splide>
+      )}
 
                 {/* Header: Tier & Actions */}
                 <div className="flex items-start justify-between mb-6">
@@ -624,6 +730,41 @@ export default function AdminPlans() {
                       </div>
                     </div>
 
+                    <div className="form-group">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('features')}</label>
+                      {(editingPlan.features || []).map((feature: string, index: number) => (
+                        <div key={index} className="flex gap-2 mb-2">
+                          <input
+                            type="text"
+                            value={feature}
+                            onChange={(e) => {
+                              const newFeatures = [...editingPlan.features]
+                              newFeatures[index] = e.target.value
+                              setEditingPlan((prev: any) => ({ ...prev, features: newFeatures }))
+                            }}
+                            className="flex-1 p-2 text-sm border border-gray-200 rounded-lg outline-none bg-gray-50"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newFeatures = editingPlan.features.filter((_: any, i: number) => i !== index)
+                              setEditingPlan((prev: any) => ({ ...prev, features: newFeatures }))
+                            }}
+                            className="p-2 text-red-500 rounded-lg bg-red-50 hover:bg-red-100"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setEditingPlan((prev: any) => ({ ...prev, features: [...(prev.features || []), ''] }))}
+                        className="w-full py-2 border-2 border-dashed border-[#488981] text-[#488981] bg-teal-50 rounded-lg text-sm font-medium hover:bg-teal-100 mt-2"
+                      >
+                        + {t('add_feature')}
+                      </button>
+                    </div>
+
                     <div className="flex gap-3 mt-8">
                       <button className="flex-1 py-3 font-bold text-gray-500 transition-colors hover:bg-gray-100 rounded-xl" onClick={() => setShowEditPlan(false)}>{t('cancel')}</button>
                       <button className="flex-1 py-3 font-bold text-white transition-colors bg-[#488981] rounded-xl" onClick={saveEditedPlan}>{t('save_changes')}</button>
@@ -773,27 +914,35 @@ export default function AdminPlans() {
         {showCreateCode && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4">
             <div className="w-full max-w-xl p-6 bg-white shadow-2xl rounded-xl">
-              <h3 className="mb-5 text-xl font-bold text-slate-800">{t('create_discount_code')}</h3>
+              <h3 className="mb-5 text-xl font-bold text-slate-800">
+                {editingCode ? t('edit_discount_code') : t('create_discount_code')}
+              </h3>
 
               <div className="space-y-4">
                 <div className="flex flex-col gap-1">
-
                   <label className="text-sm font-medium text-slate-600">{t('code_name')}</label>
                   <input
                     type="text"
-                    value={newCode.discountName}
-                    onChange={(e) => setNewCode(prev => ({ ...prev, discountName: e.target.value.toUpperCase() }))}
-                    placeholder="WELCOME20"
+                    value={editingCode ? editingCode.name : newCode.name}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (editingCode) setEditingCode((prev: any) => ({ ...prev, name: val }));
+                      else setNewCode((prev: any) => ({ ...prev, name: val }));
+                    }}
+                    placeholder="E.g. Summer Sale"
                     className="w-full px-4 py-2 border rounded-lg outline-none border-slate-200 focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-
                   <label className="text-sm font-medium text-slate-600">{t('code')}</label>
                   <input
                     type="text"
-                    value={newCode.code}
-                    onChange={(e) => setNewCode(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
+                    value={editingCode ? editingCode.code : newCode.code}
+                    onChange={(e) => {
+                      const val = e.target.value.toUpperCase();
+                      if (editingCode) setEditingCode((prev: any) => ({ ...prev, code: val }));
+                      else setNewCode((prev: any) => ({ ...prev, code: val }));
+                    }}
                     placeholder="WELCOME20"
                     className="w-full px-4 py-2 border rounded-lg outline-none border-slate-200 focus:ring-2 focus:ring-indigo-500"
                   />
@@ -804,8 +953,12 @@ export default function AdminPlans() {
                     <label className="text-sm font-medium text-slate-600">{t('discount')}</label>
                     <input
                       type="number"
-                      value={newCode.discount}
-                      onChange={(e) => setNewCode(prev => ({ ...prev, discount: e.target.value }))}
+                      value={editingCode ? editingCode.discount : newCode.discount}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (editingCode) setEditingCode((prev: any) => ({ ...prev, discount: val }));
+                        else setNewCode((prev: any) => ({ ...prev, discount: val }));
+                      }}
                       placeholder="20"
                       className="w-full px-4 py-2 border rounded-lg outline-none border-slate-200 focus:ring-2 focus:ring-indigo-500"
                     />
@@ -813,8 +966,12 @@ export default function AdminPlans() {
                   <div className="flex flex-col gap-1">
                     <label className="text-sm font-medium text-slate-600">{t('type')}</label>
                     <select
-                      value={newCode.type}
-                      onChange={(e) => setNewCode(prev => ({ ...prev, type: e.target.value }))}
+                      value={editingCode ? editingCode.type : newCode.type}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (editingCode) setEditingCode((prev: any) => ({ ...prev, type: val }));
+                        else setNewCode((prev: any) => ({ ...prev, type: val }));
+                      }}
                       className="w-full px-4 py-2 bg-white border rounded-lg outline-none border-slate-200 focus:ring-2 focus:ring-indigo-500"
                     >
                       <option value="percentage">{t('percentage')}</option>
@@ -828,8 +985,12 @@ export default function AdminPlans() {
                     <label className="text-sm font-medium text-slate-600">{t('max_usage')}</label>
                     <input
                       type="number"
-                      value={newCode.maxUsage}
-                      onChange={(e) => setNewCode(prev => ({ ...prev, maxUsage: e.target.value }))}
+                      value={editingCode ? editingCode.maxUsage : newCode.maxUsage}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (editingCode) setEditingCode((prev: any) => ({ ...prev, maxUsage: val }));
+                        else setNewCode((prev: any) => ({ ...prev, maxUsage: val }));
+                      }}
                       placeholder="100"
                       className="w-full px-4 py-2 border rounded-lg outline-none border-slate-200 focus:ring-2 focus:ring-indigo-500"
                     />
@@ -838,8 +999,12 @@ export default function AdminPlans() {
                     <label className="text-sm font-medium text-slate-600">{t('expires_at')}</label>
                     <input
                       type="date"
-                      value={newCode.expiresAt}
-                      onChange={(e) => setNewCode(prev => ({ ...prev, expiresAt: e.target.value }))}
+                      value={editingCode ? editingCode.expiresAt : newCode.expiresAt}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (editingCode) setEditingCode((prev: any) => ({ ...prev, expiresAt: val }));
+                        else setNewCode((prev: any) => ({ ...prev, expiresAt: val }));
+                      }}
                       className="w-full px-4 py-2 border rounded-lg outline-none border-slate-200 focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
@@ -849,15 +1014,18 @@ export default function AdminPlans() {
               <div className="flex gap-3 mt-6">
                 <button
                   className="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors"
-                  onClick={() => setShowCreateCode(false)}
+                  onClick={() => {
+                    setShowCreateCode(false);
+                    setEditingCode(null);
+                  }}
                 >
                   {t('cancel')}
                 </button>
                 <button
-                  className="flex-1 py-2.5 bg-[#488981] text-white rounded-lg  transition-colors font-medium"
-                  onClick={createDiscountCode}
+                  className="flex-1 py-2.5 bg-[#488981] text-white rounded-lg transition-colors font-medium"
+                  onClick={saveDiscountCode}
                 >
-                  {t('create_code')}
+                  {editingCode ? t('save_changes') : t('create_code')}
                 </button>
               </div>
             </div>
