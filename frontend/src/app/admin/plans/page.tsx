@@ -35,10 +35,7 @@ export default function AdminPlans() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [editingPlan, setEditingPlan] = useState<any>(null)
   const [planToDelete, setPlanToDelete] = useState<number | null>(null)
-  const [showCreateCode, setShowCreateCode] = useState(false)
-  const [discountName, setDiscountName] = useState('');
-  const [newDiscountCode, setNewDiscountCode] = useState('');
-  const [discountType, setDiscountType] = useState('percentage'); // القيمة الافتراضية
+  const [editingCode, setEditingCode] = useState<any>(null)
 
   // مصفوفة البيانات (مثال)
   const [newPlan, setNewPlan] = useState({
@@ -49,7 +46,9 @@ export default function AdminPlans() {
     description: '',
     features: ['']
   })
+  const [showCreateCode, setShowCreateCode] = useState(false)
   const [newCode, setNewCode] = useState({
+    name: '',
     code: '',
     discount: '',
     type: 'percentage',
@@ -65,7 +64,7 @@ const SplideSlide = SplideSlideType as any;
 
 
 const splideOptions = {
-  type: 'loop',
+  type: 'slide',
   focus: 'center',
   start: plans.findIndex(p => p.recommended) || 0,
   perPage: 3, // يظهر 3 في الشاشات الكبيرة
@@ -95,6 +94,10 @@ const splideOptions = {
   useEffect(() => {
     fetchData()
   }, [])
+
+  useEffect(() => {
+    console.log('Plans data received:', plans);
+  }, [plans])
 
 
   //state card
@@ -226,13 +229,15 @@ const splideOptions = {
 
   // Handlers for discount codes table actions
   const handleEdit = (row: any) => {
-    // Populate the "create/edit code" modal with the selected row and open it for editing
-    setNewCode({
+    setEditingCode({
+      id: row.id,
+      name: row.name || '',
       code: row.code || '',
       discount: String(row.discount ?? ''),
       type: row.type || 'percentage',
       maxUsage: String(row.maxUsage ?? ''),
-      expiresAt: row.expiresAt ? row.expiresAt.split('T')[0] : ''
+      expiresAt: row.expiresAt ? row.expiresAt.split('T')[0] : '',
+      active: row.active
     })
     setShowCreateCode(true)
   }
@@ -296,24 +301,34 @@ const splideOptions = {
     }
   }
 
-  const createDiscountCode = async () => {
+  const saveDiscountCode = async () => {
     try {
       const token = localStorage.getItem('token')
       const headers = { Authorization: `Bearer ${token}` }
 
-      await axios.post(`${API_URL}/api/plans/discount-codes`, {
-        ...newCode,
-        discount: parseFloat(newCode.discount),
-        maxUsage: parseInt(newCode.maxUsage)
-      }, { headers })
+      if (editingCode) {
+        await axios.put(`${API_URL}/api/plans/discount-codes/${editingCode.id}`, {
+          ...editingCode,
+          discount: parseFloat(editingCode.discount),
+          maxUsage: parseInt(editingCode.maxUsage)
+        }, { headers })
+        setMessage('✅ Discount code updated successfully!')
+      } else {
+        await axios.post(`${API_URL}/api/plans/discount-codes`, {
+          ...newCode,
+          discount: parseFloat(newCode.discount),
+          maxUsage: parseInt(newCode.maxUsage)
+        }, { headers })
+        setMessage('✅ Discount code created successfully!')
+      }
 
-      setMessage('✅ Discount code created successfully!')
       setShowCreateCode(false)
-      setNewCode({ code: '', discount: '', type: 'percentage', maxUsage: '', expiresAt: '' })
+      setNewCode({ name: '', code: '', discount: '', type: 'percentage', maxUsage: '', expiresAt: '' })
+      setEditingCode(null)
       fetchData()
       setTimeout(() => setMessage(''), 3000)
     } catch (error) {
-      setMessage('❌ Failed to create discount code')
+      setMessage('❌ Failed to save discount code')
       setTimeout(() => setMessage(''), 3000)
     }
   }
@@ -413,9 +428,10 @@ const splideOptions = {
 
       {/* ============================== Pricing Cards =========================*/}
    <div className="w-full max-w-[1440px] mx-auto mb-10 px-4">
-      <Splide options={splideOptions} aria-label="Plans Slider">
-        {plans.map((plan: any) => (
-          <SplideSlide key={plan.id} className="px-2 py-12"> 
+      {plans.length > 0 && (
+        <Splide options={splideOptions} aria-label="Plans Slider">
+          {plans.map((plan: any) => (
+            <SplideSlide key={plan.id} className="px-2 py-12"> 
             <div
               className={`relative p-8 rounded-[1.5rem] transition-all duration-300 h-full flex flex-col shadow-sm ${
                 plan.recommended
@@ -499,7 +515,8 @@ const splideOptions = {
             </div>
           </SplideSlide>
         ))}
-      </Splide>
+        </Splide>
+      )}
 
       {/* تنسيق بسيط للـ Pagination لجعلها تظهر بشكل أرشق */}
       <style jsx global>{`
@@ -611,6 +628,41 @@ const splideOptions = {
                           onChange={(e) => setEditingPlan(prev => ({ ...prev, yearlyPrice: e.target.value }))}
                         />
                       </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('features')}</label>
+                      {(editingPlan.features || []).map((feature: string, index: number) => (
+                        <div key={index} className="flex gap-2 mb-2">
+                          <input
+                            type="text"
+                            value={feature}
+                            onChange={(e) => {
+                              const newFeatures = [...editingPlan.features]
+                              newFeatures[index] = e.target.value
+                              setEditingPlan((prev: any) => ({ ...prev, features: newFeatures }))
+                            }}
+                            className="flex-1 p-2 border border-gray-200 outline-none bg-gray-50 rounded-lg text-sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newFeatures = editingPlan.features.filter((_: any, i: number) => i !== index)
+                              setEditingPlan((prev: any) => ({ ...prev, features: newFeatures }))
+                            }}
+                            className="p-2 text-red-500 bg-red-50 rounded-lg hover:bg-red-100"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setEditingPlan((prev: any) => ({ ...prev, features: [...(prev.features || []), ''] }))}
+                        className="w-full py-2 border-2 border-dashed border-[#488981] text-[#488981] bg-teal-50 rounded-lg text-sm font-medium hover:bg-teal-100 mt-2"
+                      >
+                        + {t('add_feature')}
+                      </button>
                     </div>
 
                     <div className="flex gap-3 mt-8">
@@ -762,27 +814,35 @@ const splideOptions = {
         {showCreateCode && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4">
             <div className="w-full max-w-xl p-6 bg-white shadow-2xl rounded-xl">
-              <h3 className="mb-5 text-xl font-bold text-slate-800">{t('create_discount_code')}</h3>
+              <h3 className="mb-5 text-xl font-bold text-slate-800">
+                {editingCode ? t('edit_discount_code') : t('create_discount_code')}
+              </h3>
 
               <div className="space-y-4">
                 <div className="flex flex-col gap-1">
-
                   <label className="text-sm font-medium text-slate-600">{t('code_name')}</label>
                   <input
                     type="text"
-                    value={newCode.discountName}
-                    onChange={(e) => setNewCode(prev => ({ ...prev, discountName: e.target.value.toUpperCase() }))}
-                    placeholder="WELCOME20"
+                    value={editingCode ? editingCode.name : newCode.name}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (editingCode) setEditingCode((prev: any) => ({ ...prev, name: val }));
+                      else setNewCode((prev: any) => ({ ...prev, name: val }));
+                    }}
+                    placeholder="E.g. Summer Sale"
                     className="w-full px-4 py-2 border rounded-lg outline-none border-slate-200 focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-
                   <label className="text-sm font-medium text-slate-600">{t('code')}</label>
                   <input
                     type="text"
-                    value={newCode.code}
-                    onChange={(e) => setNewCode(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
+                    value={editingCode ? editingCode.code : newCode.code}
+                    onChange={(e) => {
+                      const val = e.target.value.toUpperCase();
+                      if (editingCode) setEditingCode((prev: any) => ({ ...prev, code: val }));
+                      else setNewCode((prev: any) => ({ ...prev, code: val }));
+                    }}
                     placeholder="WELCOME20"
                     className="w-full px-4 py-2 border rounded-lg outline-none border-slate-200 focus:ring-2 focus:ring-indigo-500"
                   />
@@ -793,8 +853,12 @@ const splideOptions = {
                     <label className="text-sm font-medium text-slate-600">{t('discount')}</label>
                     <input
                       type="number"
-                      value={newCode.discount}
-                      onChange={(e) => setNewCode(prev => ({ ...prev, discount: e.target.value }))}
+                      value={editingCode ? editingCode.discount : newCode.discount}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (editingCode) setEditingCode((prev: any) => ({ ...prev, discount: val }));
+                        else setNewCode((prev: any) => ({ ...prev, discount: val }));
+                      }}
                       placeholder="20"
                       className="w-full px-4 py-2 border rounded-lg outline-none border-slate-200 focus:ring-2 focus:ring-indigo-500"
                     />
@@ -802,8 +866,12 @@ const splideOptions = {
                   <div className="flex flex-col gap-1">
                     <label className="text-sm font-medium text-slate-600">{t('type')}</label>
                     <select
-                      value={newCode.type}
-                      onChange={(e) => setNewCode(prev => ({ ...prev, type: e.target.value }))}
+                      value={editingCode ? editingCode.type : newCode.type}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (editingCode) setEditingCode((prev: any) => ({ ...prev, type: val }));
+                        else setNewCode((prev: any) => ({ ...prev, type: val }));
+                      }}
                       className="w-full px-4 py-2 bg-white border rounded-lg outline-none border-slate-200 focus:ring-2 focus:ring-indigo-500"
                     >
                       <option value="percentage">{t('percentage')}</option>
@@ -817,8 +885,12 @@ const splideOptions = {
                     <label className="text-sm font-medium text-slate-600">{t('max_usage')}</label>
                     <input
                       type="number"
-                      value={newCode.maxUsage}
-                      onChange={(e) => setNewCode(prev => ({ ...prev, maxUsage: e.target.value }))}
+                      value={editingCode ? editingCode.maxUsage : newCode.maxUsage}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (editingCode) setEditingCode((prev: any) => ({ ...prev, maxUsage: val }));
+                        else setNewCode((prev: any) => ({ ...prev, maxUsage: val }));
+                      }}
                       placeholder="100"
                       className="w-full px-4 py-2 border rounded-lg outline-none border-slate-200 focus:ring-2 focus:ring-indigo-500"
                     />
@@ -827,8 +899,12 @@ const splideOptions = {
                     <label className="text-sm font-medium text-slate-600">{t('expires_at')}</label>
                     <input
                       type="date"
-                      value={newCode.expiresAt}
-                      onChange={(e) => setNewCode(prev => ({ ...prev, expiresAt: e.target.value }))}
+                      value={editingCode ? editingCode.expiresAt : newCode.expiresAt}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (editingCode) setEditingCode((prev: any) => ({ ...prev, expiresAt: val }));
+                        else setNewCode((prev: any) => ({ ...prev, expiresAt: val }));
+                      }}
                       className="w-full px-4 py-2 border rounded-lg outline-none border-slate-200 focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
@@ -838,15 +914,18 @@ const splideOptions = {
               <div className="flex gap-3 mt-6">
                 <button
                   className="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors"
-                  onClick={() => setShowCreateCode(false)}
+                  onClick={() => {
+                    setShowCreateCode(false);
+                    setEditingCode(null);
+                  }}
                 >
                   {t('cancel')}
                 </button>
                 <button
-                  className="flex-1 py-2.5 bg-[#488981] text-white rounded-lg  transition-colors font-medium"
-                  onClick={createDiscountCode}
+                  className="flex-1 py-2.5 bg-[#488981] text-white rounded-lg transition-colors font-medium"
+                  onClick={saveDiscountCode}
                 >
-                  {t('create_code')}
+                  {editingCode ? t('save_changes') : t('create_code')}
                 </button>
               </div>
             </div>
