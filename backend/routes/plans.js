@@ -109,12 +109,15 @@ router.get('/analytics', async (req, res) => {
 // Create new plan
 router.post('/', async (req, res) => {
   try {
+    console.log('Creating new plan. Body:', req.body);
     const { name, tier, monthlyPrice, yearlyPrice, description, features } = req.body;
     
     const [result] = await pool.execute(`
       INSERT INTO plans (name, tier, monthly_price, yearly_price, description, features) 
       VALUES (?, ?, ?, ?, ?, ?)
     `, [name, tier, monthlyPrice, yearlyPrice, description, JSON.stringify(features)]);
+
+    console.log('Plan created successfully. InsertId:', result.insertId);
 
     const newPlan = {
       id: result.insertId,
@@ -133,6 +136,7 @@ router.post('/', async (req, res) => {
       plan: newPlan
     });
   } catch (error) {
+    console.error('Error creating plan:', error);
     res.status(500).json({ error: error.message });
   }
 });

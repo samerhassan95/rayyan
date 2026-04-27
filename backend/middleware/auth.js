@@ -43,6 +43,7 @@ const authenticateToken = async (req, res, next) => {
 // Check if user is admin
 const requireAdmin = (req, res, next) => {
   if (req.user.role !== 'admin') {
+    console.log(`Access denied: User ${req.user.id} (${req.user.username}) has role ${req.user.role}, but admin required.`);
     return res.status(403).json({ error: 'Admin access required' });
   }
   next();
