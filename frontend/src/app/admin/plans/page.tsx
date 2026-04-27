@@ -65,7 +65,6 @@ export default function AdminPlans() {
   const SplideSlide = SplideSlideType as any;
 
 
-<<<<<<< HEAD
   const splideOptions = {
     type: 'loop',
     focus: 'center',
@@ -91,22 +90,6 @@ export default function AdminPlans() {
         gap: '1rem',
         padding: '35%', // يخلي الكارت اللي في النص واضح واللي جنبه باين منه جزء
       },
-=======
-const splideOptions = {
-  type: 'slide',
-  focus: 'center',
-  start: plans.findIndex(p => p.recommended) || 0,
-  perPage: 3, // يظهر 3 في الشاشات الكبيرة
-  gap: '2rem',
-  arrows: false,
-  pagination: true,
-  trimSpace: false,
-  // لا تستخدم fixedWidth هنا إذا أردت توزيعاً تلقائياً
-  breakpoints: {
-    1280: {
-      perPage: 3,
-      gap: '1.5rem',
->>>>>>> 66de326ccad3990d0ffb6a1fd8ad4312917439c5
     },
   };
 
